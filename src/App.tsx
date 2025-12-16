@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -8,6 +8,7 @@ import Layout from '@/components/Layout'
 import Index from '@/pages/Index'
 import Login from '@/pages/Login'
 import NotFound from '@/pages/NotFound'
+import PortalHome from '@/pages/public/PortalHome'
 
 import CodeOfConduct from '@/pages/public/CodeOfConduct'
 import ManagementCommitment from '@/pages/public/ManagementCommitment'
@@ -42,7 +43,9 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            {/* Public Pages */}
+
+            {/* Portal Public Pages */}
+            <Route path="/public/portal" element={<PortalHome />} />
             <Route path="/public/code-of-conduct" element={<CodeOfConduct />} />
             <Route
               path="/public/commitment"
@@ -56,18 +59,20 @@ const App = () => (
               path="/public/complaint/status"
               element={<ComplaintStatus />}
             />
+
             {/* Collaborator Pages */}
             <Route path="/collaborator/training" element={<Training />} />
             <Route path="/collaborator/content" element={<InternalContent />} />
             <Route
               path="/collaborator/complaints"
               element={<ComplaintStatus />}
-            />{' '}
-            {/* Reusing Status Page */}
+            />
+
             {/* Manager Pages */}
             <Route path="/manager/risks" element={<RiskDashboard />} />
             <Route path="/manager/audits" element={<Audits />} />
             <Route path="/manager/mediations" element={<Mediations />} />
+
             {/* Senior Management Pages */}
             <Route path="/senior/consolidated" element={<ConsolidatedData />} />
             <Route path="/senior/due-diligence" element={<DueDiligence />} />
@@ -77,6 +82,7 @@ const App = () => (
             />
             <Route path="/senior/ai-reports" element={<AIReports />} />
             <Route path="/senior/schools" element={<SchoolManagement />} />
+
             {/* Shared Pages */}
             <Route
               path="/investigations"

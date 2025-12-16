@@ -15,7 +15,127 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      denuncias: {
+        Row: {
+          anonimo: boolean
+          created_at: string
+          denunciante_id: string | null
+          descricao: string
+          escola_id: string
+          id: string
+          protocolo: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          anonimo?: boolean
+          created_at?: string
+          denunciante_id?: string | null
+          descricao: string
+          escola_id: string
+          id?: string
+          protocolo: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          anonimo?: boolean
+          created_at?: string
+          denunciante_id?: string | null
+          descricao?: string
+          escola_id?: string
+          id?: string
+          protocolo?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'denuncias_escola_id_fkey'
+            columns: ['escola_id']
+            isOneToOne: false
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      escolas_instituicoes: {
+        Row: {
+          created_at: string
+          endereco: string
+          id: string
+          localizacao: string
+          nome_escola: string
+          rede_estadual: boolean
+          rede_federal: boolean
+          rede_municipal: boolean
+          rede_particular: boolean
+          rede_publica: boolean
+          status_adesao: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          endereco?: string
+          id?: string
+          localizacao: string
+          nome_escola: string
+          rede_estadual: boolean
+          rede_federal: boolean
+          rede_municipal: boolean
+          rede_particular: boolean
+          rede_publica: boolean
+          status_adesao?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          endereco?: string
+          id?: string
+          localizacao?: string
+          nome_escola?: string
+          rede_estadual?: boolean
+          rede_federal?: boolean
+          rede_municipal?: boolean
+          rede_particular?: boolean
+          rede_publica?: boolean
+          status_adesao?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      usuarios_escola: {
+        Row: {
+          created_at: string
+          escola_id: string
+          id: string
+          perfil: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          escola_id: string
+          id: string
+          perfil: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          escola_id?: string
+          id?: string
+          perfil?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'usuarios_escola_escola_id_fkey'
+            columns: ['escola_id']
+            isOneToOne: false
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

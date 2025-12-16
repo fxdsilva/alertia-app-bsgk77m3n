@@ -1,53 +1,80 @@
+import { useEffect, useState } from 'react'
 import useAppStore from '@/stores/useAppStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Quote } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft, Shield, Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { portalService, DocumentRecord } from '@/services/portalService'
+import { toast } from 'sonner'
 
 export default function ManagementCommitment() {
   const { selectedSchool } = useAppStore()
+  const navigate = useNavigate()
+  const [document, setDocument] = useState<DocumentRecord | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!selectedSchool) {
+      navigate('/')
+      return
+    }
+
+    const fetchDoc = async () => {
+      try {
+        const doc = await portalService.getManagementCommitment(
+          selectedSchool.id,
+        )
+        setDocument(doc)
+      } catch (error) {
+        console.error(error)
+        toast.error('Erro ao carregar o Compromisso da Alta Gestão.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDoc()
+  }, [selectedSchool, navigate])
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 animate-fade-in">
-      <h1 className="text-3xl font-bold text-primary">
-        Compromisso da Alta Gestão
-      </h1>
+    <div className="container mx-auto max-w-4xl space-y-6 animate-fade-in py-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" onClick={() => navigate('/public/portal')}>
+          <ArrowLeft className="h-5 w-5 mr-2" /> Voltar
+        </Button>
+        <h1 className="text-3xl font-bold text-primary">
+          Compromisso da Alta Gestão
+        </h1>
+      </div>
 
-      <Card className="border-l-4 border-l-secondary bg-background shadow-md">
+      <Card className="min-h-[60vh]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Quote className="h-6 w-6 text-secondary" />
-            Palavra da Direção
+            <Shield className="h-5 w-5" /> Documento Oficial
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 text-lg leading-relaxed">
-          <p>
-            Nós, da direção da <strong>{selectedSchool?.name}</strong>,
-            reafirmamos nosso compromisso inabalável com a ética, a integridade
-            e a transparência em todas as nossas atividades educacionais e
-            administrativas.
-          </p>
-          <p>
-            Entendemos que a educação vai além da sala de aula; ela se constrói
-            no exemplo diário de conduta. Por isso, implementamos o Programa de
-            Integridade ALERTIA, não apenas para cumprir normas, mas para
-            cultivar uma cultura onde fazer o certo é o único caminho.
-          </p>
-          <p>
-            Garantimos que todas as denúncias trazidas ao nosso conhecimento
-            serão tratadas com seriedade, confidencialidade e isenção. Não
-            toleraremos retaliações contra quem, de boa-fé, reportar
-            irregularidades.
-          </p>
-          <div className="mt-8 pt-8 border-t flex flex-col items-end">
-            <img
-              src="https://img.usecurling.com/i?q=signature&shape=hand-drawn"
-              alt="Assinatura"
-              className="h-16 opacity-70 mb-2"
-            />
-            <p className="font-bold">Diretoria Geral</p>
-            <p className="text-sm text-muted-foreground">
-              {selectedSchool?.name}
-            </p>
-          </div>
+        <CardContent className="flex flex-col items-center justify-center min-h-[400px]">
+          {loading ? (
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          ) : document ? (
+            <div className="w-full h-[800px]">
+              <iframe
+                src={document.arquivo_url}
+                className="w-full h-full rounded-md border"
+                title="Compromisso da Alta Gestão"
+              />
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground">
+              <p className="text-lg mb-4">
+                O Termo de Compromisso ainda não foi disponibilizado por esta
+                instituição.
+              </p>
+              <p className="text-sm">
+                Entre em contato com a administração da {selectedSchool?.name}.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

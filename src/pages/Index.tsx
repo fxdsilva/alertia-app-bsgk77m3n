@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Building2, Filter } from 'lucide-react'
+import { Search, Building2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -11,42 +11,57 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
 import useAppStore from '@/stores/useAppStore'
-import { schools, School } from '@/lib/mockData'
+import { School } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { portalService } from '@/services/portalService'
+import { useDebounce } from '@/hooks/use-debounce'
+
+// Simple debounce hook implementation if not available
+function useDebounceValue<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+  return debouncedValue
+}
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState('')
-  const [networkFilter, setNetworkFilter] = useState<string>('all')
-  const [modalityFilter, setModalityFilter] = useState<string>('all')
+  const debouncedSearchTerm = useDebounceValue(searchTerm, 500)
+  const [schools, setSchools] = useState<School[]>([])
+  const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<School | null>(null)
   const { selectSchool } = useAppStore()
   const navigate = useNavigate()
 
-  const filteredSchools = schools.filter((school) => {
-    const matchesSearch = school.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-    const matchesNetwork =
-      networkFilter === 'all' || school.network === networkFilter
-    const matchesModality =
-      modalityFilter === 'all' || school.modality === modalityFilter
-    return matchesSearch && matchesNetwork && matchesModality
-  })
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (!debouncedSearchTerm) {
+        setSchools([])
+        return
+      }
+
+      setLoading(true)
+      try {
+        const results = await portalService.searchSchools(debouncedSearchTerm)
+        setSchools(results)
+      } catch (error) {
+        console.error(error)
+        toast.error('Erro ao buscar escolas.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSchools()
+  }, [debouncedSearchTerm])
 
   const handleSelect = (school: School) => {
     setSelected(school)
@@ -62,19 +77,12 @@ const Index = () => {
       } else {
         toast.success(`Escola selecionada: ${selected.name}`)
       }
-      navigate('/public/code-of-conduct')
+      navigate('/public/portal')
     }
   }
 
-  const clearFilters = () => {
-    setSearchTerm('')
-    setNetworkFilter('all')
-    setModalityFilter('all')
-    setSelected(null)
-  }
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-3xl mx-auto space-y-8 animate-fade-in-up">
+    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-3xl mx-auto space-y-8 animate-fade-in-up p-4">
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-bold text-primary tracking-tight">
           ALERTIA
@@ -105,67 +113,14 @@ const Index = () => {
             />
           </div>
 
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="filters" className="border-none">
-              <AccordionTrigger className="py-2 hover:no-underline text-sm text-muted-foreground">
-                <span className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" /> Filtros Avançados
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      Rede de Ensino
-                    </label>
-                    <Select
-                      value={networkFilter}
-                      onValueChange={setNetworkFilter}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="Municipal">Municipal</SelectItem>
-                        <SelectItem value="Estadual">Estadual</SelectItem>
-                        <SelectItem value="Federal">Federal</SelectItem>
-                        <SelectItem value="Privada">Privada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Modalidade</label>
-                    <Select
-                      value={modalityFilter}
-                      onValueChange={setModalityFilter}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="Urbana">Urbana</SelectItem>
-                        <SelectItem value="Rural">Rural</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <Button
-                  variant="link"
-                  onClick={clearFilters}
-                  className="px-0 mt-2 text-xs text-muted-foreground"
-                >
-                  Limpar Filtros
-                </Button>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-
-          <div className="border rounded-md max-h-[300px] overflow-y-auto">
-            {filteredSchools.length > 0 ? (
+          <div className="border rounded-md min-h-[100px] max-h-[300px] overflow-y-auto relative">
+            {loading ? (
+              <div className="flex items-center justify-center h-[100px] text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" /> Buscando...
+              </div>
+            ) : schools.length > 0 ? (
               <div className="divide-y">
-                {filteredSchools.map((school) => (
+                {schools.map((school) => (
                   <div
                     key={school.id}
                     className={cn(
@@ -180,7 +135,7 @@ const Index = () => {
                         {school.name}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {school.municipality} - {school.state}
+                        {school.modality}
                       </p>
                     </div>
                     <div className="text-xs text-right">
@@ -204,7 +159,11 @@ const Index = () => {
             ) : (
               <div className="p-8 text-center text-muted-foreground">
                 <Building2 className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                <p>Nenhuma escola encontrada.</p>
+                <p>
+                  {searchTerm
+                    ? 'Nenhuma escola encontrada.'
+                    : 'Digite para buscar.'}
+                </p>
               </div>
             )}
           </div>
