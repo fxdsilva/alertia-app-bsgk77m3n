@@ -47,6 +47,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (currentUser: User) => {
     try {
       // First check if user is a Master Admin (Senior)
+      // Linked via ID in database, so this query works correctly with RLS
       const { data: seniorUser } = await supabase
         .from('usuarios_admin_master' as any)
         .select('*')
@@ -83,7 +84,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             modality: item.localizacao as 'Urbana' | 'Rural',
             municipality: item.endereco || 'N/A',
             state: 'N/A',
-            active: item.ativo ?? item.status_adesao === 'ativo',
+            active: item.ativo, // Strictly use ativo column
           }
           setSelectedSchool(schoolData)
         }
