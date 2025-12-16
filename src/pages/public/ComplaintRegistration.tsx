@@ -22,18 +22,31 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 import { toast } from 'sonner'
-import { CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react'
+import {
+  CheckCircle2,
+  ArrowLeft,
+  Loader2,
+  ChevronsUpDown,
+  Check,
+} from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
 import { portalService } from '@/services/portalService'
 import { School } from '@/lib/mockData'
+import { cn } from '@/lib/utils'
 
 const complaintSchema = z.object({
   escola_id: z
@@ -50,6 +63,7 @@ export default function ComplaintRegistration() {
   const [loading, setLoading] = useState(false)
   const [schools, setSchools] = useState<School[]>([])
   const [loadingSchools, setLoadingSchools] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const { selectedSchool, user } = useAppStore()
   const navigate = useNavigate()
@@ -187,36 +201,74 @@ export default function ComplaintRegistration() {
                 control={form.control}
                 name="escola_id"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Instituição de Ensino</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                      disabled={!!selectedSchool} // Disable if school is already selected via context
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a escola..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {loadingSchools ? (
-                          <div className="flex items-center justify-center p-2">
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            <span className="text-sm text-muted-foreground">
-                              Carregando...
-                            </span>
-                          </div>
-                        ) : (
-                          schools.map((school) => (
-                            <SelectItem key={school.id} value={school.id}>
-                              {school.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className={cn(
+                              'w-full justify-between',
+                              !field.value && 'text-muted-foreground',
+                            )}
+                            disabled={!!selectedSchool}
+                          >
+                            {field.value
+                              ? schools.find(
+                                  (school) => school.id === field.value,
+                                )?.name || selectedSchool?.name
+                              : 'Selecione a escola...'}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[300px] sm:w-[600px] p-0"
+                        align="start"
+                      >
+                        <Command>
+                          <CommandInput placeholder="Buscar escola..." />
+                          <CommandList>
+                            <CommandEmpty>
+                              Nenhuma escola encontrada.
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {loadingSchools && (
+                                <CommandItem disabled>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Carregando...
+                                </CommandItem>
+                              )}
+                              {schools.map((school) => (
+                                <CommandItem
+                                  key={school.id}
+                                  value={school.name}
+                                  onSelect={() => {
+                                    form.setValue('escola_id', school.id, {
+                                      shouldValidate: true,
+                                    })
+                                    setOpen(false)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      school.id === field.value
+                                        ? 'opacity-100'
+                                        : 'opacity-0',
+                                    )}
+                                  />
+                                  {school.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
