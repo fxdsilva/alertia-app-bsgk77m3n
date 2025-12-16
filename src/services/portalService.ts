@@ -15,7 +15,10 @@ export const portalService = {
 
     const { data, error } = await supabase
       .from('escolas_instituicoes')
-      .select('*')
+      .select(
+        'id, nome_escola, rede_municipal, rede_estadual, rede_federal, localizacao, endereco, status_adesao',
+      )
+      .eq('status_adesao', 'ativo')
       .ilike('nome_escola', `%${query}%`)
       .limit(10)
 
@@ -39,9 +42,10 @@ export const portalService = {
   },
 
   async getSchools(): Promise<School[]> {
+    // Selecting specific columns as per requirements, but ensuring we have enough for the interface
     const { data, error } = await supabase
       .from('escolas_instituicoes')
-      .select('*')
+      .select('id, nome_escola')
       .eq('status_adesao', 'ativo')
       .order('nome_escola')
 
@@ -50,17 +54,12 @@ export const portalService = {
     return data.map((item) => ({
       id: item.id,
       name: item.nome_escola,
-      network: item.rede_municipal
-        ? 'Municipal'
-        : item.rede_estadual
-          ? 'Estadual'
-          : item.rede_federal
-            ? 'Federal'
-            : 'Privada',
-      modality: item.localizacao as 'Urbana' | 'Rural',
-      municipality: item.endereco || 'N/A',
+      // Default values for fields not fetched in this specific query
+      network: 'Municipal',
+      modality: 'Urbana',
+      municipality: 'N/A',
       state: 'N/A',
-      status: item.status_adesao as 'ativo' | 'inativo',
+      status: 'ativo',
     }))
   },
 

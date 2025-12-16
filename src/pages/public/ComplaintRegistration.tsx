@@ -78,6 +78,9 @@ export default function ComplaintRegistration() {
   })
 
   useEffect(() => {
+    // Only fetch schools if we don't have a pre-selected school from context
+    // or if we want to allow switching. But usually fetching all is good practice
+    // for the combobox to work if the user needs to select.
     const fetchSchools = async () => {
       setLoadingSchools(true)
       try {
@@ -173,7 +176,7 @@ export default function ComplaintRegistration() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl space-y-6 py-6 pb-20">
+    <div className="container mx-auto max-w-2xl space-y-6 py-6 pb-20 animate-fade-in">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
