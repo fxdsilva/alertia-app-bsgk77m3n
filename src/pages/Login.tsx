@@ -20,6 +20,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { toast } from 'sonner'
 
@@ -34,11 +36,12 @@ export default function Login() {
   const { signIn, user, profile, loading: appLoading } = useAppStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: 'fxdsilva@gmail.com',
+      email: '',
       password: '',
     },
   })
@@ -62,23 +65,33 @@ export default function Login() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
+    setError(null)
     try {
-      const { error } = await signIn(values.email, values.password)
-      if (error) {
-        toast.error('Erro ao realizar login. Verifique suas credenciais.')
+      const { error: signInError } = await signIn(values.email, values.password)
+
+      if (signInError) {
+        // Specific error handling as per Acceptance Criteria
+        // Supabase returns 'Invalid login credentials' for wrong password/email
+        if (signInError.message === 'Invalid login credentials') {
+          setError('Erro ao realizar login. Verifique suas credenciais.')
+        } else {
+          console.error('Login Error:', signInError)
+          setError('Ocorreu um erro ao realizar o login. Tente novamente.')
+        }
         setLoading(false)
       } else {
         toast.success('Login realizado com sucesso!')
-        // Navigation will happen via useEffect when user/profile updates
+        // Don't set loading to false here, wait for redirection via useEffect
       }
-    } catch (error) {
-      toast.error('Erro ao realizar login.')
+    } catch (err) {
+      console.error('Unexpected Error:', err)
+      setError('Ocorreu um erro inesperado. Tente novamente.')
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh]">
+    <div className="flex items-center justify-center min-h-[80vh] px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary">
@@ -89,6 +102,14 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-6 text-left">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -118,7 +139,14 @@ export default function Login() {
                 )}
               />
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Entrando...' : 'Entrar'}
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  'Entrar'
+                )}
               </Button>
             </form>
           </Form>

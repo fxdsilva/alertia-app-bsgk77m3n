@@ -131,6 +131,7 @@ export type Database = {
       }
       escolas_instituicoes: {
         Row: {
+          ativo: boolean
           created_at: string
           endereco: string
           id: string
@@ -145,6 +146,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ativo?: boolean
           created_at?: string
           endereco?: string
           id?: string
@@ -159,6 +161,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ativo?: boolean
           created_at?: string
           endereco?: string
           id?: string
