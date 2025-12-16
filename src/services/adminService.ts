@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
+import { School } from '@/lib/mockData'
 
 export interface Complaint {
   id: string
@@ -48,13 +49,12 @@ export const adminService = {
 
     if (uploadError) throw uploadError
 
-    // Get Public URL (assuming public bucket)
+    // Get Public URL
     const {
       data: { publicUrl },
     } = supabase.storage.from('school-documents').getPublicUrl(fileName)
 
     // 2. Upsert Record
-    // Check if exists
     const existing = await this.getCodeOfConduct(schoolId)
 
     if (existing) {
@@ -64,13 +64,11 @@ export const adminService = {
         .eq('id', existing.id)
       if (error) throw error
     } else {
-      const { error } = await supabase
-        .from('codigo_conduta')
-        .insert({
-          escola_id: schoolId,
-          arquivo_url: publicUrl,
-          descricao: description,
-        })
+      const { error } = await supabase.from('codigo_conduta').insert({
+        escola_id: schoolId,
+        arquivo_url: publicUrl,
+        descricao: description,
+      })
       if (error) throw error
     }
   },
@@ -84,7 +82,6 @@ export const adminService = {
   },
 
   async deleteCodeOfConduct(id: string) {
-    // Should delete file too, but simplistic here
     const { error } = await supabase
       .from('codigo_conduta')
       .delete()
@@ -92,7 +89,7 @@ export const adminService = {
     if (error) throw error
   },
 
-  // Commitment Management (Duplicate logic, could abstract)
+  // Commitment Management
   async getCommitment(schoolId: string) {
     const { data, error } = await supabase
       .from('compromisso_alta_gestao')
@@ -126,13 +123,11 @@ export const adminService = {
         .eq('id', existing.id)
       if (error) throw error
     } else {
-      const { error } = await supabase
-        .from('compromisso_alta_gestao')
-        .insert({
-          escola_id: schoolId,
-          arquivo_url: publicUrl,
-          descricao: description,
-        })
+      const { error } = await supabase.from('compromisso_alta_gestao').insert({
+        escola_id: schoolId,
+        arquivo_url: publicUrl,
+        descricao: description,
+      })
       if (error) throw error
     }
   },
@@ -227,5 +222,40 @@ export const adminService = {
     }, {})
 
     return { total, byStatus }
+  },
+
+  // Admin Master: School Management
+  async getAllSchools(): Promise<School[]> {
+    const { data, error } = await supabase
+      .from('escolas_instituicoes')
+      .select('*')
+      .order('nome_escola')
+
+    if (error) throw error
+
+    return data.map((item) => ({
+      id: item.id,
+      name: item.nome_escola,
+      network: item.rede_municipal
+        ? 'Municipal'
+        : item.rede_estadual
+          ? 'Estadual'
+          : item.rede_federal
+            ? 'Federal'
+            : 'Privada',
+      modality: item.localizacao as 'Urbana' | 'Rural',
+      municipality: item.endereco || 'N/A',
+      state: 'N/A',
+      status: item.status_adesao as 'ativo' | 'inativo',
+    }))
+  },
+
+  async toggleSchoolStatus(id: string, newStatus: string) {
+    const { error } = await supabase
+      .from('escolas_instituicoes')
+      .update({ status_adesao: newStatus })
+      .eq('id', id)
+
+    if (error) throw error
   },
 }

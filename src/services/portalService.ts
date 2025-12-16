@@ -32,7 +32,7 @@ export const portalService = {
             ? 'Federal'
             : 'Privada',
       modality: item.localizacao as 'Urbana' | 'Rural',
-      municipality: 'N/A', // Data not explicitly in table structure provided but required by type
+      municipality: item.endereco || 'N/A', // Using address as fallback for now
       state: 'N/A',
       status: item.status_adesao as 'ativo' | 'inativo',
     }))
@@ -83,6 +83,15 @@ export const portalService = {
 
     if (error) throw error
     return result
+  },
+
+  async getComplaintStatus(protocol: string) {
+    const { data, error } = await supabase.rpc('get_complaint_by_protocol', {
+      protocol_query: protocol,
+    })
+
+    if (error) throw error
+    return data && data.length > 0 ? data[0] : null
   },
 }
 

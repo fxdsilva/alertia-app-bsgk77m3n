@@ -2,25 +2,42 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Search } from 'lucide-react'
+import { Search, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { portalService } from '@/services/portalService'
 
 export default function ComplaintStatus() {
   const [protocol, setProtocol] = useState('')
   const [result, setResult] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [notFound, setNotFound] = useState(false)
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!protocol) {
       toast.error('Digite o número do protocolo.')
       return
     }
-    // Mock result
-    setResult({
-      status: 'Em Investigação',
-      lastUpdate: '2023-12-16',
-      message:
-        'O comitê de ética iniciou a análise das evidências apresentadas.',
-    })
+    setLoading(true)
+    setResult(null)
+    setNotFound(false)
+    try {
+      const data = await portalService.getComplaintStatus(protocol)
+      if (data) {
+        setResult({
+          status: data.status,
+          lastUpdate: new Date(data.updated_at).toLocaleDateString(),
+          message:
+            'Acompanhe as atualizações periodicamente. Para mais detalhes, entre em contato com a instituição.',
+        })
+      } else {
+        setNotFound(true)
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao consultar protocolo.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -34,12 +51,16 @@ export default function ComplaintStatus() {
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Ex: PRT-123456"
+              placeholder="Ex: 20231216-123456"
               value={protocol}
               onChange={(e) => setProtocol(e.target.value)}
             />
-            <Button onClick={handleSearch}>
-              <Search className="h-4 w-4" />
+            <Button onClick={handleSearch} disabled={loading}>
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </CardContent>
@@ -49,7 +70,7 @@ export default function ComplaintStatus() {
         <Card className="animate-fade-in-up border-l-4 border-l-primary">
           <CardHeader>
             <CardTitle>
-              Status: <span className="text-primary">{result.status}</span>
+              Status: <span className="capitalize">{result.status}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -57,6 +78,15 @@ export default function ComplaintStatus() {
               Última atualização: {result.lastUpdate}
             </p>
             <p className="font-medium">{result.message}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {notFound && (
+        <Card className="animate-fade-in-up border-l-4 border-l-destructive bg-destructive/5">
+          <CardContent className="flex items-center gap-3 py-6 text-destructive">
+            <AlertCircle className="h-6 w-6" />
+            <p className="font-medium">Protocolo não encontrado.</p>
           </CardContent>
         </Card>
       )}

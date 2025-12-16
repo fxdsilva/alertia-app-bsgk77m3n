@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
+import { School } from '@/lib/mockData'
 
 export type Profile =
   | 'publico_externo'
@@ -23,11 +24,15 @@ export interface AppContextType {
   user: User | null
   profile: Profile
   loading: boolean
+  selectedSchool: School | null
+  setSelectedSchool: (school: School | null) => void
   signIn: (
     email: string,
     password: string,
   ) => Promise<{ data: any; error: any }>
   signOut: () => Promise<void>
+  logout: () => Promise<void> // Alias for signOut
+  clearSchool: () => void
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -36,13 +41,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile>(null)
+  const [selectedSchool, setSelectedSchool] = useState<School | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = async (currentUser: User) => {
     try {
       // First check if user is a Master Admin (Senior)
       const { data: seniorUser } = await supabase
-        .from('usuarios_admin_master' as any) // Using any because table is new
+        .from('usuarios_admin_master' as any)
         .select('*')
         .eq('email', currentUser.email)
         .single()
@@ -55,16 +61,36 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       // Then check standard school users
       const { data: schoolUser } = await supabase
         .from('usuarios_escola')
-        .select('perfil, ativo')
+        .select('*, escolas_instituicoes(*)')
         .eq('email', currentUser.email)
         .single()
 
       if (schoolUser && schoolUser.ativo) {
         setProfile(schoolUser.perfil as Profile)
+        // Automatically set selected school for school users
+        if (schoolUser.escolas_instituicoes) {
+          const item = schoolUser.escolas_instituicoes
+          const schoolData: School = {
+            id: item.id,
+            name: item.nome_escola,
+            network: item.rede_municipal
+              ? 'Municipal'
+              : item.rede_estadual
+                ? 'Estadual'
+                : item.rede_federal
+                  ? 'Federal'
+                  : 'Privada',
+            modality: item.localizacao as 'Urbana' | 'Rural',
+            municipality: item.endereco || 'N/A',
+            state: 'N/A',
+            status: item.status_adesao as 'ativo' | 'inativo',
+          }
+          setSelectedSchool(schoolData)
+        }
         return
       }
 
-      // Default profile if logged in but no specific role found
+      // Default profile
       setProfile('publico_externo')
     } catch (error) {
       console.error('Error fetching profile:', error)
@@ -95,6 +121,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         fetchProfile(session.user).then(() => setLoading(false))
       } else {
         setProfile(null)
+        setSelectedSchool(null)
         setLoading(false)
       }
     })
@@ -115,11 +142,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null)
     setUser(null)
     setSession(null)
+    setSelectedSchool(null)
+  }
+
+  const clearSchool = () => {
+    setSelectedSchool(null)
   }
 
   return (
     <AppContext.Provider
-      value={{ session, user, profile, loading, signIn, signOut }}
+      value={{
+        session,
+        user,
+        profile,
+        loading,
+        selectedSchool,
+        setSelectedSchool,
+        signIn,
+        signOut,
+        logout: signOut,
+        clearSchool,
+      }}
     >
       {children}
     </AppContext.Provider>

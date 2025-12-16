@@ -48,8 +48,12 @@ export default function Login() {
     if (!appLoading && user && profile) {
       if (profile === 'senior') {
         navigate('/senior/schools')
-      } else if (profile === 'administrador') {
+      } else if (profile === 'administrador' || profile === 'admin_gestor') {
         navigate('/admin/dashboard')
+      } else if (profile === 'colaborador') {
+        navigate('/collaborator/training')
+      } else if (profile === 'gestor') {
+        navigate('/manager/risks')
       } else {
         navigate('/')
       }
@@ -61,11 +65,11 @@ export default function Login() {
     try {
       const { error } = await signIn(values.email, values.password)
       if (error) {
-        toast.error('Erro ao realizar login.')
+        toast.error('Erro ao realizar login. Verifique suas credenciais.')
         setLoading(false)
       } else {
         toast.success('Login realizado com sucesso!')
-        // Do not setLoading(false) here to prevent user interaction while redirection happens
+        // Navigation will happen via useEffect when user/profile updates
       }
     } catch (error) {
       toast.error('Erro ao realizar login.')

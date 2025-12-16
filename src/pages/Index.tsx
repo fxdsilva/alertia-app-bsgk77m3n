@@ -18,7 +18,7 @@ const Index = () => {
   useEffect(() => {
     if (!loading && user) {
       if (profile === 'senior') {
-        navigate('/senior/consolidated')
+        navigate('/senior/schools')
       } else if (profile === 'administrador' || profile === 'admin_gestor') {
         navigate('/admin/dashboard')
       } else if (profile === 'alta_gestao') {

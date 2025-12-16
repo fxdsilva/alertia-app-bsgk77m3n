@@ -174,6 +174,36 @@ export type Database = {
         }
         Relationships: []
       }
+      usuarios_admin_master: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string
+          id: string
+          nome: string | null
+          senha_hash: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nome?: string | null
+          senha_hash: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string | null
+          senha_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       usuarios_escola: {
         Row: {
           ativo: boolean

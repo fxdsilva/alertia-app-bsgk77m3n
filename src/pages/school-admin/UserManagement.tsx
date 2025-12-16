@@ -18,7 +18,7 @@ import { UserFormDialog } from '@/components/users/UserFormDialog'
 import { useNavigate } from 'react-router-dom'
 
 export default function UserManagement() {
-  const { selectedSchool, user } = useAppStore()
+  const { selectedSchool, profile, user } = useAppStore()
   const navigate = useNavigate()
   const [users, setUsers] = useState<SchoolUser[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,13 +26,23 @@ export default function UserManagement() {
   const [editingUser, setEditingUser] = useState<SchoolUser | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
 
+  const hasAccess =
+    profile === 'admin_gestor' ||
+    profile === 'administrador' ||
+    profile === 'senior'
+
   useEffect(() => {
-    if (!user || user.role !== 'admin_gestor') {
+    if (!loading && !hasAccess) {
       navigate('/')
       return
     }
-    fetchUsers()
-  }, [selectedSchool, user])
+  }, [hasAccess, loading, navigate])
+
+  useEffect(() => {
+    if (selectedSchool && hasAccess) {
+      fetchUsers()
+    }
+  }, [selectedSchool, hasAccess])
 
   const fetchUsers = async () => {
     if (!selectedSchool) return
@@ -108,13 +118,15 @@ export default function UserManagement() {
     }
   }
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
+
+  if (!hasAccess) return null
 
   return (
     <div className="space-y-6 p-6 animate-fade-in">
@@ -186,7 +198,7 @@ export default function UserManagement() {
                   </TableCell>
                 </TableRow>
               ))}
-              {users.length === 0 && (
+              {users.length === 0 && !loading && (
                 <TableRow>
                   <TableCell
                     colSpan={5}

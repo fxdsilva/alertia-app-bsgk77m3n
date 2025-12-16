@@ -10,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarTrigger,
 } from '@/components/ui/sidebar'
 import {
   AlertTriangle,
@@ -21,7 +20,6 @@ import {
   Home,
   LayoutDashboard,
   LogOut,
-  Settings,
   Shield,
   Users,
   BrainCircuit,
@@ -33,7 +31,7 @@ import { Button } from '@/components/ui/button'
 
 export function AppSidebar() {
   const { pathname } = useLocation()
-  const { profile, signOut } = useAppContext()
+  const { profile, signOut, selectedSchool } = useAppContext()
 
   const isActive = (path: string) => pathname === path
 
@@ -160,12 +158,23 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Senior Management Items */}
-        {['alta_gestao', 'administrador', 'senior'].includes(profile || '') && (
+        {/* Senior Management Items (Master Admin) */}
+        {profile === 'senior' && (
           <SidebarGroup>
-            <SidebarGroupLabel>Alta Gestão</SidebarGroupLabel>
+            <SidebarGroupLabel>Alta Gestão (Master)</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/senior/schools')}
+                  >
+                    <Link to="/senior/schools">
+                      <Building2 className="h-4 w-4" />
+                      <span>Gestão de Escolas</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
@@ -215,10 +224,15 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Admin Items */}
-        {['administrador', 'admin_gestor'].includes(profile || '') && (
+        {/* School Admin Items - Visible to Admins OR Seniors when a school is selected */}
+        {(['administrador', 'admin_gestor'].includes(profile || '') ||
+          (profile === 'senior' && selectedSchool)) && (
           <SidebarGroup>
-            <SidebarGroupLabel>Administração Escolar</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              Administração Escolar
+              {selectedSchool &&
+                ` (${selectedSchool.name.substring(0, 15)}...)`}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
@@ -254,29 +268,6 @@ export function AppSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* Master Admin / Senior Exclusive Items */}
-        {profile === 'senior' && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administração Master</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive('/senior/schools')}
-                  >
-                    <Link to="/senior/schools">
-                      <Building2 className="h-4 w-4" />
-                      <span>Gestão de Escolas</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {/* Add other master admin items here */}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

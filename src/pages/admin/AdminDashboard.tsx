@@ -12,14 +12,25 @@ import { Button } from '@/components/ui/button'
 import { FileText, Shield, AlertTriangle, BarChart3 } from 'lucide-react'
 
 export default function AdminDashboard() {
-  const { user, selectedSchool, loading } = useAppStore()
+  const { user, profile, selectedSchool, loading } = useAppStore()
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'administrador')) {
+    // Redirect if not admin or senior
+    if (
+      !loading &&
+      (!user ||
+        (profile !== 'administrador' &&
+          profile !== 'admin_gestor' &&
+          profile !== 'senior'))
+    ) {
       navigate('/')
     }
-  }, [user, loading, navigate])
+    // Redirect if senior but no school selected
+    if (!loading && profile === 'senior' && !selectedSchool) {
+      navigate('/senior/schools')
+    }
+  }, [user, profile, selectedSchool, loading, navigate])
 
   if (loading || !user || !selectedSchool) return null
 
