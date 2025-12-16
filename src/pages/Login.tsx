@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -31,47 +31,44 @@ const formSchema = z.object({
 })
 
 export default function Login() {
-  const { login, user } = useAppStore()
+  const { signIn, user, profile, loading: appLoading } = useAppStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      email: 'fxdsilva@gmail.com',
       password: '',
     },
   })
 
-  // Redirect if already logged in
-  if (user) {
-    if (user.role === 'administrador') {
-      navigate('/admin/dashboard')
-    } else {
-      navigate('/')
+  // Redirect if already logged in or after successful login
+  useEffect(() => {
+    if (!appLoading && user && profile) {
+      if (profile === 'senior') {
+        navigate('/senior/schools')
+      } else if (profile === 'administrador') {
+        navigate('/admin/dashboard')
+      } else {
+        navigate('/')
+      }
     }
-  }
+  }, [user, profile, appLoading, navigate])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
     try {
-      const success = await login(values.email, values.password)
-      if (success) {
-        toast.success('Login realizado com sucesso!')
-        // Navigation is handled by auth state change listener ideally,
-        // but we can trigger here too or let the effect handle it.
-        // But since useEffect is async, we might want to wait or rely on simple redirect
-        // The useEffect in AppContext handles setting user.
-        // We can just wait a bit or let the user object update trigger redirect?
-        // Let's rely on the user check at top of component + re-render
-        // But for smoother UX, we can manually nav.
-        navigate('/')
+      const { error } = await signIn(values.email, values.password)
+      if (error) {
+        toast.error('Erro ao realizar login.')
+        setLoading(false)
       } else {
-        toast.error('Credenciais inválidas.')
+        toast.success('Login realizado com sucesso!')
+        // Do not setLoading(false) here to prevent user interaction while redirection happens
       }
     } catch (error) {
       toast.error('Erro ao realizar login.')
-    } finally {
       setLoading(false)
     }
   }

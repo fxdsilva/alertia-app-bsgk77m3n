@@ -23,6 +23,10 @@ export interface AppContextType {
   user: User | null
   profile: Profile
   loading: boolean
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ data: any; error: any }>
   signOut: () => Promise<void>
 }
 
@@ -98,6 +102,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe()
   }, [])
 
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    return { data, error }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setProfile(null)
@@ -106,7 +118,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AppContext.Provider value={{ session, user, profile, loading, signOut }}>
+    <AppContext.Provider
+      value={{ session, user, profile, loading, signIn, signOut }}
+    >
       {children}
     </AppContext.Provider>
   )
