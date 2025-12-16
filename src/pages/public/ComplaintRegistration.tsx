@@ -36,7 +36,9 @@ import { portalService } from '@/services/portalService'
 import { School } from '@/lib/mockData'
 
 const complaintSchema = z.object({
-  escola_id: z.string({ required_error: 'Selecione uma escola.' }),
+  escola_id: z
+    .string({ required_error: 'Selecione uma escola.' })
+    .min(1, 'Selecione uma escola.'),
   description: z
     .string()
     .min(10, { message: 'A descrição deve ter pelo menos 10 caracteres.' }),
@@ -175,7 +177,7 @@ export default function ComplaintRegistration() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Detalhes da Ocorrência</CardTitle>
+          <CardTitle>Detalhe da Denúncia</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
           <Form {...form}>
