@@ -250,7 +250,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_is_admin_master: { Args: never; Returns: boolean }
+      get_complaint_by_protocol: {
+        Args: { protocol_query: string }
+        Returns: {
+          status: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

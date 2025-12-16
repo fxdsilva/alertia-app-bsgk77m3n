@@ -86,9 +86,9 @@ const Index = () => {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => navigate('/public/portal')}
+              onClick={() => navigate('/public/complaint/new')}
             >
-              Acessar Portal de Transparência
+              Denúncias
             </Button>
           </CardContent>
         </Card>

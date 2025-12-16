@@ -38,6 +38,32 @@ export const portalService = {
     }))
   },
 
+  async getSchools(): Promise<School[]> {
+    const { data, error } = await supabase
+      .from('escolas_instituicoes')
+      .select('*')
+      .eq('status_adesao', 'ativo')
+      .order('nome_escola')
+
+    if (error) throw error
+
+    return data.map((item) => ({
+      id: item.id,
+      name: item.nome_escola,
+      network: item.rede_municipal
+        ? 'Municipal'
+        : item.rede_estadual
+          ? 'Estadual'
+          : item.rede_federal
+            ? 'Federal'
+            : 'Privada',
+      modality: item.localizacao as 'Urbana' | 'Rural',
+      municipality: item.endereco || 'N/A',
+      state: 'N/A',
+      status: item.status_adesao as 'ativo' | 'inativo',
+    }))
+  },
+
   async getManagementCommitment(escolaId: string) {
     const { data, error } = await supabase
       .from('compromisso_alta_gestao')
@@ -68,14 +94,19 @@ export const portalService = {
   }) {
     const protocol = generateProtocol()
 
+    // Enforce anonimo=true and denunciante_id=null for public complaints logic
+    // If anonimo is true, denunciante_id should be null
+    const finalAnonimo = data.anonimo
+    const finalDenuncianteId = data.anonimo ? null : data.denunciante_id
+
     const { data: result, error } = await supabase
       .from('denuncias')
       .insert({
         escola_id: data.escola_id,
         protocolo: protocol,
         descricao: data.descricao,
-        anonimo: data.anonimo,
-        denunciante_id: data.anonimo ? null : data.denunciante_id,
+        anonimo: finalAnonimo,
+        denunciante_id: finalDenuncianteId,
         status: 'pendente',
       })
       .select()

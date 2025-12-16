@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -21,13 +21,22 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { toast } from 'sonner'
-import { CheckCircle2, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
 import { portalService } from '@/services/portalService'
+import { School } from '@/lib/mockData'
 
 const complaintSchema = z.object({
+  escola_id: z.string({ required_error: 'Selecione uma escola.' }),
   description: z
     .string()
     .min(10, { message: 'A descrição deve ter pelo menos 10 caracteres.' }),
@@ -37,29 +46,55 @@ const complaintSchema = z.object({
 export default function ComplaintRegistration() {
   const [protocol, setProtocol] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [schools, setSchools] = useState<School[]>([])
+  const [loadingSchools, setLoadingSchools] = useState(false)
+
   const { selectedSchool, user } = useAppStore()
   const navigate = useNavigate()
 
   const form = useForm<z.infer<typeof complaintSchema>>({
     resolver: zodResolver(complaintSchema),
     defaultValues: {
+      escola_id: selectedSchool?.id || '',
       description: '',
       anonimo: true,
     },
   })
 
-  const onSubmit = async (data: z.infer<typeof complaintSchema>) => {
-    if (!selectedSchool) {
-      toast.error('Escola não selecionada.')
-      return
+  useEffect(() => {
+    const fetchSchools = async () => {
+      setLoadingSchools(true)
+      try {
+        const data = await portalService.getSchools()
+        setSchools(data)
+      } catch (error) {
+        console.error(error)
+        toast.error('Erro ao carregar lista de escolas.')
+      } finally {
+        setLoadingSchools(false)
+      }
     }
 
+    fetchSchools()
+  }, [])
+
+  // Update escola_id if selectedSchool changes (though usually it won't change while on page)
+  useEffect(() => {
+    if (selectedSchool) {
+      form.setValue('escola_id', selectedSchool.id)
+    }
+  }, [selectedSchool, form])
+
+  const onSubmit = async (data: z.infer<typeof complaintSchema>) => {
     setLoading(true)
     try {
+      // For unauthenticated users, enforce anonymous
+      const isAnonymous = !user ? true : data.anonimo
+
       const result = await portalService.createComplaint({
-        escola_id: selectedSchool.id,
+        escola_id: data.escola_id,
         descricao: data.description,
-        anonimo: data.anonimo,
+        anonimo: isAnonymous,
         denunciante_id: user?.id,
       })
 
@@ -110,9 +145,9 @@ export default function ComplaintRegistration() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => navigate('/public/portal')}
+              onClick={() => navigate('/')}
             >
-              Voltar ao Portal
+              Voltar ao Início
             </Button>
           </CardFooter>
         </Card>
@@ -123,7 +158,10 @@ export default function ComplaintRegistration() {
   return (
     <div className="container mx-auto max-w-2xl space-y-6 py-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate('/public/portal')}>
+        <Button
+          variant="ghost"
+          onClick={() => navigate(selectedSchool ? '/public/portal' : '/')}
+        >
           <ArrowLeft className="h-5 w-5 mr-2" /> Voltar
         </Button>
       </div>
@@ -131,7 +169,7 @@ export default function ComplaintRegistration() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">Faça sua Denúncia</h1>
         <p className="text-muted-foreground">
-          Para: {selectedSchool?.name || 'Escola Selecionada'}
+          Relate irregularidades, desvios de conduta ou violações de ética.
         </p>
       </div>
 
@@ -142,6 +180,45 @@ export default function ComplaintRegistration() {
         <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="escola_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instituição de Ensino</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                      disabled={!!selectedSchool} // Disable if school is already selected via context
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a escola..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {loadingSchools ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <span className="text-sm text-muted-foreground">
+                              Carregando...
+                            </span>
+                          </div>
+                        ) : (
+                          schools.map((school) => (
+                            <SelectItem key={school.id} value={school.id}>
+                              {school.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="description"
@@ -172,6 +249,7 @@ export default function ComplaintRegistration() {
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={!user} // Force check if user is not logged in (public)
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
@@ -179,7 +257,9 @@ export default function ComplaintRegistration() {
                         Desejo realizar a denúncia de forma anônima
                       </FormLabel>
                       <FormDescription>
-                        Seus dados não serão vinculados à denúncia.
+                        {!user
+                          ? 'Para denúncias públicas, o anonimato é obrigatório.'
+                          : 'Seus dados não serão vinculados à denúncia.'}
                       </FormDescription>
                     </div>
                   </FormItem>
