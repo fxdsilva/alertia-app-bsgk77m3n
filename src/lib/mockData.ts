@@ -5,7 +5,7 @@ export interface School {
   modality: 'Urbana' | 'Rural'
   municipality: string
   state: string
-  status: 'ativo' | 'inativo'
+  active: boolean
 }
 
 export interface User {
@@ -31,7 +31,7 @@ export const schools: School[] = [
     modality: 'Urbana',
     municipality: 'São Paulo',
     state: 'SP',
-    status: 'ativo',
+    active: true,
   },
   {
     id: '2',
@@ -40,7 +40,7 @@ export const schools: School[] = [
     modality: 'Urbana',
     municipality: 'Campinas',
     state: 'SP',
-    status: 'ativo',
+    active: true,
   },
   {
     id: '3',
@@ -49,7 +49,7 @@ export const schools: School[] = [
     modality: 'Rural',
     municipality: 'Sorocaba',
     state: 'SP',
-    status: 'inativo',
+    active: false,
   },
   {
     id: '4',
@@ -58,7 +58,7 @@ export const schools: School[] = [
     modality: 'Urbana',
     municipality: 'São Paulo',
     state: 'SP',
-    status: 'ativo',
+    active: true,
   },
   {
     id: '5',
@@ -67,7 +67,7 @@ export const schools: School[] = [
     modality: 'Urbana',
     municipality: 'Santos',
     state: 'SP',
-    status: 'ativo',
+    active: true,
   },
 ]
 

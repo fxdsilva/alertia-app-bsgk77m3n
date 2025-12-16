@@ -69,7 +69,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setProfile(schoolUser.perfil as Profile)
         // Automatically set selected school for school users
         if (schoolUser.escolas_instituicoes) {
-          const item = schoolUser.escolas_instituicoes
+          const item = schoolUser.escolas_instituicoes as any
           const schoolData: School = {
             id: item.id,
             name: item.nome_escola,
@@ -83,7 +83,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             modality: item.localizacao as 'Urbana' | 'Rural',
             municipality: item.endereco || 'N/A',
             state: 'N/A',
-            status: item.status_adesao as 'ativo' | 'inativo',
+            active: item.ativo ?? item.status_adesao === 'ativo',
           }
           setSelectedSchool(schoolData)
         }

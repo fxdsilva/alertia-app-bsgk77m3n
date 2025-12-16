@@ -233,7 +233,7 @@ export const adminService = {
 
     if (error) throw error
 
-    return data.map((item) => ({
+    return data.map((item: any) => ({
       id: item.id,
       name: item.nome_escola,
       network: item.rede_municipal
@@ -246,14 +246,14 @@ export const adminService = {
       modality: item.localizacao as 'Urbana' | 'Rural',
       municipality: item.endereco || 'N/A',
       state: 'N/A',
-      status: item.status_adesao as 'ativo' | 'inativo',
+      active: item.ativo,
     }))
   },
 
-  async toggleSchoolStatus(id: string, newStatus: string) {
+  async toggleSchoolStatus(id: string, isActive: boolean) {
     const { error } = await supabase
       .from('escolas_instituicoes')
-      .update({ status_adesao: newStatus })
+      .update({ ativo: isActive } as any)
       .eq('id', id)
 
     if (error) throw error

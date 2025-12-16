@@ -16,15 +16,15 @@ export const portalService = {
     const { data, error } = await supabase
       .from('escolas_instituicoes')
       .select(
-        'id, nome_escola, rede_municipal, rede_estadual, rede_federal, localizacao, endereco, status_adesao',
+        'id, nome_escola, rede_municipal, rede_estadual, rede_federal, localizacao, endereco, ativo',
       )
-      .eq('status_adesao', 'ativo')
+      .eq('ativo', true)
       .ilike('nome_escola', `%${query}%`)
       .limit(10)
 
     if (error) throw error
 
-    return data.map((item) => ({
+    return data.map((item: any) => ({
       id: item.id,
       name: item.nome_escola,
       network: item.rede_municipal
@@ -37,7 +37,7 @@ export const portalService = {
       modality: item.localizacao as 'Urbana' | 'Rural',
       municipality: item.endereco || 'N/A',
       state: 'N/A',
-      status: item.status_adesao as 'ativo' | 'inativo',
+      active: item.ativo,
     }))
   },
 
@@ -45,13 +45,13 @@ export const portalService = {
     // Selecting specific columns as per requirements, but ensuring we have enough for the interface
     const { data, error } = await supabase
       .from('escolas_instituicoes')
-      .select('id, nome_escola')
-      .eq('status_adesao', 'ativo')
+      .select('id, nome_escola, ativo')
+      .eq('ativo', true)
       .order('nome_escola')
 
     if (error) throw error
 
-    return data.map((item) => ({
+    return data.map((item: any) => ({
       id: item.id,
       name: item.nome_escola,
       // Default values for fields not fetched in this specific query
@@ -59,7 +59,7 @@ export const portalService = {
       modality: 'Urbana',
       municipality: 'N/A',
       state: 'N/A',
-      status: 'ativo',
+      active: item.ativo,
     }))
   },
 

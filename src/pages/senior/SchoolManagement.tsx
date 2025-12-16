@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -20,8 +20,16 @@ import { useNavigate } from 'react-router-dom'
 export default function SchoolManagement() {
   const [schools, setSchools] = useState<School[]>([])
   const [loading, setLoading] = useState(true)
-  const { setSelectedSchool } = useAppStore()
+  const { setSelectedSchool, profile, loading: appLoading } = useAppStore()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    // Access Control
+    if (!appLoading && profile !== 'senior') {
+      toast.error('Acesso negado')
+      navigate('/')
+    }
+  }, [profile, appLoading, navigate])
 
   const fetchSchools = async () => {
     setLoading(true)
@@ -37,19 +45,19 @@ export default function SchoolManagement() {
   }
 
   useEffect(() => {
-    fetchSchools()
-  }, [])
+    if (profile === 'senior') {
+      fetchSchools()
+    }
+  }, [profile])
 
-  const toggleStatus = async (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo'
+  const toggleStatus = async (id: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus
     try {
       await adminService.toggleSchoolStatus(id, newStatus)
       setSchools(
-        schools.map((s) =>
-          s.id === id ? { ...s, status: newStatus as any } : s,
-        ),
+        schools.map((s) => (s.id === id ? { ...s, active: newStatus } : s)),
       )
-      toast.success('Status atualizado')
+      toast.success(`Escola ${newStatus ? 'ativada' : 'inativada'} com sucesso`)
     } catch (error) {
       toast.error('Erro ao atualizar status')
     }
@@ -61,7 +69,7 @@ export default function SchoolManagement() {
     navigate('/admin/dashboard')
   }
 
-  if (loading) {
+  if (loading || appLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -69,8 +77,10 @@ export default function SchoolManagement() {
     )
   }
 
+  if (profile !== 'senior') return null
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in p-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Gestão de Escolas</h1>
         <Button className="gap-2">
@@ -100,18 +110,23 @@ export default function SchoolManagement() {
                   <TableCell>{school.network}</TableCell>
                   <TableCell>
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${school.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${school.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
                     >
-                      {school.status.toUpperCase()}
+                      {school.active ? 'ATIVA' : 'INATIVA'}
                     </span>
                   </TableCell>
                   <TableCell className="text-right flex items-center justify-end gap-4">
-                    <Switch
-                      checked={school.status === 'ativo'}
-                      onCheckedChange={() =>
-                        toggleStatus(school.id, school.status)
-                      }
-                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {school.active ? 'Ativo' : 'Inativo'}
+                      </span>
+                      <Switch
+                        checked={school.active}
+                        onCheckedChange={() =>
+                          toggleStatus(school.id, school.active)
+                        }
+                      />
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
