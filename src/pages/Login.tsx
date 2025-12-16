@@ -25,11 +25,13 @@ import { toast } from 'sonner'
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Email inválido.' }),
-  password: z.string().min(1, { message: 'Senha é obrigatória.' }),
+  password: z
+    .string()
+    .min(6, { message: 'Senha deve ter no mínimo 6 caracteres.' }),
 })
 
 export default function Login() {
-  const { login } = useAppStore()
+  const { login, user } = useAppStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
 
@@ -41,17 +43,31 @@ export default function Login() {
     },
   })
 
+  // Redirect if already logged in
+  if (user) {
+    if (user.role === 'administrador') {
+      navigate('/admin/dashboard')
+    } else {
+      navigate('/')
+    }
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
     try {
-      const success = await login(values.email)
+      const success = await login(values.email, values.password)
       if (success) {
         toast.success('Login realizado com sucesso!')
+        // Navigation is handled by auth state change listener ideally,
+        // but we can trigger here too or let the effect handle it.
+        // But since useEffect is async, we might want to wait or rely on simple redirect
+        // The useEffect in AppContext handles setting user.
+        // We can just wait a bit or let the user object update trigger redirect?
+        // Let's rely on the user check at top of component + re-render
+        // But for smoother UX, we can manually nav.
         navigate('/')
       } else {
-        toast.error(
-          'Credenciais inválidas. Tente: collab@alertia.com, manager@alertia.com ou senior@alertia.com',
-        )
+        toast.error('Credenciais inválidas.')
       }
     } catch (error) {
       toast.error('Erro ao realizar login.')
@@ -105,14 +121,6 @@ export default function Login() {
               </Button>
             </form>
           </Form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            <p>Emails de teste:</p>
-            <ul className="list-disc list-inside">
-              <li>collab@alertia.com</li>
-              <li>manager@alertia.com</li>
-              <li>senior@alertia.com</li>
-            </ul>
-          </div>
         </CardContent>
       </Card>
     </div>

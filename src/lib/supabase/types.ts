@@ -15,6 +15,76 @@ export type Database = {
   }
   public: {
     Tables: {
+      codigo_conduta: {
+        Row: {
+          arquivo_url: string
+          created_at: string
+          descricao: string | null
+          escola_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url: string
+          created_at?: string
+          descricao?: string | null
+          escola_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string
+          created_at?: string
+          descricao?: string | null
+          escola_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'codigo_conduta_escola_id_fkey'
+            columns: ['escola_id']
+            isOneToOne: true
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      compromisso_alta_gestao: {
+        Row: {
+          arquivo_url: string
+          created_at: string
+          descricao: string | null
+          escola_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url: string
+          created_at?: string
+          descricao?: string | null
+          escola_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string
+          created_at?: string
+          descricao?: string | null
+          escola_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'compromisso_alta_gestao_escola_id_fkey'
+            columns: ['escola_id']
+            isOneToOne: true
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       denuncias: {
         Row: {
           anonimo: boolean

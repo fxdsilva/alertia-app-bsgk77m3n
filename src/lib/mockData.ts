@@ -12,8 +12,9 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'collaborator' | 'manager' | 'senior' | 'external'
+  role: 'collaborator' | 'manager' | 'senior' | 'external' | 'administrador'
   avatar?: string
+  escola_id?: string
 }
 
 export const schools: School[] = [

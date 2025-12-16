@@ -28,7 +28,7 @@ import {
   Gavel,
   School,
   FileBarChart,
-  Settings,
+  LayoutDashboard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -55,6 +55,34 @@ export function AppSidebar() {
       title: 'Acompanhar Denúncia',
       url: '/public/complaint/status',
       icon: Search,
+    },
+  ]
+
+  const adminItems = [
+    {
+      title: 'Dashboard',
+      url: '/admin/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Código de Conduta',
+      url: '/admin/code-of-conduct',
+      icon: FileText,
+    },
+    {
+      title: 'Compromisso',
+      url: '/admin/commitment',
+      icon: ShieldCheck,
+    },
+    {
+      title: 'Denúncias',
+      url: '/admin/complaints',
+      icon: AlertTriangle,
+    },
+    {
+      title: 'Relatórios',
+      url: '/admin/reports',
+      icon: BarChart3,
     },
   ]
 
@@ -109,6 +137,37 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="bg-sidebar-background text-sidebar-foreground">
+        {user?.role === 'administrador' && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-foreground/70">
+              Administração
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.title}
+                      isActive={isActive(item.url)}
+                      className={cn(
+                        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                        isActive(item.url) &&
+                          'bg-sidebar-primary text-sidebar-primary-foreground',
+                      )}
+                    >
+                      <Link to={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/70">
             Público

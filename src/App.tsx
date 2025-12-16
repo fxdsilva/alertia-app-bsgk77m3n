@@ -31,6 +31,13 @@ import SchoolManagement from '@/pages/senior/SchoolManagement'
 import InternalInvestigations from '@/pages/InternalInvestigations'
 import ReportGeneration from '@/pages/ReportGeneration'
 
+// Admin Pages
+import AdminDashboard from '@/pages/admin/AdminDashboard'
+import CodeOfConductManager from '@/pages/admin/CodeOfConductManager'
+import CommitmentManager from '@/pages/admin/CommitmentManager'
+import ComplaintManager from '@/pages/admin/ComplaintManager'
+import Reports from '@/pages/admin/Reports'
+
 const App = () => (
   <AppProvider>
     <BrowserRouter
@@ -43,6 +50,16 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route
+              path="/admin/code-of-conduct"
+              element={<CodeOfConductManager />}
+            />
+            <Route path="/admin/commitment" element={<CommitmentManager />} />
+            <Route path="/admin/complaints" element={<ComplaintManager />} />
+            <Route path="/admin/reports" element={<Reports />} />
 
             {/* Portal Public Pages */}
             <Route path="/public/portal" element={<PortalHome />} />
