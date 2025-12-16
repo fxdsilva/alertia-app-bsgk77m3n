@@ -7,9 +7,8 @@ import {
 } from 'react'
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
-import { Database } from '@/lib/supabase/types'
 
-type Profile =
+export type Profile =
   | 'publico_externo'
   | 'colaborador'
   | 'gestor'
@@ -19,7 +18,7 @@ type Profile =
   | 'senior'
   | null
 
-interface AppContextType {
+export interface AppContextType {
   session: Session | null
   user: User | null
   profile: Profile
@@ -27,7 +26,7 @@ interface AppContextType {
   signOut: () => Promise<void>
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined)
+export const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null)
