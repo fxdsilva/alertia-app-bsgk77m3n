@@ -12,7 +12,13 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'collaborator' | 'manager' | 'senior' | 'external' | 'administrador'
+  role:
+    | 'collaborator'
+    | 'manager'
+    | 'senior'
+    | 'external'
+    | 'administrador'
+    | 'admin_gestor'
   avatar?: string
   escola_id?: string
 }

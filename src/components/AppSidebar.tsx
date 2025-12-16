@@ -29,6 +29,7 @@ import {
   School,
   FileBarChart,
   LayoutDashboard,
+  UserCog,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -83,6 +84,19 @@ export function AppSidebar() {
       title: 'Relatórios',
       url: '/admin/reports',
       icon: BarChart3,
+    },
+  ]
+
+  const schoolAdminItems = [
+    {
+      title: 'Gestão de Usuários',
+      url: '/school-admin/users',
+      icon: UserCog,
+    },
+    {
+      title: 'Relatórios',
+      url: '/reports',
+      icon: FileBarChart,
     },
   ]
 
@@ -168,6 +182,37 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {user?.role === 'admin_gestor' && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-foreground/70">
+              Gestão Escolar
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {schoolAdminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.title}
+                      isActive={isActive(item.url)}
+                      className={cn(
+                        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                        isActive(item.url) &&
+                          'bg-sidebar-primary text-sidebar-primary-foreground',
+                      )}
+                    >
+                      <Link to={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/70">
             Público
@@ -197,36 +242,39 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {user && ['collaborator', 'manager', 'senior'].includes(user.role) && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/70">
-              Colaborador
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {collaboratorItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive(item.url)}
-                      className={cn(
-                        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                        isActive(item.url) &&
-                          'bg-sidebar-primary text-sidebar-primary-foreground',
-                      )}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        {user &&
+          ['collaborator', 'manager', 'senior', 'admin_gestor'].includes(
+            user.role,
+          ) && (
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-sidebar-foreground/70">
+                Colaborador
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {collaboratorItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.title}
+                        isActive={isActive(item.url)}
+                        className={cn(
+                          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                          isActive(item.url) &&
+                            'bg-sidebar-primary text-sidebar-primary-foreground',
+                        )}
+                      >
+                        <Link to={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
 
         {user && ['manager', 'senior'].includes(user.role) && (
           <SidebarGroup>

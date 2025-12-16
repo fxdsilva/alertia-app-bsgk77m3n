@@ -38,6 +38,9 @@ import CommitmentManager from '@/pages/admin/CommitmentManager'
 import ComplaintManager from '@/pages/admin/ComplaintManager'
 import Reports from '@/pages/admin/Reports'
 
+// School Admin Pages
+import UserManagement from '@/pages/school-admin/UserManagement'
+
 const App = () => (
   <AppProvider>
     <BrowserRouter
@@ -60,6 +63,9 @@ const App = () => (
             <Route path="/admin/commitment" element={<CommitmentManager />} />
             <Route path="/admin/complaints" element={<ComplaintManager />} />
             <Route path="/admin/reports" element={<Reports />} />
+
+            {/* School Admin Routes */}
+            <Route path="/school-admin/users" element={<UserManagement />} />
 
             {/* Portal Public Pages */}
             <Route path="/public/portal" element={<PortalHome />} />

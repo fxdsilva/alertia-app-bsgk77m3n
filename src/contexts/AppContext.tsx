@@ -47,9 +47,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           .single()
 
         if (error) {
-          // If no profile, maybe it's a raw user or error
           console.error('Profile fetch error:', error)
-          // Fallback user from metadata if available
           setUser({
             id: sessionUser.id,
             name: sessionUser.email || 'Usuário',
@@ -57,18 +55,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             role: (sessionUser.user_metadata?.role as any) || 'external',
           })
         } else {
-          // Map profile to User
           setUser({
             id: profile.id,
-            name: sessionUser.email || 'Usuário', // Name usually in profile, but schema doesn't have name in usuarios_escola, maybe in metadata
-            email: sessionUser.email || '',
+            name: profile.nome_usuario || sessionUser.email || 'Usuário',
+            email: profile.email || sessionUser.email || '',
             role: (profile.perfil as any) || 'external',
             escola_id: profile.escola_id,
           })
 
           // Automatically select school for admins
           if (
-            profile.perfil === 'administrador' &&
+            (profile.perfil === 'administrador' ||
+              profile.perfil === 'admin_gestor') &&
             profile.escolas_instituicoes
           ) {
             const schoolData = profile.escolas_instituicoes as any
@@ -83,8 +81,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                     ? 'Federal'
                     : 'Privada',
               modality: schoolData.localizacao,
-              municipality: 'N/A', // Not in table
-              state: 'N/A', // Not in table
+              municipality: 'N/A',
+              state: 'N/A',
               status: schoolData.status_adesao,
             }
             setSelectedSchool(school)
@@ -103,10 +101,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         fetchProfile(session.user)
       } else {
         setUser(null)
-        // Only clear school if it was auto-selected? For now clear all to be safe on logout
-        // But keep if manually selected?
-        // If admin, we want to clear.
-        // Let's rely on manual clear for public users, but clear user-specific state.
       }
       setLoading(false)
     })
@@ -124,8 +118,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password?: string): Promise<boolean> => {
     if (!password) {
-      // Fallback for existing mock implementation calls in UI (if any left)
-      // But we should use password.
       console.warn('Password required for real auth')
       return false
     }

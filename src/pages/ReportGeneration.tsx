@@ -7,8 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import useAppStore from '@/stores/useAppStore'
 
 export default function ReportGeneration() {
+  const { user } = useAppStore()
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Geração de Relatórios</h1>
@@ -29,6 +32,12 @@ export default function ReportGeneration() {
                   Adesão a Treinamentos
                 </SelectItem>
                 <SelectItem value="riscos">Matriz de Riscos</SelectItem>
+                {(user?.role === 'admin_gestor' ||
+                  user?.role === 'administrador') && (
+                  <SelectItem value="usuarios">
+                    Atividade de Usuários
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
