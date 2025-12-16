@@ -80,7 +80,7 @@ export default function ComplaintRegistration() {
     fetchSchools()
   }, [])
 
-  // Update escola_id if selectedSchool changes (though usually it won't change while on page)
+  // Update escola_id if selectedSchool changes (e.g. from context)
   useEffect(() => {
     if (selectedSchool) {
       form.setValue('escola_id', selectedSchool.id)
@@ -91,6 +91,7 @@ export default function ComplaintRegistration() {
     setLoading(true)
     try {
       // For unauthenticated users, enforce anonymous
+      // Ideally this is also enforced by UI, but good to double check
       const isAnonymous = !user ? true : data.anonimo
 
       const result = await portalService.createComplaint({
@@ -112,7 +113,7 @@ export default function ComplaintRegistration() {
 
   if (protocol) {
     return (
-      <div className="container mx-auto max-w-lg pt-10 text-center animate-fade-in">
+      <div className="container mx-auto max-w-lg pt-10 text-center animate-fade-in pb-10">
         <Card className="border-green-500 border-t-4 shadow-lg">
           <CardHeader>
             <div className="mx-auto bg-green-100 p-4 rounded-full mb-4">
@@ -158,7 +159,7 @@ export default function ComplaintRegistration() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl space-y-6 py-6">
+    <div className="container mx-auto max-w-2xl space-y-6 py-6 pb-20">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"

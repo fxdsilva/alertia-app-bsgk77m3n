@@ -32,7 +32,7 @@ export const portalService = {
             ? 'Federal'
             : 'Privada',
       modality: item.localizacao as 'Urbana' | 'Rural',
-      municipality: item.endereco || 'N/A', // Using address as fallback for now
+      municipality: item.endereco || 'N/A',
       state: 'N/A',
       status: item.status_adesao as 'ativo' | 'inativo',
     }))
@@ -71,7 +71,7 @@ export const portalService = {
       .eq('escola_id', escolaId)
       .single()
 
-    if (error && error.code !== 'PGRST116') throw error // PGRST116 is no rows found
+    if (error && error.code !== 'PGRST116') throw error
     return data as DocumentRecord | null
   },
 
@@ -94,8 +94,7 @@ export const portalService = {
   }) {
     const protocol = generateProtocol()
 
-    // Enforce anonimo=true and denunciante_id=null for public complaints logic
-    // If anonimo is true, denunciante_id should be null
+    // Enforce logic: if anonymous is true, denunciante_id must be null
     const finalAnonimo = data.anonimo
     const finalDenuncianteId = data.anonimo ? null : data.denunciante_id
 
