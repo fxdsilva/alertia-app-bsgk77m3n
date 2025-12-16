@@ -28,11 +28,10 @@ CREATE POLICY "School users read own school" ON public.escolas_instituicoes
   TO authenticated
   USING (
     id IN (
-      SELECT escuela_id FROM public.usuarios_escola WHERE id = auth.uid()
+      SELECT escola_id FROM public.usuarios_escola WHERE id = auth.uid()
     )
   );
 
 -- Note: Admin Master UPDATE/DELETE policies are handled in migration 20251218090000_implement_security_and_access_control.sql
 -- We need to make sure Admin Master can UPDATE the 'ativo' column.
 -- The existing policy "Admin Master can update schools" uses CHECK (public.check_is_admin_master()) which covers all columns.
-
