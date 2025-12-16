@@ -1,6 +1,7 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -9,358 +10,290 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarFooter,
+  SidebarTrigger,
 } from '@/components/ui/sidebar'
-import { Link, useLocation } from 'react-router-dom'
-import useAppStore from '@/stores/useAppStore'
 import {
-  FileText,
-  ShieldCheck,
   AlertTriangle,
-  Search,
-  GraduationCap,
-  FolderOpen,
-  BarChart3,
-  ClipboardCheck,
-  Users,
-  PieChart,
-  FileSearch,
+  BarChart,
+  BookOpen,
+  FileText,
   Gavel,
-  School,
-  FileBarChart,
+  Home,
   LayoutDashboard,
-  UserCog,
+  LogOut,
+  Settings,
+  Shield,
+  Users,
+  BrainCircuit,
+  Building2,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Link, useLocation } from 'react-router-dom'
+import { useAppContext } from '@/contexts/AppContext'
+import { Button } from '@/components/ui/button'
 
 export function AppSidebar() {
-  const { user, selectedSchool } = useAppStore()
-  const location = useLocation()
-  const pathname = location.pathname
+  const { pathname } = useLocation()
+  const { profile, signOut } = useAppContext()
 
-  if (!selectedSchool) return null
-
-  const publicItems = [
-    {
-      title: 'Código de Conduta',
-      url: '/public/code-of-conduct',
-      icon: FileText,
-    },
-    { title: 'Compromisso', url: '/public/commitment', icon: ShieldCheck },
-    {
-      title: 'Nova Denúncia',
-      url: '/public/complaint/new',
-      icon: AlertTriangle,
-    },
-    {
-      title: 'Acompanhar Denúncia',
-      url: '/public/complaint/status',
-      icon: Search,
-    },
-  ]
-
-  const adminItems = [
-    {
-      title: 'Dashboard',
-      url: '/admin/dashboard',
-      icon: LayoutDashboard,
-    },
-    {
-      title: 'Código de Conduta',
-      url: '/admin/code-of-conduct',
-      icon: FileText,
-    },
-    {
-      title: 'Compromisso',
-      url: '/admin/commitment',
-      icon: ShieldCheck,
-    },
-    {
-      title: 'Denúncias',
-      url: '/admin/complaints',
-      icon: AlertTriangle,
-    },
-    {
-      title: 'Relatórios',
-      url: '/admin/reports',
-      icon: BarChart3,
-    },
-  ]
-
-  const schoolAdminItems = [
-    {
-      title: 'Gestão de Usuários',
-      url: '/school-admin/users',
-      icon: UserCog,
-    },
-    {
-      title: 'Relatórios',
-      url: '/reports',
-      icon: FileBarChart,
-    },
-  ]
-
-  const collaboratorItems = [
-    {
-      title: 'Treinamentos',
-      url: '/collaborator/training',
-      icon: GraduationCap,
-    },
-    {
-      title: 'Conteúdos Internos',
-      url: '/collaborator/content',
-      icon: FolderOpen,
-    },
-    {
-      title: 'Minhas Denúncias',
-      url: '/collaborator/complaints',
-      icon: Search,
-    },
-  ]
-
-  const managerItems = [
-    { title: 'Dashboard de Riscos', url: '/manager/risks', icon: BarChart3 },
-    { title: 'Auditorias', url: '/manager/audits', icon: ClipboardCheck },
-    { title: 'Mediações', url: '/manager/mediations', icon: Users },
-  ]
-
-  const seniorItems = [
-    {
-      title: 'Dados Consolidados',
-      url: '/senior/consolidated',
-      icon: PieChart,
-    },
-    { title: 'Due Diligence', url: '/senior/due-diligence', icon: FileSearch },
-    { title: 'Decisões Disciplinares', url: '/senior/decisions', icon: Gavel },
-    { title: 'Relatórios IA', url: '/senior/ai-reports', icon: BarChart3 },
-    { title: 'Gestão de Escolas', url: '/senior/schools', icon: School },
-  ]
-
-  const sharedItems = [
-    { title: 'Investigações', url: '/investigations', icon: Search },
-    { title: 'Relatórios', url: '/reports', icon: FileBarChart },
-  ]
-
-  const isActive = (url: string) => pathname === url
+  const isActive = (path: string) => pathname === path
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="bg-sidebar-background text-sidebar-foreground py-4">
-        <div className="flex items-center justify-center font-bold text-2xl tracking-tighter">
-          AL
+    <Sidebar>
+      <SidebarHeader className="border-b p-4">
+        <div className="flex items-center gap-2">
+          <Shield className="h-6 w-6 text-primary" />
+          <span className="font-bold text-lg">ALERTIA</span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="bg-sidebar-background text-sidebar-foreground">
-        {user?.role === 'administrador' && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/70">
-              Administração
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive(item.url)}
-                      className={cn(
-                        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                        isActive(item.url) &&
-                          'bg-sidebar-primary text-sidebar-primary-foreground',
-                      )}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
 
-        {user?.role === 'admin_gestor' && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/70">
-              Gestão Escolar
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {schoolAdminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive(item.url)}
-                      className={cn(
-                        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                        isActive(item.url) &&
-                          'bg-sidebar-primary text-sidebar-primary-foreground',
-                      )}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
+      <SidebarContent>
+        {/* Public / Common Items */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">
-            Público
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {publicItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.title}
-                    isActive={isActive(item.url)}
-                    className={cn(
-                      'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                      isActive(item.url) &&
-                        'bg-sidebar-primary text-sidebar-primary-foreground',
-                    )}
-                  >
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/')}>
+                  <Link to="/">
+                    <Home className="h-4 w-4" />
+                    <span>Início</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive('/public/portal')}
+                >
+                  <Link to="/public/portal">
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span>Portal de Transparência</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {user &&
-          ['collaborator', 'manager', 'senior', 'admin_gestor'].includes(
-            user.role,
-          ) && (
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-sidebar-foreground/70">
-                Colaborador
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {collaboratorItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        tooltip={item.title}
-                        isActive={isActive(item.url)}
-                        className={cn(
-                          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                          isActive(item.url) &&
-                            'bg-sidebar-primary text-sidebar-primary-foreground',
-                        )}
-                      >
-                        <Link to={item.url}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
-
-        {user && ['manager', 'senior'].includes(user.role) && (
+        {/* Collaborator Items */}
+        {[
+          'colaborador',
+          'gestor',
+          'alta_gestao',
+          'admin_gestor',
+          'administrador',
+        ].includes(profile || '') && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/70">
-              Gestão
-            </SidebarGroupLabel>
+            <SidebarGroupLabel>Colaborador</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {managerItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive(item.url)}
-                      className={cn(
-                        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                        isActive(item.url) &&
-                          'bg-sidebar-primary text-sidebar-primary-foreground',
-                      )}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-                {sharedItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive(item.url)}
-                      className={cn(
-                        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                        isActive(item.url) &&
-                          'bg-sidebar-primary text-sidebar-primary-foreground',
-                      )}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/collaborator/training')}
+                  >
+                    <Link to="/collaborator/training">
+                      <BookOpen className="h-4 w-4" />
+                      <span>Treinamentos</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/collaborator/content')}
+                  >
+                    <Link to="/collaborator/content">
+                      <FileText className="h-4 w-4" />
+                      <span>Conteúdos Internos</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
 
-        {user && ['senior'].includes(user.role) && (
+        {/* Manager Items */}
+        {['gestor', 'alta_gestao', 'admin_gestor', 'administrador'].includes(
+          profile || '',
+        ) && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/70">
-              Alta Gestão
-            </SidebarGroupLabel>
+            <SidebarGroupLabel>Gestão</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {seniorItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive(item.url)}
-                      className={cn(
-                        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                        isActive(item.url) &&
-                          'bg-sidebar-primary text-sidebar-primary-foreground',
-                      )}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/manager/risks')}
+                  >
+                    <Link to="/manager/risks">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>Gestão de Riscos</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/manager/audits')}
+                  >
+                    <Link to="/manager/audits">
+                      <FileText className="h-4 w-4" />
+                      <span>Auditorias</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/manager/mediations')}
+                  >
+                    <Link to="/manager/mediations">
+                      <Users className="h-4 w-4" />
+                      <span>Mediação de Conflitos</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Senior Management Items */}
+        {['alta_gestao', 'administrador', 'senior'].includes(profile || '') && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Alta Gestão</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/senior/consolidated')}
+                  >
+                    <Link to="/senior/consolidated">
+                      <BarChart className="h-4 w-4" />
+                      <span>Dados Consolidados</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/senior/due-diligence')}
+                  >
+                    <Link to="/senior/due-diligence">
+                      <Shield className="h-4 w-4" />
+                      <span>Due Diligence</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/senior/decisions')}
+                  >
+                    <Link to="/senior/decisions">
+                      <Gavel className="h-4 w-4" />
+                      <span>Decisões Disciplinares</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/senior/ai-reports')}
+                  >
+                    <Link to="/senior/ai-reports">
+                      <BrainCircuit className="h-4 w-4" />
+                      <span>Relatórios IA</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Admin Items */}
+        {['administrador', 'admin_gestor'].includes(profile || '') && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração Escolar</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/admin/dashboard')}
+                  >
+                    <Link to="/admin/dashboard">
+                      <LayoutDashboard className="h-4 w-4" />
+                      <span>Painel Administrativo</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/school-admin/users')}
+                  >
+                    <Link to="/school-admin/users">
+                      <Users className="h-4 w-4" />
+                      <span>Gestão de Usuários</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/admin/complaints')}
+                  >
+                    <Link to="/admin/complaints">
+                      <FileText className="h-4 w-4" />
+                      <span>Gestão de Denúncias</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Master Admin / Senior Exclusive Items */}
+        {profile === 'senior' && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração Master</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive('/senior/schools')}
+                  >
+                    <Link to="/senior/schools">
+                      <Building2 className="h-4 w-4" />
+                      <span>Gestão de Escolas</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {/* Add other master admin items here */}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
       </SidebarContent>
-      <SidebarFooter className="bg-sidebar-background">
-        <div className="p-4 text-xs text-sidebar-foreground/50 text-center">
-          v0.0.1
-        </div>
+
+      <SidebarFooter className="border-t p-4">
+        {profile && (
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={signOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair
+          </Button>
+        )}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -176,23 +176,32 @@ export type Database = {
       }
       usuarios_escola: {
         Row: {
+          ativo: boolean
           created_at: string
+          email: string
           escola_id: string
           id: string
+          nome_usuario: string
           perfil: string
           updated_at: string
         }
         Insert: {
+          ativo?: boolean
           created_at?: string
+          email: string
           escola_id: string
           id: string
+          nome_usuario?: string
           perfil: string
           updated_at?: string
         }
         Update: {
+          ativo?: boolean
           created_at?: string
+          email?: string
           escola_id?: string
           id?: string
+          nome_usuario?: string
           perfil?: string
           updated_at?: string
         }

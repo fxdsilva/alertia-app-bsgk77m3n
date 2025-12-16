@@ -1,160 +1,122 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react'
-import { School, User } from '@/lib/mockData'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react'
+import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
-import { toast } from 'sonner'
-import { Session } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/types'
+
+type Profile =
+  | 'publico_externo'
+  | 'colaborador'
+  | 'gestor'
+  | 'alta_gestao'
+  | 'administrador'
+  | 'admin_gestor'
+  | 'senior'
+  | null
 
 interface AppContextType {
-  selectedSchool: School | null
+  session: Session | null
   user: User | null
-  isAuthenticated: boolean
-  selectSchool: (school: School) => void
-  login: (email: string, password?: string) => Promise<boolean>
-  logout: () => void
-  clearSchool: () => void
+  profile: Profile
   loading: boolean
+  signOut: () => Promise<void>
 }
 
-export const AppContext = createContext<AppContextType | undefined>(undefined)
+const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null)
-  const [selectedSchool, setSelectedSchool] = useState<School | null>(() => {
-    const stored = localStorage.getItem('alertia_school')
-    return stored ? JSON.parse(stored) : null
-  })
-
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // Persist selected school
-    if (selectedSchool) {
-      localStorage.setItem('alertia_school', JSON.stringify(selectedSchool))
-    } else {
-      localStorage.removeItem('alertia_school')
-    }
-  }, [selectedSchool])
+  const fetchProfile = async (currentUser: User) => {
+    try {
+      // First check if user is a Master Admin (Senior)
+      const { data: seniorUser } = await supabase
+        .from('usuarios_admin_master' as any) // Using any because table is new
+        .select('*')
+        .eq('email', currentUser.email)
+        .single()
 
-  // Initialize Supabase Auth
-  useEffect(() => {
-    const fetchProfile = async (sessionUser: any) => {
-      try {
-        const { data: profile, error } = await supabase
-          .from('usuarios_escola')
-          .select('*, escolas_instituicoes(*)')
-          .eq('id', sessionUser.id)
-          .single()
-
-        if (error) {
-          console.error('Profile fetch error:', error)
-          setUser({
-            id: sessionUser.id,
-            name: sessionUser.email || 'Usuário',
-            email: sessionUser.email || '',
-            role: (sessionUser.user_metadata?.role as any) || 'external',
-          })
-        } else {
-          setUser({
-            id: profile.id,
-            name: profile.nome_usuario || sessionUser.email || 'Usuário',
-            email: profile.email || sessionUser.email || '',
-            role: (profile.perfil as any) || 'external',
-            escola_id: profile.escola_id,
-          })
-
-          // Automatically select school for admins
-          if (
-            (profile.perfil === 'administrador' ||
-              profile.perfil === 'admin_gestor') &&
-            profile.escolas_instituicoes
-          ) {
-            const schoolData = profile.escolas_instituicoes as any
-            const school: School = {
-              id: schoolData.id,
-              name: schoolData.nome_escola,
-              network: schoolData.rede_municipal
-                ? 'Municipal'
-                : schoolData.rede_estadual
-                  ? 'Estadual'
-                  : schoolData.rede_federal
-                    ? 'Federal'
-                    : 'Privada',
-              modality: schoolData.localizacao,
-              municipality: 'N/A',
-              state: 'N/A',
-              status: schoolData.status_adesao,
-            }
-            setSelectedSchool(school)
-          }
-        }
-      } catch (e) {
-        console.error(e)
+      if (seniorUser && seniorUser.ativo) {
+        setProfile('senior')
+        return
       }
-    }
 
+      // Then check standard school users
+      const { data: schoolUser } = await supabase
+        .from('usuarios_escola')
+        .select('perfil, ativo')
+        .eq('email', currentUser.email)
+        .single()
+
+      if (schoolUser && schoolUser.ativo) {
+        setProfile(schoolUser.perfil as Profile)
+        return
+      }
+
+      // Default profile if logged in but no specific role found
+      setProfile('publico_externo')
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+      setProfile('publico_externo')
+    }
+  }
+
+  useEffect(() => {
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchProfile(session.user).then(() => setLoading(false))
+      } else {
+        setLoading(false)
+      }
+    })
+
+    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      setUser(session?.user ?? null)
       if (session?.user) {
-        fetchProfile(session.user)
+        setLoading(true)
+        fetchProfile(session.user).then(() => setLoading(false))
       } else {
-        setUser(null)
+        setProfile(null)
+        setLoading(false)
       }
-      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  const selectSchool = (school: School) => {
-    setSelectedSchool(school)
-  }
-
-  const clearSchool = () => {
-    setSelectedSchool(null)
-  }
-
-  const login = async (email: string, password?: string): Promise<boolean> => {
-    if (!password) {
-      console.warn('Password required for real auth')
-      return false
-    }
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      console.error(error)
-      return false
-    }
-    return true
-  }
-
-  const logout = async () => {
+  const signOut = async () => {
     await supabase.auth.signOut()
+    setProfile(null)
     setUser(null)
     setSession(null)
-    setSelectedSchool(null)
-    localStorage.removeItem('alertia_school')
   }
 
-  return React.createElement(
-    AppContext.Provider,
-    {
-      value: {
-        selectedSchool,
-        user,
-        isAuthenticated: !!user,
-        selectSchool,
-        login,
-        logout,
-        clearSchool,
-        loading,
-      },
-    },
-    children,
+  return (
+    <AppContext.Provider value={{ session, user, profile, loading, signOut }}>
+      {children}
+    </AppContext.Provider>
   )
+}
+
+export const useAppContext = () => {
+  const context = useContext(AppContext)
+  if (context === undefined) {
+    throw new Error('useAppContext must be used within an AppProvider')
+  }
+  return context
 }
