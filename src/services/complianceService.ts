@@ -3,7 +3,7 @@ import { SchoolUser } from './schoolAdminService'
 
 export interface ComplianceTask {
   id: string
-  titulo?: string // Assuming title might be needed or we use description as main
+  titulo?: string
   descricao: string | null
   tipo_modulo: string
   escola_id: string | null

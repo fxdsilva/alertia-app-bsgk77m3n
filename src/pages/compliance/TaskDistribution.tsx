@@ -13,10 +13,7 @@ import {
   Calendar,
   Briefcase,
   User,
-  Building2,
-  CheckCircle2,
   Shield,
-  Eye,
   Loader2,
   Lock,
 } from 'lucide-react'

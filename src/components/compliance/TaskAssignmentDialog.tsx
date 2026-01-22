@@ -31,12 +31,11 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, ShieldCheck, UserCog, Building2, Lock } from 'lucide-react'
+import { Loader2, ShieldCheck, UserCog, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { complianceService } from '@/services/complianceService'
 import { adminService } from '@/services/adminService'
 import { SchoolUser } from '@/services/schoolAdminService'
-import { School } from '@/lib/mockData'
 
 const taskSchema = z.object({
   analista_id: z.string().min(1, 'Selecione um analista'),
