@@ -1,4 +1,37 @@
+-- Fix any potential invalid data in tipo_modulo before applying the constraint
+-- We fallback invalid types to 'auditoria' which is a safe default
+UPDATE public.compliance_tasks 
+SET tipo_modulo = 'auditoria' 
+WHERE tipo_modulo NOT IN ('compromisso', 'codigo_conduta', 'treinamentos', 'auditoria', 'riscos', 'controles_internos', 'consolidacao', 'denuncias', 'documentacao');
+
+-- Ensure institutional_docs_auth is BOOLEAN (fix for potential JSONB type mismatch error)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 
+    FROM information_schema.columns 
+    WHERE table_name = 'compliance_tasks' 
+    AND column_name = 'institutional_docs_auth' 
+    AND data_type = 'jsonb'
+  ) THEN
+    ALTER TABLE public.compliance_tasks 
+    ALTER COLUMN institutional_docs_auth TYPE BOOLEAN 
+    USING (institutional_docs_auth::text::boolean);
+    
+    ALTER TABLE public.compliance_tasks
+    ALTER COLUMN institutional_docs_auth SET DEFAULT FALSE;
+  END IF;
+END $$;
+
 -- Ensure investigation status enum or checks
+-- First, ensure all existing statuses are valid
+UPDATE public.investigacoes 
+SET status = 'em_andamento' 
+WHERE status NOT IN ('em_andamento', 'concluida', 'pausada', 'arquivada');
+
+ALTER TABLE public.investigacoes
+DROP CONSTRAINT IF EXISTS investigacoes_status_check;
+
 ALTER TABLE public.investigacoes
 ADD CONSTRAINT investigacoes_status_check
 CHECK (status IN ('em_andamento', 'concluida', 'pausada', 'arquivada'));
@@ -41,11 +74,10 @@ USING (
   )
 );
 
--- Add column to tasks for specific module type if not exists (already in schema but good to ensure constraints)
+-- Add column to tasks for specific module type if not exists
 ALTER TABLE public.compliance_tasks
 DROP CONSTRAINT IF EXISTS compliance_tasks_tipo_modulo_check;
 
 ALTER TABLE public.compliance_tasks
 ADD CONSTRAINT compliance_tasks_tipo_modulo_check
 CHECK (tipo_modulo IN ('compromisso', 'codigo_conduta', 'treinamentos', 'auditoria', 'riscos', 'controles_internos', 'consolidacao', 'denuncias', 'documentacao'));
-

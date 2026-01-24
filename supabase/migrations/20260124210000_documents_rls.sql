@@ -59,4 +59,3 @@ WITH CHECK (
      WHERE id = auth.uid() AND perfil IN ('DIRETOR_COMPLIANCE', 'senior')
   )
 );
-
