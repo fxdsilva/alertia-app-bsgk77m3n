@@ -14,12 +14,23 @@ BEGIN
     AND column_name = 'institutional_docs_auth' 
     AND data_type = 'jsonb'
   ) THEN
+    -- 1. Drop the default value first to avoid casting errors during type change
+    ALTER TABLE public.compliance_tasks ALTER COLUMN institutional_docs_auth DROP DEFAULT;
+    
+    -- 2. Convert column to boolean with explicit casting
+    -- We use a CASE statement to handle potential text representations of jsonb boolean values
     ALTER TABLE public.compliance_tasks 
     ALTER COLUMN institutional_docs_auth TYPE BOOLEAN 
-    USING (institutional_docs_auth::text::boolean);
+    USING (
+      CASE 
+        WHEN institutional_docs_auth::text = 'true' THEN true
+        WHEN institutional_docs_auth::text = 'false' THEN false
+        ELSE false -- Default to false for any other value or null
+      END
+    );
     
-    ALTER TABLE public.compliance_tasks
-    ALTER COLUMN institutional_docs_auth SET DEFAULT FALSE;
+    -- 3. Set the default back to FALSE (boolean)
+    ALTER TABLE public.compliance_tasks ALTER COLUMN institutional_docs_auth SET DEFAULT FALSE;
   END IF;
 END $$;
 
