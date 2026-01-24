@@ -49,7 +49,12 @@ export default function TaskDetails() {
       const data = await complianceService.getTask(id!)
       setTask(data)
 
-      if (data.institutional_docs_auth && data.escola_id) {
+      const hasDocAuth =
+        typeof data.institutional_docs_auth === 'boolean'
+          ? data.institutional_docs_auth
+          : data.institutional_docs_auth?.include === true
+
+      if (hasDocAuth && data.escola_id) {
         // Fetch docs if authorized
         try {
           const [code, commitment] = await Promise.all([
@@ -112,6 +117,11 @@ export default function TaskDetails() {
   }
 
   if (!task) return null
+
+  const hasDocAuth =
+    typeof task.institutional_docs_auth === 'boolean'
+      ? task.institutional_docs_auth
+      : task.institutional_docs_auth?.include === true
 
   return (
     <div className="space-y-6 p-6 animate-fade-in pb-20">
@@ -232,7 +242,7 @@ export default function TaskDetails() {
 
         {/* Sidebar Resources */}
         <div className="space-y-6">
-          {task.institutional_docs_auth && (
+          {hasDocAuth && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
@@ -292,10 +302,13 @@ export default function TaskDetails() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {task.institutional_docs_auth && (
-                  <Badge variant="secondary" className="w-full justify-start">
-                    <CheckCircle className="h-3 w-3 mr-2 text-green-600" />
-                    Docs Institucionais
+                {hasDocAuth && (
+                  <Badge
+                    variant="secondary"
+                    className="w-full justify-start bg-purple-50 text-purple-700 hover:bg-purple-100"
+                  >
+                    <CheckCircle className="h-3 w-3 mr-2" />
+                    Gestão Documental
                   </Badge>
                 )}
                 {task.gestor_escolar_id && (
@@ -304,7 +317,7 @@ export default function TaskDetails() {
                     Colaboração com Gestor
                   </Badge>
                 )}
-                {!task.institutional_docs_auth && !task.gestor_escolar_id && (
+                {!hasDocAuth && !task.gestor_escolar_id && (
                   <p className="text-sm text-muted-foreground">
                     Nenhuma permissão especial.
                   </p>

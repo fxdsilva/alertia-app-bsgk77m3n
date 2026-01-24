@@ -11,7 +11,15 @@ export interface ComplianceTask {
   diretor_id: string
   status: string
   prazo: string | null
-  institutional_docs_auth: boolean
+  institutional_docs_auth:
+    | boolean
+    | {
+        include?: boolean
+        elaborate?: boolean
+        update?: boolean
+        consolidate?: boolean
+      }
+    | null
   school_manager_access_config: {
     view_content: boolean
     view_evidence: boolean
@@ -135,6 +143,41 @@ export const complianceService = {
       .eq('id', taskId)
 
     if (error) throw error
+  },
+
+  async hasSchoolDocPermission(userId: string, schoolId: string) {
+    // Check if user has admin/director profile first
+    const { data: userProfile } = await supabase
+      .from('usuarios_escola')
+      .select('perfil')
+      .eq('id', userId)
+      .single()
+
+    if (
+      userProfile &&
+      ['diretor', 'gestao_escola', 'admin', 'admin_master'].includes(
+        userProfile.perfil,
+      )
+    ) {
+      return true
+    }
+
+    // Check for active tasks with permission
+    const { data } = await supabase
+      .from('compliance_tasks')
+      .select('institutional_docs_auth')
+      .eq('analista_id', userId)
+      .eq('escola_id', schoolId)
+      .neq('status', 'concluido')
+
+    if (!data) return false
+
+    // Check if any task has the 'update' permission in the JSON
+    return data.some((task: any) => {
+      const auth = task.institutional_docs_auth
+      if (typeof auth === 'boolean') return auth
+      return auth?.update === true
+    })
   },
 
   // COMPLAINTS TRIAGE

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import useAppStore from '@/stores/useAppStore'
 import { adminService } from '@/services/adminService'
+import { complianceService } from '@/services/complianceService'
 import {
   Card,
   CardContent,
@@ -13,14 +14,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { FileText, Upload, Trash2, Eye } from 'lucide-react'
+import { FileText, Trash2, Loader2, AlertTriangle } from 'lucide-react'
 
 export default function CodeOfConductManager() {
-  const { selectedSchool } = useAppStore()
+  const { selectedSchool, user } = useAppStore()
   const [document, setDocument] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [description, setDescription] = useState('')
+  const [canEdit, setCanEdit] = useState(false)
+  const [checkingPermission, setCheckingPermission] = useState(true)
 
   const fetchDoc = async () => {
     if (!selectedSchool) return
@@ -33,9 +36,33 @@ export default function CodeOfConductManager() {
     }
   }
 
+  const checkPermissions = async () => {
+    if (!user || !selectedSchool) {
+      setCanEdit(false)
+      setCheckingPermission(false)
+      return
+    }
+
+    try {
+      const hasPermission = await complianceService.hasSchoolDocPermission(
+        user.id,
+        selectedSchool.id,
+      )
+      setCanEdit(hasPermission)
+    } catch (error) {
+      console.error('Error checking permissions:', error)
+      setCanEdit(false)
+    } finally {
+      setCheckingPermission(false)
+    }
+  }
+
   useEffect(() => {
-    fetchDoc()
-  }, [selectedSchool])
+    if (selectedSchool && user) {
+      fetchDoc()
+      checkPermissions()
+    }
+  }, [selectedSchool, user])
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,9 +118,25 @@ export default function CodeOfConductManager() {
     }
   }
 
+  if (checkingPermission) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-3xl font-bold">Gestão: Código de Conduta</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Gestão: Código de Conduta</h1>
+        {!canEdit && (
+          <div className="flex items-center gap-2 text-yellow-600 bg-yellow-50 px-4 py-2 rounded-lg border border-yellow-200">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm font-medium">Modo Somente Leitura</span>
+          </div>
+        )}
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -124,11 +167,12 @@ export default function CodeOfConductManager() {
                   <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    disabled={!canEdit}
                   />
                   <div className="flex gap-2">
                     <Button
                       onClick={handleUpdate}
-                      disabled={loading}
+                      disabled={loading || !canEdit}
                       variant="outline"
                       size="sm"
                     >
@@ -136,7 +180,7 @@ export default function CodeOfConductManager() {
                     </Button>
                     <Button
                       onClick={handleDelete}
-                      disabled={loading}
+                      disabled={loading || !canEdit}
                       variant="destructive"
                       size="sm"
                     >
@@ -154,7 +198,7 @@ export default function CodeOfConductManager() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={!canEdit ? 'opacity-70 pointer-events-none' : ''}>
           <CardHeader>
             <CardTitle>
               {document ? 'Substituir Documento' : 'Novo Documento'}
@@ -173,6 +217,7 @@ export default function CodeOfConductManager() {
                   accept="application/pdf"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                   required={!document}
+                  disabled={!canEdit}
                 />
               </div>
 
@@ -184,13 +229,14 @@ export default function CodeOfConductManager() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Ex: Código de conduta aprovado em assembleia..."
+                    disabled={!canEdit}
                   />
                 </div>
               )}
 
               <Button
                 type="submit"
-                disabled={!file || loading}
+                disabled={!file || loading || !canEdit}
                 className="w-full"
               >
                 {loading

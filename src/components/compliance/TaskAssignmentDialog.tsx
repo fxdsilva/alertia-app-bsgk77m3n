@@ -31,11 +31,12 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, ShieldCheck, UserCog, Lock } from 'lucide-react'
+import { Loader2, ShieldCheck, UserCog, Lock, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { complianceService } from '@/services/complianceService'
 import { adminService } from '@/services/adminService'
 import { SchoolUser } from '@/services/schoolAdminService'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 const taskSchema = z.object({
   analista_id: z.string().min(1, 'Selecione um analista'),
@@ -79,6 +80,7 @@ export function TaskAssignmentDialog({
   })
 
   const selectedSchoolId = form.watch('escola_id')
+  const selectedModule = form.watch('tipo_modulo')
 
   useEffect(() => {
     if (open) {
@@ -100,6 +102,13 @@ export function TaskAssignmentDialog({
       setManagers([])
     }
   }, [selectedSchoolId])
+
+  // Automatically enable docs auth if "documentacao" module is selected
+  useEffect(() => {
+    if (selectedModule === 'documentacao') {
+      form.setValue('institutional_docs_auth', true)
+    }
+  }, [selectedModule, form])
 
   const loadResources = async () => {
     setLoadingResources(true)
@@ -138,7 +147,30 @@ export function TaskAssignmentDialog({
         tipo_modulo: values.tipo_modulo,
         descricao: values.descricao,
         prazo: values.prazo,
-        institutional_docs_auth: values.institutional_docs_auth,
+      }
+
+      // Handle Institutional Docs Permission
+      if (values.tipo_modulo === 'documentacao') {
+        payload.institutional_docs_auth = {
+          include: true,
+          elaborate: true,
+          update: true,
+          consolidate: true,
+        }
+      } else {
+        payload.institutional_docs_auth = values.institutional_docs_auth
+          ? {
+              include: true,
+              elaborate: true,
+              update: true,
+              consolidate: true,
+            }
+          : {
+              include: false,
+              elaborate: false,
+              update: false,
+              consolidate: false,
+            }
       }
 
       // Handle School Manager Access
@@ -257,6 +289,12 @@ export function TaskAssignmentDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem
+                            value="documentacao"
+                            className="font-semibold text-purple-700"
+                          >
+                            ★ Gestão de Documentos (Código e Compromisso)
+                          </SelectItem>
                           <SelectItem value="compromisso">
                             Compromisso Alta Gestão
                           </SelectItem>
@@ -297,6 +335,20 @@ export function TaskAssignmentDialog({
                   )}
                 />
               </div>
+
+              {selectedModule === 'documentacao' && (
+                <Alert className="bg-purple-50 border-purple-200">
+                  <FileText className="h-4 w-4 text-purple-600" />
+                  <AlertTitle className="text-purple-800">
+                    Acesso Total a Documentos
+                  </AlertTitle>
+                  <AlertDescription className="text-purple-700 text-xs">
+                    Ao selecionar este módulo, o analista receberá
+                    automaticamente permissões de edição e consolidação para o
+                    Código de Conduta e Termo de Compromisso desta escola.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <FormField
                 control={form.control}
@@ -340,6 +392,7 @@ export function TaskAssignmentDialog({
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          disabled={selectedModule === 'documentacao'}
                         />
                       </FormControl>
                     </FormItem>
