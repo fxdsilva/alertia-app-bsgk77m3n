@@ -7,8 +7,9 @@
 @layer base {
   :root {
     /* Background: Soft Cream / Warm White to reduce glare */
-    /* Previously: 0 0% 96% */
-    --background: 40 33% 98%;
+    /* Updated for Accessibility (Down Syndrome support): Warm Cream */
+    /* Previously: 40 33% 98% */
+    --background: 44 60% 95%;
 
     /* Foreground: High contrast Dark Charcoal/Navy for maximum legibility */
     /* Previously: 222.2 84% 4.9% */
