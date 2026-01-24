@@ -88,19 +88,22 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-background">
-      <Card className="w-full max-w-md shadow-xl border-border/60">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold text-primary">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-muted/20">
+      <Card className="w-full max-w-md shadow-2xl border-2 border-border/60">
+        <CardHeader className="text-center space-y-2 pb-8">
+          <CardTitle className="text-3xl font-extrabold text-primary tracking-tight">
             Login ALERTIA
           </CardTitle>
-          <CardDescription className="text-base">
+          <CardDescription className="text-base font-medium text-muted-foreground">
             Acesse sua conta para gerenciar programas de integridade.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           {error && (
-            <Alert variant="destructive" className="mb-6 text-left shadow-sm">
+            <Alert
+              variant="destructive"
+              className="mb-6 text-left shadow-sm border-2"
+            >
               <AlertCircle className="h-5 w-5" />
               <AlertTitle className="ml-2 font-bold">Erro</AlertTitle>
               <AlertDescription className="ml-2 font-medium">
@@ -116,17 +119,17 @@ export default function Login() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground font-semibold">
+                    <FormLabel className="text-foreground text-base font-bold">
                       Email
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="seu@email.com"
                         {...field}
-                        className="h-12 text-base"
+                        className="h-12 text-base border-2 border-slate-300 dark:border-slate-700 focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary transition-all shadow-sm"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="font-semibold" />
                   </FormItem>
                 )}
               />
@@ -135,7 +138,7 @@ export default function Login() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground font-semibold">
+                    <FormLabel className="text-foreground text-base font-bold">
                       Senha
                     </FormLabel>
                     <FormControl>
@@ -143,16 +146,16 @@ export default function Login() {
                         type="password"
                         placeholder="******"
                         {...field}
-                        className="h-12 text-base"
+                        className="h-12 text-base border-2 border-slate-300 dark:border-slate-700 focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary transition-all shadow-sm"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="font-semibold" />
                   </FormItem>
                 )}
               />
               <Button
                 type="submit"
-                className="w-full h-12 text-base font-bold shadow-md hover:shadow-lg transition-shadow"
+                className="w-full h-12 text-lg font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 active:translate-y-0"
                 disabled={loading}
               >
                 {loading ? (
