@@ -70,8 +70,6 @@ export default function Login() {
       const { error: signInError } = await signIn(values.email, values.password)
 
       if (signInError) {
-        // Specific error handling as per Acceptance Criteria
-        // Supabase returns 'Invalid login credentials' for wrong password/email
         if (signInError.message === 'Invalid login credentials') {
           setError('Erro ao realizar login. Verifique suas credenciais.')
         } else {
@@ -81,7 +79,6 @@ export default function Login() {
         setLoading(false)
       } else {
         toast.success('Login realizado com sucesso!')
-        // Don't set loading to false here, wait for redirection via useEffect
       }
     } catch (err) {
       console.error('Unexpected Error:', err)
@@ -91,22 +88,24 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh] px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-background">
+      <Card className="w-full max-w-md shadow-xl border-border/60">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-3xl font-bold text-primary">
             Login ALERTIA
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Acesse sua conta para gerenciar programas de integridade.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
-            <Alert variant="destructive" className="mb-6 text-left">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erro</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+            <Alert variant="destructive" className="mb-6 text-left shadow-sm">
+              <AlertCircle className="h-5 w-5" />
+              <AlertTitle className="ml-2 font-bold">Erro</AlertTitle>
+              <AlertDescription className="ml-2 font-medium">
+                {error}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -117,9 +116,15 @@ export default function Login() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-foreground font-semibold">
+                      Email
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="seu@email.com" {...field} />
+                      <Input
+                        placeholder="seu@email.com"
+                        {...field}
+                        className="h-12 text-base"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -130,18 +135,29 @@ export default function Login() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Senha</FormLabel>
+                    <FormLabel className="text-foreground font-semibold">
+                      Senha
+                    </FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="******" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="******"
+                        {...field}
+                        className="h-12 text-base"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-bold shadow-md hover:shadow-lg transition-shadow"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Entrando...
                   </>
                 ) : (

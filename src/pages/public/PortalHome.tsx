@@ -17,22 +17,28 @@ export default function PortalHome() {
   if (!selectedSchool) return null
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-[#0f2e5a] text-white p-6 animate-fade-in">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-background text-foreground p-6 animate-fade-in">
       <div className="w-full max-w-md space-y-8 flex flex-col h-full">
         <div className="text-center space-y-2 mt-8">
-          <h1 className="text-3xl font-bold tracking-wider">PORTAL DE</h1>
-          <h1 className="text-4xl font-extrabold tracking-wider text-white">
+          <h1 className="text-3xl font-bold tracking-wider text-foreground/80">
+            PORTAL DE
+          </h1>
+          <h1 className="text-4xl font-extrabold tracking-wider text-primary">
             INTEGRIDADE
           </h1>
-          <p className="text-sm opacity-80 mt-2">{selectedSchool.name}</p>
+          <p className="text-sm font-medium opacity-80 mt-2 text-muted-foreground">
+            {selectedSchool.name}
+          </p>
         </div>
 
-        <div className="flex-1 flex flex-col gap-4 justify-center py-8">
+        <div className="flex-1 flex flex-col gap-5 justify-center py-8">
           <Button
-            className="h-24 text-lg font-semibold bg-[#8faecb] hover:bg-[#7a9bb8] text-[#0f2e5a] shadow-lg flex items-center justify-start px-6 gap-4"
+            className="h-28 text-lg font-bold bg-card hover:bg-secondary text-foreground border-2 border-primary/20 hover:border-primary shadow-sm hover:shadow-md flex items-center justify-start px-8 gap-5 transition-all duration-300 rounded-xl"
             onClick={() => navigate('/public/commitment')}
           >
-            <Shield className="h-10 w-10 shrink-0" />
+            <div className="bg-primary/10 p-3 rounded-full">
+              <Shield className="h-8 w-8 text-primary" />
+            </div>
             <div className="text-left leading-tight">
               COMPROMISSO
               <br />
@@ -41,10 +47,12 @@ export default function PortalHome() {
           </Button>
 
           <Button
-            className="h-24 text-lg font-semibold bg-[#8faecb] hover:bg-[#7a9bb8] text-[#0f2e5a] shadow-lg flex items-center justify-start px-6 gap-4"
+            className="h-28 text-lg font-bold bg-card hover:bg-secondary text-foreground border-2 border-primary/20 hover:border-primary shadow-sm hover:shadow-md flex items-center justify-start px-8 gap-5 transition-all duration-300 rounded-xl"
             onClick={() => navigate('/public/code-of-conduct')}
           >
-            <FileText className="h-10 w-10 shrink-0" />
+            <div className="bg-primary/10 p-3 rounded-full">
+              <FileText className="h-8 w-8 text-primary" />
+            </div>
             <div className="text-left leading-tight">
               CÓDIGO DE
               <br />
@@ -55,10 +63,12 @@ export default function PortalHome() {
           </Button>
 
           <Button
-            className="h-24 text-lg font-semibold bg-white hover:bg-gray-100 text-[#0f2e5a] shadow-lg flex items-center justify-start px-6 gap-4"
+            className="h-28 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg flex items-center justify-start px-8 gap-5 transition-all duration-300 rounded-xl"
             onClick={() => navigate('/public/complaint/new')}
           >
-            <AlertTriangle className="h-10 w-10 shrink-0 text-[#8faecb]" />
+            <div className="bg-white/20 p-3 rounded-full">
+              <AlertTriangle className="h-8 w-8 text-white" />
+            </div>
             <div className="text-left leading-tight">
               FAÇA SUA
               <br />
@@ -70,10 +80,10 @@ export default function PortalHome() {
         <div className="mt-auto pb-6 text-center">
           <Button
             variant="ghost"
-            className="text-white hover:text-white/80 hover:bg-transparent gap-2"
+            className="text-muted-foreground hover:text-primary hover:bg-transparent gap-2 font-medium"
             onClick={() => navigate('/login')}
           >
-            Veja mais <ChevronDown className="h-4 w-4" />
+            Área Restrita <ChevronDown className="h-4 w-4" />
           </Button>
         </div>
       </div>
