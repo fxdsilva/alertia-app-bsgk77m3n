@@ -257,16 +257,24 @@ export function TaskAssignmentDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="controles_internos">
-                            Controles Internos
+                          <SelectItem value="compromisso">
+                            Compromisso Alta Gestão
                           </SelectItem>
-                          <SelectItem value="denuncias">Denúncias</SelectItem>
-                          <SelectItem value="documentacao">
-                            Documentação Institucional
+                          <SelectItem value="codigo_conduta">
+                            Código de Conduta
+                          </SelectItem>
+                          <SelectItem value="treinamentos">
+                            Treinamentos
                           </SelectItem>
                           <SelectItem value="auditoria">Auditoria</SelectItem>
                           <SelectItem value="riscos">
                             Gestão de Riscos
+                          </SelectItem>
+                          <SelectItem value="controles_internos">
+                            Controles Internos
+                          </SelectItem>
+                          <SelectItem value="consolidacao">
+                            Consolidação & Relatórios
                           </SelectItem>
                         </SelectContent>
                       </Select>

@@ -8,15 +8,7 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Plus,
-  Calendar,
-  Briefcase,
-  User,
-  Shield,
-  Loader2,
-  Lock,
-} from 'lucide-react'
+import { Plus, Calendar, User, Shield, Loader2, Lock } from 'lucide-react'
 import { complianceService, ComplianceTask } from '@/services/complianceService'
 import { TaskAssignmentDialog } from '@/components/compliance/TaskAssignmentDialog'
 import { format } from 'date-fns'
@@ -43,7 +35,7 @@ export default function TaskDistribution() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in pb-10">
+    <div className="space-y-8 animate-fade-in pb-10 p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -55,7 +47,7 @@ export default function TaskDistribution() {
         </div>
         <Button
           onClick={() => setDialogOpen(true)}
-          className="gap-2 shadow-ios bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
+          className="gap-2 shadow-sm bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
         >
           <Plus className="h-4 w-4" /> Nova Atribuição
         </Button>
@@ -68,7 +60,7 @@ export default function TaskDistribution() {
       ) : tasks.length === 0 ? (
         <Card className="border-dashed border-2 bg-muted/20">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Briefcase className="h-12 w-12 text-muted-foreground opacity-50 mb-4" />
+            <Shield className="h-12 w-12 text-muted-foreground opacity-50 mb-4" />
             <p className="text-lg font-medium text-foreground">
               Nenhuma tarefa atribuída
             </p>
@@ -82,12 +74,12 @@ export default function TaskDistribution() {
           {tasks.map((task) => (
             <Card
               key={task.id}
-              className="border-none shadow-ios hover:shadow-ios-deep transition-all duration-300 group overflow-hidden flex flex-col"
+              className="border-none shadow-sm hover:shadow-md transition-all duration-300 group overflow-hidden flex flex-col"
             >
               <CardHeader className="bg-muted/5 border-b border-border/40 pb-4">
                 <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-white">
-                    {task.tipo_modulo.replace('_', ' ').toUpperCase()}
+                  <Badge variant="outline" className="bg-white capitalize">
+                    {task.tipo_modulo.replace('_', ' ')}
                   </Badge>
                   <Badge
                     className={

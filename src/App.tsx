@@ -41,6 +41,13 @@ import Reports from '@/pages/admin/Reports'
 // School Admin Pages
 import UserManagement from '@/pages/school-admin/UserManagement'
 
+// Compliance Pages
+import TaskDistribution from '@/pages/compliance/TaskDistribution'
+import ComplaintTriage from '@/pages/compliance/director/ComplaintTriage'
+import AnalystDashboard from '@/pages/compliance/analyst/AnalystDashboard'
+import InvestigationWorkspace from '@/pages/compliance/analyst/InvestigationWorkspace'
+import TaskDetails from '@/pages/compliance/analyst/TaskDetails'
+
 const App = () => (
   <AppProvider>
     <BrowserRouter
@@ -66,6 +73,30 @@ const App = () => (
 
             {/* School Admin Routes */}
             <Route path="/school-admin/users" element={<UserManagement />} />
+
+            {/* Compliance Director Routes */}
+            <Route
+              path="/compliance/director/tasks"
+              element={<TaskDistribution />}
+            />
+            <Route
+              path="/compliance/director/complaints"
+              element={<ComplaintTriage />}
+            />
+
+            {/* Compliance Analyst Routes */}
+            <Route
+              path="/compliance/analyst/dashboard"
+              element={<AnalystDashboard />}
+            />
+            <Route
+              path="/compliance/analyst/task/:id"
+              element={<TaskDetails />}
+            />
+            <Route
+              path="/compliance/analyst/investigation/:id"
+              element={<InvestigationWorkspace />}
+            />
 
             {/* Portal Public Pages */}
             <Route path="/public/portal" element={<PortalHome />} />

@@ -14,13 +14,12 @@ import {
   SearchCheck,
   BrainCircuit,
   MessageSquare,
-  Share2,
   LifeBuoy,
   Menu,
-  X,
   GraduationCap,
   Calendar,
-  Lock,
+  ClipboardList,
+  Gavel,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -179,11 +178,11 @@ const Layout = () => {
             <NavLink to="/compliance/director/analysts" icon={Users}>
               Equipe
             </NavLink>
-            <NavLink to="/compliance/director/tasks" icon={FileText}>
-              Tarefas
+            <NavLink to="/compliance/director/tasks" icon={ClipboardList}>
+              Atribuição de Tarefas
             </NavLink>
-            <NavLink to="/senior/pending-reports" icon={AlertTriangle}>
-              Denúncias Pendentes
+            <NavLink to="/compliance/director/complaints" icon={AlertTriangle}>
+              Triagem de Denúncias
             </NavLink>
           </>
         )}
@@ -195,19 +194,7 @@ const Layout = () => {
               Operacional
             </div>
             <NavLink to="/compliance/analyst/dashboard" icon={LayoutGrid}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/compliance/analyst/complaints" icon={AlertTriangle}>
-              Denúncias
-            </NavLink>
-            <NavLink to="/compliance/analyst/auditing" icon={FileCheck}>
-              Auditorias
-            </NavLink>
-            <NavLink to="/compliance/analyst/due-diligence" icon={SearchCheck}>
-              Due Diligence
-            </NavLink>
-            <NavLink to="/compliance/analyst/risk-management" icon={PieChart}>
-              Riscos
+              Meu Workspace
             </NavLink>
           </>
         )}
