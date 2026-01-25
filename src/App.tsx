@@ -47,6 +47,7 @@ import Reports from '@/pages/admin/Reports'
 // School Admin Pages
 import UserManagement from '@/pages/school-admin/UserManagement'
 import SchoolComplaints from '@/pages/school-admin/SchoolComplaints'
+import StrategicDashboard from '@/pages/school-manager/StrategicDashboard'
 
 // Compliance Pages
 import TaskDistribution from '@/pages/compliance/TaskDistribution'
@@ -96,6 +97,10 @@ const App = () => (
             <Route
               path="/school-admin/complaints"
               element={<SchoolComplaints />}
+            />
+            <Route
+              path="/school-management/dashboard"
+              element={<StrategicDashboard />}
             />
 
             {/* Compliance Director Routes */}
@@ -198,6 +203,9 @@ const App = () => (
               element={<InternalInvestigations />}
             />
             <Route path="/reports" element={<ReportGeneration />} />
+            
+            {/* Redirects for direct sidebar access */}
+            <Route path="/home" element={<Navigate to="/" replace />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

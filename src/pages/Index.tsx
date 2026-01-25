@@ -35,6 +35,8 @@ const Index = () => {
         navigate('/compliance/director/dashboard')
       } else if (profile === 'ANALISTA_COMPLIANCE') {
         navigate('/compliance/analyst/dashboard')
+      } else if (profile === 'gestao_escola') {
+        navigate('/school-management/dashboard')
       }
     }
   }, [user, profile, loading, navigate])

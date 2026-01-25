@@ -59,6 +59,8 @@ export default function Login() {
         navigate('/dashboard-professor')
       } else if (profile === 'gestor') {
         navigate('/manager/risks')
+      } else if (profile === 'gestao_escola') {
+        navigate('/school-management/dashboard')
       } else {
         navigate('/')
       }

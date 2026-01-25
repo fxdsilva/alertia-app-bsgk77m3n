@@ -21,6 +21,7 @@ import {
   Share2,
   MessageSquare,
   Info,
+  BarChart3,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -230,30 +231,64 @@ const Layout = () => {
           </>
         )}
 
-        {/* SCHOOL MANAGEMENT */}
+        {/* SCHOOL MANAGEMENT (GESTOR ESCOLAR) */}
         {profile === 'gestao_escola' && (
           <>
+            <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
+              Gestão da Escola
+            </div>
             <NavLink to="/school-management/dashboard" icon={LayoutGrid}>
-              Dashboard
+              Dashboard Estratégico
             </NavLink>
-            <NavLink to="/school-management/stats/complaints" icon={PieChart}>
-              Estatísticas
-            </NavLink>
-            <NavLink to="/school-management/complaints" icon={AlertTriangle}>
-              Denúncias da Escola
-            </NavLink>
+            
+            <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
+              Módulos
+            </div>
             <NavLink to="/admin/code-of-conduct" icon={FileText}>
               Código de Conduta
             </NavLink>
             <NavLink to="/admin/commitment" icon={Shield}>
-              Compromisso
+              Compromisso da Gestão
             </NavLink>
-            <NavLink to="/school-admin/trainings" icon={GraduationCap}>
-              Treinamentos
+            <NavLink to="/school-admin/complaints" icon={AlertTriangle}>
+              Denúncias
             </NavLink>
-            <NavLink to="/admin/reports" icon={FileText}>
+            <NavLink to="/admin/reports" icon={BarChart3}>
               Relatórios
             </NavLink>
+            <NavLink to="/collaborator/training" icon={GraduationCap}>
+              Treinamentos
+            </NavLink>
+            <NavLink to="/manager/risks" icon={PieChart}>
+              Gestão de Riscos
+            </NavLink>
+            <NavLink to="/manager/audits" icon={FileCheck}>
+              Auditorias
+            </NavLink>
+            <NavLink to="/manager/mediations" icon={Scale}>
+              Mediação de Conflitos
+            </NavLink>
+            <NavLink to="/senior/due-diligence" icon={SearchCheck}>
+              Due Diligence
+            </NavLink>
+            <NavLink to="/senior/decisions" icon={Gavel}>
+              Decisões Disciplinares
+            </NavLink>
+            <NavLink to="/senior/ai-reports" icon={BrainCircuit}>
+              Relatórios IA
+            </NavLink>
+            <NavLink to="/senior/consolidated" icon={Building2}>
+              Visão Consolidada
+            </NavLink>
+
+            <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
+              Menu Principal
+            </div>
+            <NavLink to="/home" icon={Home}>Início</NavLink>
+            <NavLink to="/share" icon={Share2}>Compartilhar App</NavLink>
+            <NavLink to="/messages" icon={MessageSquare}>Mensagens</NavLink>
+            <NavLink to="/support" icon={LifeBuoy}>Suporte</NavLink>
+            <NavLink to="/about" icon={Info}>Sobre</NavLink>
           </>
         )}
 
@@ -308,8 +343,8 @@ const Layout = () => {
           </>
         )}
 
-        {/* Common Links - Excluded for Professor as they have their own menu items */}
-        {profile !== 'professor' && (
+        {/* Common Links - Excluded for Professor/Gestao Escola as they have their own menu items in section */}
+        {profile !== 'professor' && profile !== 'gestao_escola' && (
           <div className="pt-4 mt-4 border-t border-sidebar-border">
             <NavLink to="/support" icon={LifeBuoy}>
               Suporte
