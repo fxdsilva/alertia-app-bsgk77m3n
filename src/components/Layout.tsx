@@ -143,6 +143,9 @@ const Layout = () => {
             <NavLink to="/senior/users" icon={Users}>
               Usuários
             </NavLink>
+            <NavLink to="/senior/pending-reports" icon={AlertTriangle}>
+              Denúncias Pendentes
+            </NavLink>
             <NavLink to="/senior/consolidated" icon={Building2}>
               Dados Consolidados
             </NavLink>

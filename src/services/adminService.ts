@@ -8,6 +8,10 @@ export interface Complaint {
   created_at: string
   descricao: string
   anonimo: boolean
+  escola_id?: string
+  escolas_instituicoes?: {
+    nome_escola: string
+  }
 }
 
 export const adminService = {
@@ -163,11 +167,22 @@ export const adminService = {
   async getComplaint(id: string) {
     const { data, error } = await supabase
       .from('denuncias')
-      .select('*')
+      .select('*, escolas_instituicoes(nome_escola)')
       .eq('id', id)
       .single()
     if (error) throw error
     return data as Complaint
+  },
+
+  async getAllPendingComplaints() {
+    const { data, error } = await supabase
+      .from('denuncias')
+      .select('*, escolas_instituicoes(nome_escola)')
+      .eq('status', 'pendente')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data as Complaint[]
   },
 
   async updateComplaintStatus(id: string, status: string) {
