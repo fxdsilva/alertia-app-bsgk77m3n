@@ -13,7 +13,7 @@ export interface ComplaintData {
   escola_id: string
   descricao: string
   anonimo: boolean
-  denunciante_id?: string
+  denunciante_id?: string | null
   categoria?: string[]
   envolvidos_detalhes?: Record<string, any>
   evidencias_urls?: string[]
@@ -26,7 +26,7 @@ export const portalService = {
     const { data, error } = await supabase
       .from('escolas_instituicoes')
       .select(
-        'id, nome_escola, rede_municipal, rede_estadual, rede_federal, localizacao, endereco, ativo',
+        'id, nome_escola, rede_municipal, rede_estadual, rede_federal, rede_particular, localizacao, endereco, ativo',
       )
       .eq('ativo', true)
       .ilike('nome_escola', `%${query}%`)
@@ -43,8 +43,10 @@ export const portalService = {
           ? 'Estadual'
           : item.rede_federal
             ? 'Federal'
-            : 'Privada',
-      modality: item.localizacao as 'Urbana' | 'Rural',
+            : item.rede_particular
+              ? 'Privada'
+              : 'Pública',
+      modality: (item.localizacao as 'Urbana' | 'Rural') || 'Urbana',
       municipality: item.endereco || 'N/A',
       state: 'N/A',
       active: item.ativo,
@@ -54,7 +56,9 @@ export const portalService = {
   async getSchools(): Promise<School[]> {
     const { data, error } = await supabase
       .from('escolas_instituicoes')
-      .select('id, nome_escola, ativo')
+      .select(
+        'id, nome_escola, rede_municipal, rede_estadual, rede_federal, rede_particular, localizacao, endereco, ativo',
+      )
       .eq('ativo', true)
       .order('nome_escola')
 
@@ -63,9 +67,17 @@ export const portalService = {
     return data.map((item: any) => ({
       id: item.id,
       name: item.nome_escola,
-      network: 'Municipal',
-      modality: 'Urbana',
-      municipality: 'N/A',
+      network: item.rede_municipal
+        ? 'Municipal'
+        : item.rede_estadual
+          ? 'Estadual'
+          : item.rede_federal
+            ? 'Federal'
+            : item.rede_particular
+              ? 'Privada'
+              : 'Pública',
+      modality: (item.localizacao as 'Urbana' | 'Rural') || 'Urbana',
+      municipality: item.endereco || 'N/A',
       state: 'N/A',
       active: item.ativo,
     }))
@@ -76,9 +88,9 @@ export const portalService = {
       .from('compromisso_alta_gestao')
       .select('*')
       .eq('escola_id', escolaId)
-      .single()
+      .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') throw error
+    if (error) throw error
     return data as DocumentRecord | null
   },
 
@@ -87,9 +99,9 @@ export const portalService = {
       .from('codigo_conduta')
       .select('*')
       .eq('escola_id', escolaId)
-      .single()
+      .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') throw error
+    if (error) throw error
     return data as DocumentRecord | null
   },
 
@@ -139,7 +151,7 @@ export const portalService = {
         denunciante_id: finalDenuncianteId,
         categoria: data.categoria,
         status: 'pendente',
-        envolvidos_detalhes: data.envolvidos_detalhes,
+        envolvidos_detalhes: data.envolvidos_detalhes as any, // Cast to any to match Json type
         evidencias_urls: data.evidencias_urls,
       })
       .select()

@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import {
   CheckCircle2,
@@ -53,10 +54,13 @@ import {
   X,
   AlertTriangle,
   ExternalLink,
+  FileText,
+  Shield,
+  FileSearch,
 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
-import { portalService } from '@/services/portalService'
+import { portalService, DocumentRecord } from '@/services/portalService'
 import { School } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -126,6 +130,13 @@ export default function ComplaintRegistration() {
   const [openCategory, setOpenCategory] = useState(false)
   const [files, setFiles] = useState<File[]>([])
 
+  // Documents State
+  const [documents, setDocuments] = useState<{
+    code: DocumentRecord | null
+    commitment: DocumentRecord | null
+  }>({ code: null, commitment: null })
+  const [loadingDocs, setLoadingDocs] = useState(false)
+
   const { selectedSchool, user } = useAppStore()
   const navigate = useNavigate()
 
@@ -144,6 +155,8 @@ export default function ComplaintRegistration() {
       autor_descricao: '',
     },
   })
+
+  const selectedSchoolId = form.watch('escola_id')
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -167,6 +180,30 @@ export default function ComplaintRegistration() {
       form.setValue('escola_id', selectedSchool.id)
     }
   }, [selectedSchool, form])
+
+  // Fetch Documents when School Changes
+  useEffect(() => {
+    const fetchDocs = async () => {
+      if (!selectedSchoolId) {
+        setDocuments({ code: null, commitment: null })
+        return
+      }
+      setLoadingDocs(true)
+      try {
+        const [code, commitment] = await Promise.all([
+          portalService.getCodeOfConduct(selectedSchoolId),
+          portalService.getManagementCommitment(selectedSchoolId),
+        ])
+        setDocuments({ code, commitment })
+      } catch (error) {
+        console.error('Error fetching documents:', error)
+      } finally {
+        setLoadingDocs(false)
+      }
+    }
+
+    fetchDocs()
+  }, [selectedSchoolId])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -289,12 +326,10 @@ export default function ComplaintRegistration() {
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
-            onClick={() =>
-              navigate(selectedSchool ? '/public/portal' : '/login')
-            }
+            onClick={() => navigate('/')}
             className="text-slate-500 hover:text-slate-900"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para Login
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar ao Início
           </Button>
           <Button
             variant="link"
@@ -316,20 +351,6 @@ export default function ComplaintRegistration() {
             Este é um espaço seguro para relatar violações de ética, conduta ou
             compliance. Sua identidade será preservada se desejar.
           </p>
-        </div>
-
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-          <div className="bg-blue-100 p-2 rounded-full mt-0.5">
-            <CheckCircle2 className="h-4 w-4 text-blue-600" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-blue-900 text-sm">
-              Como podemos ajudar?
-            </h4>
-            <p className="text-blue-700 text-sm">
-              Deseja registrar uma denúncia ou tem outras necessidades?
-            </p>
-          </div>
         </div>
 
         <Form {...form}>
@@ -420,6 +441,105 @@ export default function ComplaintRegistration() {
                     </FormItem>
                   )}
                 />
+
+                {/* Institutional Documents Section */}
+                {selectedSchoolId && (
+                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <FileSearch className="h-4 w-4 text-slate-500" />
+                      <h4 className="text-sm font-semibold text-slate-700">
+                        Documentos de Integridade
+                      </h4>
+                    </div>
+
+                    {loadingDocs ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Skeleton className="h-16 w-full" />
+                        <Skeleton className="h-16 w-full" />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Código de Conduta */}
+                        {documents.code ? (
+                          <a
+                            href={documents.code.arquivo_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block"
+                          >
+                            <div className="bg-white border hover:border-blue-400 hover:shadow-sm transition-all rounded-md p-3 flex items-center gap-3 cursor-pointer h-full">
+                              <div className="bg-blue-50 p-2 rounded-full">
+                                <FileText className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-slate-900">
+                                  Código de Conduta
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  Ler documento
+                                </p>
+                              </div>
+                              <ExternalLink className="h-3 w-3 text-slate-400" />
+                            </div>
+                          </a>
+                        ) : (
+                          <div className="bg-slate-100/50 border border-slate-100 rounded-md p-3 flex items-center gap-3 h-full opacity-60">
+                            <div className="bg-slate-200 p-2 rounded-full">
+                              <FileText className="h-5 w-5 text-slate-400" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-slate-500">
+                                Código de Conduta
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                Não disponível
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Compromisso Alta Gestão */}
+                        {documents.commitment ? (
+                          <a
+                            href={documents.commitment.arquivo_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block"
+                          >
+                            <div className="bg-white border hover:border-blue-400 hover:shadow-sm transition-all rounded-md p-3 flex items-center gap-3 cursor-pointer h-full">
+                              <div className="bg-blue-50 p-2 rounded-full">
+                                <Shield className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-slate-900">
+                                  Compromisso de Gestão
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  Ler documento
+                                </p>
+                              </div>
+                              <ExternalLink className="h-3 w-3 text-slate-400" />
+                            </div>
+                          </a>
+                        ) : (
+                          <div className="bg-slate-100/50 border border-slate-100 rounded-md p-3 flex items-center gap-3 h-full opacity-60">
+                            <div className="bg-slate-200 p-2 rounded-full">
+                              <Shield className="h-5 w-5 text-slate-400" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-slate-500">
+                                Compromisso de Gestão
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                Não disponível
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <FormField
                   control={form.control}
@@ -728,12 +848,10 @@ export default function ComplaintRegistration() {
                       accept="image/*,application/pdf,audio/*,video/*"
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       onChange={handleFileChange}
-                      // Hack to allow same file selection again if cleared, technically optional here since we control the input
+                      // Hack to allow same file selection again if cleared
                       value=""
                     />
-                    <div className="mt-4 w-full relative z-10 pointer-events-none">
-                      {/* This div is just to push content down if needed, actual file display is below */}
-                    </div>
+                    <div className="mt-4 w-full relative z-10 pointer-events-none"></div>
                   </div>
 
                   {files.length > 0 && (
@@ -802,12 +920,7 @@ export default function ComplaintRegistration() {
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                          disabled={!user} // If public (not logged in), default true and maybe force it? Or allow identification?
-                          // User story says: "choose between a named or anonymous report".
-                          // If user is NOT logged in, we can't auto-fill "denunciante_id", but we could ask for name/email if they want.
-                          // However, current schema relies on "denunciante_id" (Supabase User ID).
-                          // So for public users without account, it is effectively anonymous regarding the system user.
-                          // But we will stick to the Switch logic.
+                          disabled={!user}
                         />
                       </FormControl>
                     </FormItem>
