@@ -66,25 +66,42 @@ import { School } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 
-const OCCURRENCE_CATEGORIES = [
-  'Bullying',
-  'Cyberbullying',
-  'Violência Física',
-  'Violência Psicológica',
-  'Assédio Moral',
-  'Assédio Sexual',
-  'Racismo',
-  'Intolerância Religiosa',
-  'LGBTQIfobia',
-  'Machismo',
-  'Xenofobia',
-  'Discriminação (Outros)',
-  'Furto/Roubo',
-  'Vandalismo',
-  'Uso de Drogas/Álcool',
-  'Porte de Armas',
-  'Fraude/Corrupção',
-  'Outro',
+const CATEGORY_GROUPS = [
+  {
+    heading: 'Violências contra estudantes',
+    items: [
+      'Bullying',
+      'Cyberbullying',
+      'Violência física',
+      'Violência psicológica',
+    ],
+  },
+  {
+    heading: 'Assédio e abuso',
+    items: ['Assédio moral', 'Assédio sexual', 'Abuso psicológico'],
+  },
+  {
+    heading: 'Discriminação e preconceito',
+    items: [
+      'Racismo',
+      'Intolerância religiosa',
+      'LGBTfobia',
+      'Capacitismo',
+      'Machismo',
+      'Xenofobia',
+    ],
+  },
+  {
+    heading: 'Outras Ocorrências',
+    items: [
+      'Violações de direitos educacionais',
+      'Irregularidades administrativas e financeiras',
+      'Violação ética e profissional',
+      'Violência institucional',
+      'Segurança e integridade física',
+      'Outro',
+    ],
+  },
 ]
 
 const ROLES = [
@@ -426,12 +443,12 @@ export default function ComplaintRegistration() {
                               <CommandEmpty>
                                 Escola não encontrada.
                               </CommandEmpty>
+                              {loadingSchools && (
+                                <div className="p-4 text-sm text-center text-muted-foreground">
+                                  Carregando...
+                                </div>
+                              )}
                               <CommandGroup>
-                                {loadingSchools && (
-                                  <CommandItem disabled>
-                                    Carregando...
-                                  </CommandItem>
-                                )}
                                 {schools.map((school) => (
                                   <CommandItem
                                     key={school.id}
@@ -610,33 +627,44 @@ export default function ComplaintRegistration() {
                               <CommandEmpty>
                                 Nenhuma categoria encontrada.
                               </CommandEmpty>
-                              <CommandGroup className="max-h-64 overflow-auto">
-                                {OCCURRENCE_CATEGORIES.map((category) => (
-                                  <CommandItem
-                                    key={category}
-                                    value={category}
-                                    onSelect={() => {
-                                      const current = field.value || []
-                                      const updated = current.includes(category)
-                                        ? current.filter((c) => c !== category)
-                                        : [...current, category]
-                                      form.setValue('categories', updated, {
-                                        shouldValidate: true,
-                                      })
-                                    }}
+                              <div className="max-h-[300px] overflow-y-auto">
+                                {CATEGORY_GROUPS.map((group) => (
+                                  <CommandGroup
+                                    key={group.heading}
+                                    heading={group.heading}
                                   >
-                                    <Check
-                                      className={cn(
-                                        'mr-2 h-4 w-4',
-                                        field.value?.includes(category)
-                                          ? 'opacity-100'
-                                          : 'opacity-0',
-                                      )}
-                                    />
-                                    {category}
-                                  </CommandItem>
+                                    {group.items.map((category) => (
+                                      <CommandItem
+                                        key={category}
+                                        value={category}
+                                        onSelect={() => {
+                                          const current = field.value || []
+                                          const updated = current.includes(
+                                            category,
+                                          )
+                                            ? current.filter(
+                                                (c) => c !== category,
+                                              )
+                                            : [...current, category]
+                                          form.setValue('categories', updated, {
+                                            shouldValidate: true,
+                                          })
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            'mr-2 h-4 w-4',
+                                            field.value?.includes(category)
+                                              ? 'opacity-100'
+                                              : 'opacity-0',
+                                          )}
+                                        />
+                                        {category}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
                                 ))}
-                              </CommandGroup>
+                              </div>
                             </CommandList>
                           </Command>
                         </PopoverContent>
