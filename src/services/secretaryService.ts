@@ -38,7 +38,8 @@ export const secretaryService = {
       const { data: complaintsData, error: complaintsError } = await supabase
         .from('denuncias')
         .select('escola_id, status')
-        // Assuming 'arquivado' and 'resolvido' are closed statuses
+        // We consider active complaints everything that is not archived or fully resolved/closed if those statuses exist
+        // Based on other files, status might be 'pendente', 'em_analise', 'investigado', 'resolvido', 'arquivado'
         .not('status', 'in', '("arquivado","resolvido")')
 
       if (complaintsError) throw complaintsError
@@ -47,7 +48,7 @@ export const secretaryService = {
       const { data: investigationsData, error: invError } = await supabase
         .from('investigacoes')
         .select('escola_id, status')
-        .neq('status', 'concluida')
+        .neq('status', 'concluida') // Assuming 'concluida' is the closed status
 
       if (invError) throw invError
 
@@ -67,7 +68,7 @@ export const secretaryService = {
 
       if (trainError) throw trainError
 
-      // Aggregation Map
+      // Aggregation Maps
       const complaintsMap = new Map<string, number>()
       complaintsData?.forEach((c) => {
         if (c.escola_id) {
@@ -80,7 +81,7 @@ export const secretaryService = {
 
       const investigationsMap = new Map<string, number>()
       investigationsData?.forEach((i) => {
-        const id = i.escola_id // investigative table has escola_id directly
+        const id = i.escola_id
         if (id) {
           investigationsMap.set(id, (investigationsMap.get(id) || 0) + 1)
         }
@@ -107,7 +108,7 @@ export const secretaryService = {
       })
 
       // Map schools to SchoolMetric
-      const schools: SchoolMetric[] = schoolsData.map((school) => {
+      const schools: SchoolMetric[] = (schoolsData || []).map((school) => {
         // Determine network string
         let network = 'Outra'
         if (school.rede_municipal) network = 'Municipal'
@@ -124,7 +125,7 @@ export const secretaryService = {
           network,
           sphere,
           address: school.endereco || '',
-          municipality: school.localizacao || '', // Assuming localizacao holds city/municipality context or generic location
+          municipality: school.localizacao || '',
           complaintsCount: complaintsMap.get(school.id) || 0,
           investigationsCount: investigationsMap.get(school.id) || 0,
           mediationsCount: mediationsMap.get(school.id) || 0,
@@ -132,7 +133,7 @@ export const secretaryService = {
         }
       })
 
-      // Calculate totals
+      // Calculate totals based on the fetched raw data (before client-side filtering)
       const totalComplaints = complaintsData?.length || 0
       const totalInvestigations = investigationsData?.length || 0
       const totalMediations = mediationsData?.length || 0

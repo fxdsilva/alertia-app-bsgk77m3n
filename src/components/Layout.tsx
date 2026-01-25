@@ -15,7 +15,6 @@ import {
   LifeBuoy,
   Menu,
   GraduationCap,
-  Calendar,
   Gavel,
   Home,
   Share2,
@@ -344,23 +343,46 @@ const Layout = () => {
           </>
         )}
 
-        {/* SECRETARY */}
+        {/* SECRETARY OF EDUCATION */}
         {profile === 'SECRETARIA DE EDUCAÇÃO' && (
           <>
+            <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
+              SECRETARIA DE EDUCAÇÃO
+            </div>
             <NavLink to="/secretary/dashboard" icon={LayoutGrid}>
               Visão Geral
+            </NavLink>
+            <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
+              MENU PRINCIPAL
+            </div>
+            <NavLink to="/home" icon={Home}>
+              Início
+            </NavLink>
+            <NavLink to="/share" icon={Share2}>
+              Compartilhar App
+            </NavLink>
+            <NavLink to="/messages" icon={MessageSquare}>
+              Mensagens
+            </NavLink>
+            <NavLink to="/support" icon={LifeBuoy}>
+              Suporte
+            </NavLink>
+            <NavLink to="/about" icon={Info}>
+              Sobre
             </NavLink>
           </>
         )}
 
-        {/* Common Links - Excluded for Professor/Gestao Escola as they have their own menu items in section */}
-        {profile !== 'professor' && profile !== 'gestao_escola' && (
-          <div className="pt-4 mt-4 border-t border-sidebar-border">
-            <NavLink to="/support" icon={LifeBuoy}>
-              Suporte
-            </NavLink>
-          </div>
-        )}
+        {/* Common Links - Excluded for Professor/Gestao Escola/Secretary as they have their own menu items in section */}
+        {profile !== 'professor' &&
+          profile !== 'gestao_escola' &&
+          profile !== 'SECRETARIA DE EDUCAÇÃO' && (
+            <div className="pt-4 mt-4 border-t border-sidebar-border">
+              <NavLink to="/support" icon={LifeBuoy}>
+                Suporte
+              </NavLink>
+            </div>
+          )}
       </div>
 
       <div className="mt-auto pt-4 border-t border-sidebar-border">
@@ -425,7 +447,8 @@ const Layout = () => {
           <div className="flex items-center gap-4 ml-auto">
             {selectedSchool &&
               profile !== 'senior' &&
-              profile !== 'DIRETOR_COMPLIANCE' && (
+              profile !== 'DIRETOR_COMPLIANCE' &&
+              profile !== 'SECRETARIA DE EDUCAÇÃO' && (
                 <div className="hidden md:flex items-center gap-2 bg-secondary px-4 py-2 rounded-full border border-border">
                   <Building2 className="h-4 w-4 text-primary" />
                   <span className="text-sm font-semibold text-foreground max-w-[200px] truncate">
