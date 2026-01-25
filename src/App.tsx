@@ -8,6 +8,7 @@ import Layout from '@/components/Layout'
 import Index from '@/pages/Index'
 import Login from '@/pages/Login'
 import NotFound from '@/pages/NotFound'
+import Support from '@/pages/Support'
 import PortalHome from '@/pages/public/PortalHome'
 
 import CodeOfConduct from '@/pages/public/CodeOfConduct'
@@ -64,6 +65,7 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/support" element={<Support />} />
 
             {/* Admin Routes */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />

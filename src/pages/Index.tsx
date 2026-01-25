@@ -57,12 +57,17 @@ const Index = () => {
             ALERTIA
           </span>
         </div>
-        <Button
-          onClick={() => navigate('/login')}
-          className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-6"
-        >
-          Entrar
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={() => navigate('/support')}>
+            Suporte
+          </Button>
+          <Button
+            onClick={() => navigate('/login')}
+            className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-6"
+          >
+            Entrar
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -162,8 +167,17 @@ const Index = () => {
         </div>
       </main>
 
-      <footer className="py-8 text-center text-sm text-slate-400">
-        © {new Date().getFullYear()} ALERTIA. Integridade em primeiro lugar.
+      <footer className="py-8 text-center text-sm text-slate-400 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+        <span>
+          © {new Date().getFullYear()} ALERTIA. Integridade em primeiro lugar.
+        </span>
+        <span className="hidden sm:inline">•</span>
+        <button
+          onClick={() => navigate('/support')}
+          className="hover:text-slate-600 transition-colors underline underline-offset-4"
+        >
+          Suporte
+        </button>
       </footer>
     </div>
   )
