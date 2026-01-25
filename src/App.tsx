@@ -53,6 +53,7 @@ import AnalystDashboard from '@/pages/compliance/analyst/AnalystDashboard'
 import InvestigationWorkspace from '@/pages/compliance/analyst/InvestigationWorkspace'
 import TaskDetails from '@/pages/compliance/analyst/TaskDetails'
 import DirectorDashboard from '@/pages/compliance/DirectorDashboard'
+import AnalystManagement from '@/pages/compliance/director/AnalystManagement'
 
 const App = () => (
   <AppProvider>
@@ -97,6 +98,10 @@ const App = () => (
             <Route
               path="/compliance/director/complaints"
               element={<ComplaintTriage />}
+            />
+            <Route
+              path="/compliance/director/analysts"
+              element={<AnalystManagement />}
             />
 
             {/* Compliance Analyst Routes */}
