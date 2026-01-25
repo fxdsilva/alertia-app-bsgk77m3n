@@ -44,7 +44,7 @@ import CommitmentManager from '@/pages/admin/CommitmentManager'
 import ComplaintManager from '@/pages/admin/ComplaintManager'
 import Reports from '@/pages/admin/Reports'
 
-// School Admin Pages
+// School Admin Routes
 import UserManagement from '@/pages/school-admin/UserManagement'
 import SchoolComplaints from '@/pages/school-admin/SchoolComplaints'
 import StrategicDashboard from '@/pages/school-manager/StrategicDashboard'
@@ -57,6 +57,9 @@ import InvestigationWorkspace from '@/pages/compliance/analyst/InvestigationWork
 import TaskDetails from '@/pages/compliance/analyst/TaskDetails'
 import DirectorDashboard from '@/pages/compliance/DirectorDashboard'
 import AnalystManagement from '@/pages/compliance/director/AnalystManagement'
+import ComplaintWorkflow from '@/pages/compliance/director/ComplaintWorkflow'
+import WorkflowDetail from '@/pages/compliance/director/WorkflowDetail'
+import WorkflowTask from '@/pages/compliance/analyst/WorkflowTask'
 
 // Secretary Page
 import SecretaryDashboard from '@/pages/secretary/SecretaryDashboard'
@@ -129,6 +132,15 @@ const App = () => (
               path="/compliance/director/analysts"
               element={<AnalystManagement />}
             />
+            {/* New Workflow Routes */}
+            <Route
+              path="/compliance/director/workflow"
+              element={<ComplaintWorkflow />}
+            />
+            <Route
+              path="/compliance/director/workflow/:id"
+              element={<WorkflowDetail />}
+            />
 
             {/* Compliance Analyst Routes */}
             <Route
@@ -142,6 +154,10 @@ const App = () => (
             <Route
               path="/compliance/analyst/investigation/:id"
               element={<InvestigationWorkspace />}
+            />
+            <Route
+              path="/compliance/analyst/workflow/:id"
+              element={<WorkflowTask />}
             />
 
             {/* Portal Public Pages */}

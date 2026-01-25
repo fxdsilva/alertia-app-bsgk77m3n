@@ -12,11 +12,10 @@ import {
   UserCog,
   Loader2,
   Activity,
-  AlertCircle,
   AlertTriangle,
   FileCheck,
-  ChevronRight,
   ShieldAlert,
+  GitPullRequest,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { complianceService } from '@/services/complianceService'
@@ -90,6 +89,28 @@ export default function DirectorDashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Workflow Card - NEW */}
+        <Card
+          className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-teal-500 bg-teal-50/20"
+          onClick={() => navigate('/compliance/director/workflow')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Workflow de Denúncias
+            </CardTitle>
+            <GitPullRequest className="h-4 w-4 text-teal-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-teal-700">Gestão</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Fases 1, 2 e 3 + SoD
+            </p>
+            <div className="mt-4 flex items-center text-sm text-teal-600 font-medium group-hover:translate-x-1 transition-transform">
+              Acessar Workflow &rarr;
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Active Complaints Card */}
         <Card
           className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-red-500"
@@ -97,7 +118,7 @@ export default function DirectorDashboard() {
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Denúncias Ativas
+              Triagem Rápida
             </CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
@@ -114,30 +135,6 @@ export default function DirectorDashboard() {
           </CardContent>
         </Card>
 
-        {/* Pending Tasks Card */}
-        <Card
-          className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-purple-500"
-          onClick={() => navigate('/compliance/director/tasks')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Tarefas Pendentes
-            </CardTitle>
-            <ClipboardList className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-700">
-              {stats.pendingTasks}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              De {stats.totalTasks} tarefas totais
-            </p>
-            <div className="mt-4 flex items-center text-sm text-purple-600 font-medium group-hover:translate-x-1 transition-transform">
-              Gerenciar &rarr;
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Analysts Card */}
         <Card
           className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-blue-500"
@@ -148,8 +145,10 @@ export default function DirectorDashboard() {
             <UserCog className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Gestão</div>
-            <p className="text-xs text-muted-foreground mt-1">Equipe técnica</p>
+            <div className="text-2xl font-bold">Equipe</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Gestão de acessos
+            </p>
             <div className="mt-4 flex items-center text-sm text-blue-600 font-medium group-hover:translate-x-1 transition-transform">
               Ver Equipe &rarr;
             </div>
@@ -248,31 +247,6 @@ export default function DirectorDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {stats.pendingTasks > 0 && (
-        <div className="rounded-xl bg-orange-50 border border-orange-100 p-4 flex items-center gap-4 animate-fade-in-up">
-          <div className="p-2 bg-orange-100 rounded-lg">
-            <AlertCircle className="h-6 w-6 text-orange-600" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-orange-900">
-              Atenção Necessária
-            </h3>
-            <p className="text-sm text-orange-800">
-              Existem {stats.pendingTasks} tarefas pendentes que podem precisar
-              de revisão ou reatribuição.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="ml-auto bg-white border-orange-200 text-orange-700 hover:bg-orange-50"
-            onClick={() => navigate('/compliance/director/tasks')}
-          >
-            Ver Pendências
-          </Button>
-        </div>
-      )}
     </div>
   )
 }

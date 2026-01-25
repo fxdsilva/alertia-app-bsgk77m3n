@@ -16,17 +16,20 @@ import {
   Calendar,
   ChevronRight,
   FileCheck,
+  GitPullRequest,
   Loader2,
 } from 'lucide-react'
 import { complianceService } from '@/services/complianceService'
+import { supabase } from '@/lib/supabase/client'
 import useAppStore from '@/stores/useAppStore'
 import { format } from 'date-fns'
+import { WorkflowComplaint, WORKFLOW_STATUS } from '@/services/workflowService'
 
 export default function AnalystDashboard() {
   const { user } = useAppStore()
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<any[]>([])
-  const [investigations, setInvestigations] = useState<any[]>([])
+  const [workflowTasks, setWorkflowTasks] = useState<WorkflowComplaint[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -36,12 +39,47 @@ export default function AnalystDashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [tasksData, invData] = await Promise.all([
+      const [tasksData] = await Promise.all([
         complianceService.getAnalystTasks(user!.id),
-        complianceService.getAnalystInvestigations(user!.id),
       ])
       setTasks(tasksData)
-      setInvestigations(invData)
+
+      // Fetch Workflow Tasks assigned to this analyst
+      const { data: wfData } = await supabase
+        .from('denuncias')
+        .select('*, escolas_instituicoes(nome_escola)')
+        .or(
+          `analista_1_id.eq.${user!.id},analista_2_id.eq.${user!.id},analista_3_id.eq.${user!.id}`,
+        )
+        .not(
+          'status',
+          'in',
+          `("${WORKFLOW_STATUS.CLOSED}","${WORKFLOW_STATUS.ARCHIVED}")`,
+        )
+
+      // Filter strictly by active status for the specific analyst phase
+      const activeWf = (wfData || []).filter((w: any) => {
+        if (
+          w.analista_1_id === user!.id &&
+          (w.status === WORKFLOW_STATUS.ANALYSIS_1 ||
+            w.status === WORKFLOW_STATUS.RETURNED_1)
+        )
+          return true
+        if (
+          w.analista_2_id === user!.id &&
+          w.status === WORKFLOW_STATUS.INVESTIGATION_2
+        )
+          return true
+        if (
+          w.analista_3_id === user!.id &&
+          (w.status === WORKFLOW_STATUS.MEDIATION_3 ||
+            w.status === WORKFLOW_STATUS.DISCIPLINARY_3)
+        )
+          return true
+        return false
+      })
+
+      setWorkflowTasks(activeWf)
     } catch (error) {
       console.error(error)
     } finally {
@@ -66,11 +104,49 @@ export default function AnalystDashboard() {
         </p>
       </div>
 
-      <Tabs defaultValue="tasks" className="w-full">
+      <Tabs defaultValue="workflow" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="tasks">Tarefas e Controles</TabsTrigger>
-          <TabsTrigger value="investigations">Investigações</TabsTrigger>
+          <TabsTrigger value="workflow">Workflow de Denúncias</TabsTrigger>
+          <TabsTrigger value="tasks">Tarefas Gerais</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="workflow" className="mt-6 space-y-4">
+          {workflowTasks.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+              <GitPullRequest className="h-10 w-10 mx-auto mb-2 opacity-50" />
+              <p>Nenhuma etapa de workflow pendente.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {workflowTasks.map((w) => (
+                <Card
+                  key={w.id}
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() =>
+                    navigate(`/compliance/analyst/workflow/${w.id}`)
+                  }
+                >
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-base font-medium">
+                      {w.protocolo}
+                    </CardTitle>
+                    <Badge variant="secondary">{w.status}</Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {w.descricao}
+                    </p>
+                    <div className="mt-3 flex items-center justify-end">
+                      <Button size="sm" className="gap-2">
+                        Abrir Tarefa <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="tasks" className="mt-6 space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -122,51 +198,6 @@ export default function AnalystDashboard() {
               <div className="col-span-full text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
                 <FileCheck className="h-10 w-10 mx-auto mb-2 opacity-50" />
                 <p>Nenhuma tarefa atribuída no momento.</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="investigations" className="mt-6 space-y-4">
-          <div className="grid gap-4">
-            {investigations.map((inv) => (
-              <Card
-                key={inv.id}
-                className="hover:bg-muted/50 cursor-pointer transition-colors"
-                onClick={() =>
-                  navigate(`/compliance/analyst/investigation/${inv.id}`)
-                }
-              >
-                <div className="flex flex-col md:flex-row items-start md:items-center p-6 gap-4">
-                  <div className="bg-red-100 p-3 rounded-full">
-                    <AlertTriangle className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">
-                        Protocolo: {inv.denuncias?.protocolo}
-                      </h3>
-                      <Badge variant="outline">
-                        {inv.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Escola: {inv.escolas_instituicoes?.nome_escola}
-                    </p>
-                    <p className="text-sm">
-                      {inv.denuncias?.descricao.substring(0, 100)}...
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="icon">
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-            {investigations.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
-                <AlertTriangle className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p>Nenhuma investigação em andamento.</p>
               </div>
             )}
           </div>

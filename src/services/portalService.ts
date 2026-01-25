@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 import { School } from '@/lib/mockData'
+import { WORKFLOW_STATUS } from './workflowService'
 
 export interface DocumentRecord {
   id: string
@@ -109,7 +110,6 @@ export const portalService = {
     const urls: string[] = []
 
     for (const file of files) {
-      // Sanitize filename to avoid issues
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
       const filePath = `${fileName}`
@@ -135,10 +135,11 @@ export const portalService = {
 
   async createComplaint(data: ComplaintData) {
     const protocol = generateProtocol()
-
-    // Enforce logic: if anonymous is true, denunciante_id must be null
     const finalAnonimo = data.anonimo
     const finalDenuncianteId = data.anonimo ? null : data.denunciante_id
+
+    // Use the WORKFLOW_STATUS.REGISTERED ('Denúncia registrada')
+    const initialStatus = WORKFLOW_STATUS.REGISTERED
 
     const { data: result, error } = await supabase
       .from('denuncias')
@@ -149,8 +150,8 @@ export const portalService = {
         anonimo: finalAnonimo,
         denunciante_id: finalDenuncianteId,
         categoria: data.categoria,
-        status: 'pendente',
-        envolvidos_detalhes: data.envolvidos_detalhes as any, // Cast to any to match Json type
+        status: initialStatus,
+        envolvidos_detalhes: data.envolvidos_detalhes as any,
         evidencias_urls: data.evidencias_urls,
       })
       .select()
