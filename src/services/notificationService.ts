@@ -186,4 +186,64 @@ export const notificationService = {
       return []
     }
   },
+
+  async getNotifications(): Promise<Notification[]> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return []
+
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching notifications:', error)
+      return []
+    }
+
+    return (data || []).map((n) => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      type: (n.type as Notification['type']) || 'info',
+      created_at: n.created_at || new Date().toISOString(),
+      read: n.read || false,
+      link: n.link || undefined,
+    }))
+  },
+
+  async markAsRead(id: string) {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', id)
+
+    if (error) throw error
+  },
+
+  async markAllAsRead() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', user.id)
+      .eq('read', false)
+
+    if (error) throw error
+  },
+
+  async deleteNotification(id: string) {
+    const { error } = await supabase.from('notifications').delete().eq('id', id)
+
+    if (error) throw error
+  },
 }
