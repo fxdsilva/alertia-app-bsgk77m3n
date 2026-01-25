@@ -17,6 +17,7 @@ import ComplaintRegistration from '@/pages/public/ComplaintRegistration'
 import ComplaintStatus from '@/pages/public/ComplaintStatus'
 
 import Training from '@/pages/collaborator/Training'
+import TrainingList from '@/pages/collaborator/TrainingList'
 import InternalContent from '@/pages/collaborator/InternalContent'
 
 import RiskDashboard from '@/pages/manager/RiskDashboard'
@@ -137,6 +138,10 @@ const App = () => (
 
             {/* Collaborator Pages */}
             <Route path="/collaborator/training" element={<Training />} />
+            <Route
+              path="/collaborator/training/public-list"
+              element={<TrainingList />}
+            />
             <Route path="/collaborator/content" element={<InternalContent />} />
             <Route
               path="/collaborator/complaints"
