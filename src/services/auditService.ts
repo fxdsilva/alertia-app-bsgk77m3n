@@ -1,5 +1,15 @@
 import { supabase } from '@/lib/supabase/client'
 
+export interface LogEntry {
+  id: string
+  created_at: string
+  user_id: string | null
+  action_type: string
+  description: string | null
+  table_affected: string | null
+  metadata: any
+}
+
 export const auditService = {
   async logAction(
     action: string,
@@ -16,8 +26,8 @@ export const auditService = {
         user_id: session?.user?.id || null,
         action_type: action,
         description: description,
-        table_name: tableName || null,
-        details: metadata || null,
+        table_affected: tableName || null,
+        metadata: metadata || null,
       })
 
       if (error) {
@@ -35,7 +45,7 @@ export const auditService = {
   }) {
     let query = supabase
       .from('logs_sistema')
-      .select('*, user:user_id(email)')
+      .select('*')
       .order('created_at', { ascending: false })
 
     if (filters?.actionType) {
@@ -44,12 +54,12 @@ export const auditService = {
     if (filters?.userId) {
       query = query.eq('user_id', filters.userId)
     }
-    if (filters?.limit) {
-      query = query.limit(filters.limit)
-    }
+
+    // Default limit to 100 if not specified to prevent overloading
+    query = query.limit(filters?.limit || 100)
 
     const { data, error } = await query
     if (error) throw error
-    return data
+    return data as LogEntry[]
   },
 }

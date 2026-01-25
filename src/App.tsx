@@ -29,6 +29,7 @@ import AIReports from '@/pages/senior/AIReports'
 import SchoolManagement from '@/pages/senior/SchoolManagement'
 import SeniorDashboard from '@/pages/senior/SeniorDashboard'
 import SeniorUserManagement from '@/pages/senior/UserManagement'
+import AuditLogs from '@/pages/senior/AuditLogs'
 
 import InternalInvestigations from '@/pages/InternalInvestigations'
 import ReportGeneration from '@/pages/ReportGeneration'
@@ -145,6 +146,7 @@ const App = () => (
             />
             <Route path="/senior/ai-reports" element={<AIReports />} />
             <Route path="/senior/schools" element={<SchoolManagement />} />
+            <Route path="/senior/audit-logs" element={<AuditLogs />} />
 
             {/* Shared Pages */}
             <Route
