@@ -17,6 +17,12 @@ export type Profile =
   | 'administrador'
   | 'admin_gestor'
   | 'senior'
+  | 'professor'
+  | 'DIRETOR_COMPLIANCE'
+  | 'ANALISTA_COMPLIANCE'
+  | 'operacional'
+  | 'SECRETARIA DE EDUCAÇÃO'
+  | 'gestao_escola'
   | null
 
 export interface AppContextType {
@@ -33,6 +39,7 @@ export interface AppContextType {
   signOut: () => Promise<void>
   logout: () => Promise<void> // Alias for signOut
   clearSchool: () => void
+  hasAccess: (moduleKey: string) => boolean
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -150,6 +157,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setSelectedSchool(null)
   }
 
+  const hasAccess = (moduleKey: string) => {
+    // Basic implementation - expand based on RBAC requirements
+    return true
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -163,6 +175,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         signOut,
         logout: signOut,
         clearSchool,
+        hasAccess,
       }}
     >
       {children}

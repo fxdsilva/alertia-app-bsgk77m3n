@@ -12,12 +12,15 @@ import {
   Scale,
   SearchCheck,
   BrainCircuit,
-  MessageSquare,
   LifeBuoy,
   Menu,
   GraduationCap,
   Calendar,
   Gavel,
+  Home,
+  Share2,
+  MessageSquare,
+  Info,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -42,13 +45,7 @@ const Layout = () => {
       '/admin/auth',
       '/auth/forgot-password',
       '/auth/reset-password',
-      '/home',
-      '/about',
-      '/support',
-    ].includes(location.pathname) ||
-    location.pathname.startsWith('/public') ||
-    location.pathname === '/share' ||
-    location.pathname === '/messages'
+    ].includes(location.pathname) || location.pathname.startsWith('/public')
 
   if (isPublicRoute) {
     return <Outlet />
@@ -263,14 +260,29 @@ const Layout = () => {
         {/* PROFESSOR */}
         {profile === 'professor' && (
           <>
-            <NavLink to="/dashboard-professor" icon={LayoutGrid}>
-              Minha Área
-            </NavLink>
-            <NavLink to="/professor/agenda" icon={Calendar}>
-              Agenda
-            </NavLink>
+            <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
+              Módulos
+            </div>
             <NavLink to="/professor/trainings" icon={GraduationCap}>
               Treinamentos
+            </NavLink>
+            <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
+              Menu Principal
+            </div>
+            <NavLink to="/dashboard-professor" icon={Home}>
+              Início
+            </NavLink>
+            <NavLink to="/share" icon={Share2}>
+              Compartilhar App
+            </NavLink>
+            <NavLink to="/messages" icon={MessageSquare}>
+              Mensagens
+            </NavLink>
+            <NavLink to="/support" icon={LifeBuoy}>
+              Suporte
+            </NavLink>
+            <NavLink to="/about" icon={Info}>
+              Sobre
             </NavLink>
           </>
         )}
@@ -296,12 +308,14 @@ const Layout = () => {
           </>
         )}
 
-        {/* Common Links */}
-        <div className="pt-4 mt-4 border-t border-sidebar-border">
-          <NavLink to="/support" icon={LifeBuoy}>
-            Suporte
-          </NavLink>
-        </div>
+        {/* Common Links - Excluded for Professor as they have their own menu items */}
+        {profile !== 'professor' && (
+          <div className="pt-4 mt-4 border-t border-sidebar-border">
+            <NavLink to="/support" icon={LifeBuoy}>
+              Suporte
+            </NavLink>
+          </div>
+        )}
       </div>
 
       <div className="mt-auto pt-4 border-t border-sidebar-border">

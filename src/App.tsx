@@ -57,6 +57,16 @@ import TaskDetails from '@/pages/compliance/analyst/TaskDetails'
 import DirectorDashboard from '@/pages/compliance/DirectorDashboard'
 import AnalystManagement from '@/pages/compliance/director/AnalystManagement'
 
+// Professor Pages
+import DashboardProfessor from '@/pages/professor/DashboardProfessor'
+import Agenda from '@/pages/professor/Agenda'
+import Library from '@/pages/professor/Library'
+import {
+  ProfessorShare,
+  ProfessorMessages,
+  ProfessorAbout,
+} from '@/pages/professor/Placeholders'
+
 const App = () => (
   <AppProvider>
     <BrowserRouter
@@ -147,6 +157,18 @@ const App = () => (
               path="/collaborator/complaints"
               element={<Navigate to="/collaborator/training" replace />}
             />
+
+            {/* Professor Pages */}
+            <Route
+              path="/dashboard-professor"
+              element={<DashboardProfessor />}
+            />
+            <Route path="/professor/agenda" element={<Agenda />} />
+            <Route path="/professor/library" element={<Library />} />
+            <Route path="/professor/trainings" element={<Training />} />
+            <Route path="/share" element={<ProfessorShare />} />
+            <Route path="/messages" element={<ProfessorMessages />} />
+            <Route path="/about" element={<ProfessorAbout />} />
 
             {/* Manager Pages */}
             <Route path="/manager/risks" element={<RiskDashboard />} />

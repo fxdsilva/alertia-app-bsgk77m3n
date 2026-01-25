@@ -55,6 +55,8 @@ export default function Login() {
         navigate('/admin/dashboard')
       } else if (profile === 'colaborador') {
         navigate('/collaborator/training')
+      } else if (profile === 'professor') {
+        navigate('/dashboard-professor')
       } else if (profile === 'gestor') {
         navigate('/manager/risks')
       } else {

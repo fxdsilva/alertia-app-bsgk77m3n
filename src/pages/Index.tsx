@@ -29,6 +29,8 @@ const Index = () => {
         navigate('/manager/risks')
       } else if (profile === 'colaborador') {
         navigate('/collaborator/training')
+      } else if (profile === 'professor') {
+        navigate('/dashboard-professor')
       } else if (profile === 'DIRETOR_COMPLIANCE') {
         navigate('/compliance/director/dashboard')
       } else if (profile === 'ANALISTA_COMPLIANCE') {
