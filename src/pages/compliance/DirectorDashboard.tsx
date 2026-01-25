@@ -1,16 +1,36 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   ClipboardList,
   UserCog,
   Loader2,
-  TrendingUp,
   Activity,
   AlertCircle,
+  AlertTriangle,
+  FileCheck,
+  ChevronRight,
+  ShieldAlert,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { complianceService } from '@/services/complianceService'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export default function DirectorDashboard() {
   const navigate = useNavigate()
@@ -19,21 +39,30 @@ export default function DirectorDashboard() {
     totalTasks: 0,
     pendingTasks: 0,
     completedTasks: 0,
+    activeComplaints: 0,
   })
+  const [recentAudits, setRecentAudits] = useState<any[]>([])
 
   useEffect(() => {
-    fetchStats()
+    fetchDashboardData()
   }, [])
 
-  const fetchStats = async () => {
+  const fetchDashboardData = async () => {
     setLoading(true)
     try {
-      const tasks = await complianceService.getTasks()
+      const [tasks, activeComplaintsCount, audits] = await Promise.all([
+        complianceService.getTasks(),
+        complianceService.getActiveComplaintsCount(),
+        complianceService.getRecentAudits(),
+      ])
+
       setStats({
         totalTasks: tasks.length,
         pendingTasks: tasks.filter((t) => t.status === 'pendente').length,
         completedTasks: tasks.filter((t) => t.status === 'concluido').length,
+        activeComplaints: activeComplaintsCount,
       })
+      setRecentAudits(audits || [])
     } catch (error) {
       console.error(error)
     } finally {
@@ -60,30 +89,58 @@ export default function DirectorDashboard() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Active Complaints Card */}
         <Card
-          className="cursor-pointer hover:shadow-ios-deep transition-all group"
-          onClick={() => navigate('/compliance/director/tasks')}
+          className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-red-500"
+          onClick={() => navigate('/compliance/director/complaints')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Tarefas Atribuídas
+              Denúncias Ativas
             </CardTitle>
-            <ClipboardList className="h-4 w-4 text-purple-600" />
+            <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTasks}</div>
+            <div className="text-2xl font-bold text-red-700">
+              {stats.activeComplaints}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {stats.pendingTasks} pendentes
+              Ocorrências em andamento
             </p>
-            <div className="mt-4 flex items-center text-sm text-purple-600 font-medium group-hover:translate-x-1 transition-transform">
-              Gerenciar Distribuição &rarr;
+            <div className="mt-4 flex items-center text-sm text-red-600 font-medium group-hover:translate-x-1 transition-transform">
+              Ver Triagem &rarr;
             </div>
           </CardContent>
         </Card>
 
+        {/* Pending Tasks Card */}
         <Card
-          className="cursor-pointer hover:shadow-ios-deep transition-all group"
+          className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-purple-500"
+          onClick={() => navigate('/compliance/director/tasks')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Tarefas Pendentes
+            </CardTitle>
+            <ClipboardList className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-700">
+              {stats.pendingTasks}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              De {stats.totalTasks} tarefas totais
+            </p>
+            <div className="mt-4 flex items-center text-sm text-purple-600 font-medium group-hover:translate-x-1 transition-transform">
+              Gerenciar &rarr;
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Analysts Card */}
+        <Card
+          className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-blue-500"
           onClick={() => navigate('/compliance/director/analysts')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -99,29 +156,101 @@ export default function DirectorDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-50 border-purple-100">
+        {/* Efficiency Card */}
+        <Card className="bg-slate-50 border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-900">
-              Taxa de Conclusão
+            <CardTitle className="text-sm font-medium text-slate-900">
+              Taxa de Resolução
             </CardTitle>
-            <Activity className="h-4 w-4 text-purple-600" />
+            <Activity className="h-4 w-4 text-slate-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-700">
+            <div className="text-2xl font-bold text-slate-700">
               {stats.totalTasks > 0
                 ? Math.round((stats.completedTasks / stats.totalTasks) * 100)
                 : 0}
               %
             </div>
-            <p className="text-xs text-purple-600/80 mt-1">
-              Eficiência da equipe
-            </p>
+            <p className="text-xs text-slate-600/80 mt-1">Eficiência geral</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Recent Audits Table */}
+        <Card className="col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Últimas Auditorias</CardTitle>
+              <CardDescription>
+                Monitoramento recente de conformidade institucional.
+              </CardDescription>
+            </div>
+            <FileCheck className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {recentAudits.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <ShieldAlert className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                <p>Nenhuma auditoria recente encontrada.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Instituição</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Pendências</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentAudits.map((audit) => (
+                    <TableRow key={audit.id}>
+                      <TableCell className="font-medium">
+                        {format(new Date(audit.data_auditoria), 'dd/MM/yyyy', {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        {audit.escolas_instituicoes?.nome_escola || 'N/A'}
+                      </TableCell>
+                      <TableCell>{audit.tipo}</TableCell>
+                      <TableCell>{audit.responsavel}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            audit.status_auditoria?.nome_status === 'Concluída'
+                              ? 'bg-green-50 text-green-700 border-green-200'
+                              : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                          }
+                        >
+                          {audit.status_auditoria?.nome_status || audit.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {audit.pendencias > 0 ? (
+                          <span className="text-red-600 font-bold">
+                            {audit.pendencias}
+                          </span>
+                        ) : (
+                          <span className="text-green-600 font-medium">OK</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {stats.pendingTasks > 0 && (
-        <div className="rounded-xl bg-orange-50 border border-orange-100 p-4 flex items-center gap-4">
+        <div className="rounded-xl bg-orange-50 border border-orange-100 p-4 flex items-center gap-4 animate-fade-in-up">
           <div className="p-2 bg-orange-100 rounded-lg">
             <AlertCircle className="h-6 w-6 text-orange-600" />
           </div>

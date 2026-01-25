@@ -39,6 +39,9 @@ export interface ComplianceTask {
     commitment_term: boolean
     consolidated_report: boolean
   }
+  escolas_instituicoes?: {
+    nome_escola: string
+  }
 }
 
 export interface TaskEvidence {
@@ -474,7 +477,7 @@ export const complianceService = {
     let query = supabase
       .from('compliance_tasks')
       .select(
-        '*, analyst:analista_id(nome_usuario, email), secondary_analyst:secondary_analyst_id(nome_usuario, email), school:escola_id(nome_escola)',
+        '*, analyst:analista_id(nome_usuario, email), secondary_analyst:secondary_analyst_id(nome_usuario, email), schools_instituicoes:escola_id(nome_escola), escolas_instituicoes(nome_escola)',
       )
       .order('created_at', { ascending: false })
     if (filters?.directorId) query = query.eq('diretor_id', filters.directorId)
@@ -485,6 +488,109 @@ export const complianceService = {
     const { data, error } = await query
     if (error) throw error
     return data as ComplianceTask[]
+  },
+
+  async getAnalystTasks(analystId: string) {
+    const { data, error } = await supabase
+      .from('compliance_tasks')
+      .select(
+        '*, escolas_instituicoes(nome_escola), analyst:analista_id(nome_usuario)',
+      )
+      .or(`analista_id.eq.${analystId},secondary_analyst_id.eq.${analystId}`)
+      .neq('status', 'concluido')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  async getAnalystInvestigations(analystId: string) {
+    const { data, error } = await supabase
+      .from('investigacoes')
+      .select(
+        '*, escolas_instituicoes(nome_escola), denuncias(protocolo, descricao)',
+      )
+      .eq('analista_id', analystId)
+      .neq('status', 'concluido')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  async getInvestigation(id: string) {
+    const { data, error } = await supabase
+      .from('investigacoes')
+      .select(
+        '*, escolas_instituicoes(nome_escola), denuncias(protocolo, descricao)',
+      )
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async updateInvestigation(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('investigacoes')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async updateTaskStatus(id: string, status: string) {
+    const { error } = await supabase
+      .from('compliance_tasks')
+      .update({ status })
+      .eq('id', id)
+
+    if (error) throw error
+  },
+
+  async getTask(id: string) {
+    const { data, error } = await supabase
+      .from('compliance_tasks')
+      .select('*, escolas_instituicoes(nome_escola)')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+    return data as ComplianceTask
+  },
+
+  async uploadConsolidatedReport(schoolId: string, file: File, year: number) {
+    // 1. Upload file
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${schoolId}/${year}_consolidated_${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('documentos-institucionais')
+      .upload(fileName, file)
+
+    if (uploadError) throw uploadError
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage
+      .from('documentos-institucionais')
+      .getPublicUrl(fileName)
+
+    // 2. Insert DB record
+    const { error: dbError } = await supabase
+      .from('relatorios_consolidados')
+      .upsert({
+        escola_id: schoolId,
+        ano: year,
+        arquivo_url: publicUrl,
+      })
+
+    if (dbError) throw dbError
+    return publicUrl
   },
 
   async getSchoolManagers(schoolId: string) {
@@ -512,5 +618,41 @@ export const complianceService = {
       .limit(1)
 
     return !!data && data.length > 0
+  },
+
+  // --- DASHBOARD STATISTICS METHODS ---
+
+  async getActiveComplaintsCount() {
+    // Get complaints that are NOT 'resolvido' or 'arquivado' (assuming these are final statuses)
+    // Since status might be a FK to status_denuncia, we'll assume string based on usage in other files
+    // or we check the status_denuncia names if needed.
+    // Based on previous code, status is treated as a string value in 'denuncias' table result
+    // (likely due to Supabase returning joined value or denormalized, but schema says FK)
+    // Safest bet is to filter by exclusion if status is text, or fetch all and filter in memory if volume low.
+    // Let's assume 'status' column in 'denuncias' is textual based on existing code usage.
+    const { count, error } = await supabase
+      .from('denuncias')
+      .select('*', { count: 'exact', head: true })
+      .not('status', 'in', '("resolvido","arquivado","concluido")')
+
+    if (error) {
+      console.error('Error fetching active complaints count', error)
+      return 0
+    }
+    return count || 0
+  },
+
+  async getRecentAudits() {
+    // Fetch latest audits from 'auditorias' table
+    const { data, error } = await supabase
+      .from('auditorias')
+      .select(
+        '*, escolas_instituicoes(nome_escola), status_auditoria(nome_status)',
+      )
+      .order('data_auditoria', { ascending: false })
+      .limit(5)
+
+    if (error) throw error
+    return data
   },
 }
