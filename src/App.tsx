@@ -58,6 +58,9 @@ import TaskDetails from '@/pages/compliance/analyst/TaskDetails'
 import DirectorDashboard from '@/pages/compliance/DirectorDashboard'
 import AnalystManagement from '@/pages/compliance/director/AnalystManagement'
 
+// Secretary Page
+import SecretaryDashboard from '@/pages/secretary/SecretaryDashboard'
+
 // Professor Pages
 import DashboardProfessor from '@/pages/professor/DashboardProfessor'
 import Agenda from '@/pages/professor/Agenda'
@@ -101,6 +104,12 @@ const App = () => (
             <Route
               path="/school-management/dashboard"
               element={<StrategicDashboard />}
+            />
+
+            {/* Secretary Route */}
+            <Route
+              path="/secretary/dashboard"
+              element={<SecretaryDashboard />}
             />
 
             {/* Compliance Director Routes */}
