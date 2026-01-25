@@ -32,7 +32,16 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, UserCheck, Loader2, ArrowRight } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import {
+  AlertCircle,
+  UserCheck,
+  Loader2,
+  ArrowRight,
+  Eye,
+  Lock,
+  Unlock,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { complianceService } from '@/services/complianceService'
 import { SchoolUser } from '@/services/schoolAdminService'
@@ -45,6 +54,10 @@ export default function ComplaintTriage() {
   const [selectedAnalyst, setSelectedAnalyst] = useState<string>('')
   const [assignOpen, setAssignOpen] = useState(false)
   const [assigning, setAssigning] = useState(false)
+
+  // Details Modal
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [accessToggleLoading, setAccessToggleLoading] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -73,6 +86,11 @@ export default function ComplaintTriage() {
     setAssignOpen(true)
   }
 
+  const handleOpenDetails = (complaint: any) => {
+    setSelectedComplaint(complaint)
+    setDetailsOpen(true)
+  }
+
   const handleAssign = async () => {
     if (!selectedComplaint || !selectedAnalyst) return
     setAssigning(true)
@@ -82,13 +100,39 @@ export default function ComplaintTriage() {
         selectedAnalyst,
         selectedComplaint.escola_id,
       )
-      toast.success('Investigador designado com sucesso')
+      toast.success('Analista designado para apuração com sucesso')
       setAssignOpen(false)
       fetchData()
     } catch (error) {
       toast.error('Erro ao designar investigador')
     } finally {
       setAssigning(false)
+    }
+  }
+
+  const handleToggleAccess = async (allowed: boolean) => {
+    if (!selectedComplaint) return
+    setAccessToggleLoading(true)
+    try {
+      await complianceService.toggleSchoolAccess(selectedComplaint.id, allowed)
+      setSelectedComplaint({ ...selectedComplaint, autorizado_gestao: allowed })
+      // Update list state locally
+      setComplaints((prev) =>
+        prev.map((c) =>
+          c.id === selectedComplaint.id
+            ? { ...c, autorizado_gestao: allowed }
+            : c,
+        ),
+      )
+      toast.success(
+        allowed
+          ? 'Acesso liberado para gestão escolar'
+          : 'Acesso revogado da gestão escolar',
+      )
+    } catch (error) {
+      toast.error('Erro ao alterar permissão')
+    } finally {
+      setAccessToggleLoading(false)
     }
   }
 
@@ -99,15 +143,16 @@ export default function ComplaintTriage() {
           Triagem de Denúncias
         </h1>
         <p className="text-muted-foreground">
-          Gerencie e designe investigadores para denúncias recebidas.
+          Gestão centralizada de novas denúncias e designação de apuração.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Denúncias Pendentes</CardTitle>
+          <CardTitle>Entrada de Denúncias</CardTitle>
           <CardDescription>
-            Aguardando análise e designação de responsável.
+            Todas as novas denúncias aparecem automaticamente aqui para análise
+            preliminar.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -118,7 +163,7 @@ export default function ComplaintTriage() {
           ) : complaints.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
               <AlertCircle className="h-10 w-10 mb-2 opacity-50" />
-              <p>Nenhuma denúncia pendente no momento.</p>
+              <p>Nenhuma denúncia pendente de triagem.</p>
             </div>
           ) : (
             <Table>
@@ -128,7 +173,7 @@ export default function ComplaintTriage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Escola</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Descrição Resumida</TableHead>
+                  <TableHead>Confidencialidade</TableHead>
                   <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -147,16 +192,40 @@ export default function ComplaintTriage() {
                         {c.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-[300px] truncate">
-                      {c.descricao}
+                    <TableCell>
+                      {c.autorizado_gestao ? (
+                        <div className="flex items-center text-green-600 gap-1 text-xs font-medium">
+                          <Unlock className="h-3 w-3" />
+                          Visível p/ Gestão
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-red-600 gap-1 text-xs font-medium">
+                          <Lock className="h-3 w-3" />
+                          Sigiloso
+                        </div>
+                      )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenDetails(c)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         className="gap-2"
                         onClick={() => handleOpenAssign(c)}
+                        disabled={!!c.analista_id}
                       >
-                        Designar <ArrowRight className="h-4 w-4" />
+                        {c.analista_id ? (
+                          'Designado'
+                        ) : (
+                          <>
+                            Designar <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -167,18 +236,19 @@ export default function ComplaintTriage() {
         </CardContent>
       </Card>
 
+      {/* Assignment Dialog */}
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Designar Investigador</DialogTitle>
+            <DialogTitle>Designar Analista para Apuração</DialogTitle>
             <DialogDescription>
-              Selecione um analista de compliance para conduzir a investigação
+              Selecione o profissional responsável por conduzir a investigação
               do protocolo {selectedComplaint?.protocolo}.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div className="space-y-2">
-              <Label>Analista Responsável</Label>
+              <Label>Analista de Compliance</Label>
               <Select
                 value={selectedAnalyst}
                 onValueChange={setSelectedAnalyst}
@@ -195,6 +265,12 @@ export default function ComplaintTriage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="bg-blue-50 p-3 rounded-md text-xs text-blue-700">
+              <p>
+                Ao designar, o status mudará automaticamente para "Em Análise" e
+                o analista receberá acesso completo aos dados.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setAssignOpen(false)}>
@@ -210,6 +286,67 @@ export default function ComplaintTriage() {
                 <UserCheck className="h-4 w-4 mr-2" />
               )}
               Confirmar Designação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Details & Permission Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Denúncia</DialogTitle>
+            <DialogDescription>
+              Protocolo: {selectedComplaint?.protocolo}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedComplaint && (
+            <div className="space-y-6 py-2">
+              <div className="p-4 bg-muted/30 rounded-lg space-y-2 border">
+                <h4 className="font-semibold text-sm">Relato Original</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {selectedComplaint.descricao}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-base font-semibold">
+                      Compartilhar com Gestão Escolar
+                    </Label>
+                    {selectedComplaint.autorizado_gestao ? (
+                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                        Autorizado
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="text-muted-foreground"
+                      >
+                        Restrito
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground max-w-[350px]">
+                    Habilitar permite que o diretor da escola visualize o
+                    conteúdo desta denúncia. Mantenha desativado para garantir
+                    sigilo total.
+                  </p>
+                </div>
+                <Switch
+                  checked={selectedComplaint.autorizado_gestao || false}
+                  onCheckedChange={handleToggleAccess}
+                  disabled={accessToggleLoading}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setDetailsOpen(false)}>
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>

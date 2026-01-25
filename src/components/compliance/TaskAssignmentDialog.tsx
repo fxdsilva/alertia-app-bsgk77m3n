@@ -37,6 +37,7 @@ import { complianceService } from '@/services/complianceService'
 import { adminService } from '@/services/adminService'
 import { SchoolUser } from '@/services/schoolAdminService'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import useAppStore from '@/stores/useAppStore'
 
 const taskSchema = z.object({
   analista_id: z.string().min(1, 'Selecione um analista'),
@@ -45,6 +46,9 @@ const taskSchema = z.object({
   descricao: z.string().min(10, 'A descrição deve ter no mínimo 10 caracteres'),
   prazo: z.string().min(1, 'Defina um prazo'),
   institutional_docs_auth: z.boolean().default(false),
+  doc_permissions_code: z.boolean().default(false),
+  doc_permissions_commitment: z.boolean().default(false),
+  doc_permissions_report: z.boolean().default(false),
   gestor_escolar_id: z.string().optional(),
   access_view_content: z.boolean().default(false),
   access_view_evidence: z.boolean().default(false),
@@ -62,6 +66,7 @@ export function TaskAssignmentDialog({
   onOpenChange,
   onTaskCreated,
 }: TaskAssignmentDialogProps) {
+  const { user } = useAppStore()
   const [analysts, setAnalysts] = useState<SchoolUser[]>([])
   const [schools, setSchools] = useState<any[]>([])
   const [managers, setManagers] = useState<SchoolUser[]>([])
@@ -72,6 +77,9 @@ export function TaskAssignmentDialog({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       institutional_docs_auth: false,
+      doc_permissions_code: false,
+      doc_permissions_commitment: false,
+      doc_permissions_report: false,
       access_view_content: false,
       access_view_evidence: false,
       access_track_status: false,
@@ -87,6 +95,9 @@ export function TaskAssignmentDialog({
       loadResources()
       form.reset({
         institutional_docs_auth: false,
+        doc_permissions_code: false,
+        doc_permissions_commitment: false,
+        doc_permissions_report: false,
         access_view_content: false,
         access_view_evidence: false,
         access_track_status: false,
@@ -107,6 +118,9 @@ export function TaskAssignmentDialog({
   useEffect(() => {
     if (selectedModule === 'documentacao') {
       form.setValue('institutional_docs_auth', true)
+      form.setValue('doc_permissions_code', true)
+      form.setValue('doc_permissions_commitment', true)
+      form.setValue('doc_permissions_report', true)
     }
   }, [selectedModule, form])
 
@@ -140,37 +154,36 @@ export function TaskAssignmentDialog({
   }
 
   const onSubmit = async (values: z.infer<typeof taskSchema>) => {
+    if (!user) return
+
     try {
       const payload: any = {
         analista_id: values.analista_id,
         escola_id: values.escola_id,
+        diretor_id: user.id,
         tipo_modulo: values.tipo_modulo,
         descricao: values.descricao,
         prazo: values.prazo,
+        status: 'pendente',
       }
 
       // Handle Institutional Docs Permission
-      if (values.tipo_modulo === 'documentacao') {
-        payload.institutional_docs_auth = {
-          include: true,
-          elaborate: true,
-          update: true,
-          consolidate: true,
-        }
-      } else {
-        payload.institutional_docs_auth = values.institutional_docs_auth
-          ? {
-              include: true,
-              elaborate: true,
-              update: true,
-              consolidate: true,
-            }
-          : {
-              include: false,
-              elaborate: false,
-              update: false,
-              consolidate: false,
-            }
+      payload.institutional_docs_auth = values.institutional_docs_auth
+
+      if (values.institutional_docs_auth) {
+        // We might store these specific permissions in a JSON field if DB supports it,
+        // or just rely on the boolean flag implying all for now, but user requested specificity.
+        // Assuming we store it in metadata or description for now if no dedicated column exists
+        // or just log it. In a real scenario, we'd add columns or a jsonb column.
+        // We will append to description for visibility if no column.
+        const permissions = []
+        if (values.doc_permissions_code) permissions.push('Código de Conduta')
+        if (values.doc_permissions_commitment)
+          permissions.push('Termo de Compromisso')
+        if (values.doc_permissions_report)
+          permissions.push('Relatório Consolidado')
+
+        payload.descricao += `\n\n[Permissões de Documentação]: ${permissions.join(', ')}`
       }
 
       // Handle School Manager Access
@@ -293,7 +306,7 @@ export function TaskAssignmentDialog({
                             value="documentacao"
                             className="font-semibold text-purple-700"
                           >
-                            ★ Gestão de Documentos (Código e Compromisso)
+                            ★ Gestão de Documentos Institucionais
                           </SelectItem>
                           <SelectItem value="compromisso">
                             Compromisso Alta Gestão
@@ -312,7 +325,7 @@ export function TaskAssignmentDialog({
                             Controles Internos
                           </SelectItem>
                           <SelectItem value="consolidacao">
-                            Consolidação & Relatórios
+                            Relatórios e Consolidação
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -343,9 +356,8 @@ export function TaskAssignmentDialog({
                     Acesso Total a Documentos
                   </AlertTitle>
                   <AlertDescription className="text-purple-700 text-xs">
-                    Ao selecionar este módulo, o analista receberá
-                    automaticamente permissões de edição e consolidação para o
-                    Código de Conduta e Termo de Compromisso desta escola.
+                    Ao selecionar este módulo, o analista receberá permissões
+                    para elaborar e consolidar os documentos institucionais.
                   </AlertDescription>
                 </Alert>
               )}
@@ -372,32 +384,88 @@ export function TaskAssignmentDialog({
               <div className="space-y-4 pt-2">
                 <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground/80 border-b pb-2">
                   <ShieldCheck className="h-4 w-4 text-purple-600" />
-                  Autorizações Especiais do Analista
+                  Autorização para Elaboração/Consolidação
                 </h3>
-                <FormField
-                  control={form.control}
-                  name="institutional_docs_auth"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-xl border p-4 bg-muted/20">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Gestão de Documentos Institucionais
-                        </FormLabel>
-                        <FormDescription>
-                          Permite ao analista incluir e consolidar Códigos de
-                          Conduta e Relatórios.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={selectedModule === 'documentacao'}
-                        />
-                      </FormControl>
-                    </FormItem>
+                <div className="bg-purple-50/50 rounded-xl p-4 border border-purple-100 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="institutional_docs_auth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base text-purple-900">
+                            Habilitar Edição de Documentos
+                          </FormLabel>
+                          <FormDescription>
+                            Autoriza atuação conjunta com a gestão escolar.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch('institutional_docs_auth') && (
+                    <div className="grid grid-cols-1 gap-2 pl-4 border-l-2 border-purple-200 animate-fade-in">
+                      <FormField
+                        control={form.control}
+                        name="doc_permissions_code"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Novo Código de Conduta
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="doc_permissions_commitment"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Novo Termo de Compromisso da Gestão
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="doc_permissions_report"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Novo Relatório Consolidado
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   )}
-                />
+                </div>
               </div>
 
               {/* Permission Section: School Management Access */}

@@ -40,6 +40,7 @@ import Reports from '@/pages/admin/Reports'
 
 // School Admin Pages
 import UserManagement from '@/pages/school-admin/UserManagement'
+import SchoolComplaints from '@/pages/school-admin/SchoolComplaints'
 
 // Compliance Pages
 import TaskDistribution from '@/pages/compliance/TaskDistribution'
@@ -73,6 +74,10 @@ const App = () => (
 
             {/* School Admin Routes */}
             <Route path="/school-admin/users" element={<UserManagement />} />
+            <Route
+              path="/school-admin/complaints"
+              element={<SchoolComplaints />}
+            />
 
             {/* Compliance Director Routes */}
             <Route
