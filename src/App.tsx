@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -145,7 +145,7 @@ const App = () => (
             <Route path="/collaborator/content" element={<InternalContent />} />
             <Route
               path="/collaborator/complaints"
-              element={<ComplaintStatus />}
+              element={<Navigate to="/collaborator/training" replace />}
             />
 
             {/* Manager Pages */}

@@ -284,9 +284,6 @@ const Layout = () => {
             <NavLink to="/collaborator/training/public-list" icon={LayoutGrid}>
               Catálogo
             </NavLink>
-            <NavLink to="/collaborator/complaints" icon={MessageSquare}>
-              Minhas Denúncias
-            </NavLink>
           </>
         )}
 
