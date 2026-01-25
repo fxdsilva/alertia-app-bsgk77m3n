@@ -24,7 +24,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Email inválido.' }),
@@ -90,47 +89,34 @@ export default function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-muted/40">
-      <Card className="w-full max-w-md shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] border-2 border-slate-200 dark:border-slate-800 bg-card z-10">
-        <CardHeader className="text-center space-y-3 pb-8">
-          <CardTitle className="text-3xl font-extrabold text-foreground tracking-tight drop-shadow-sm">
-            Login ALERTIA
-          </CardTitle>
-          <CardDescription className="text-base font-semibold text-muted-foreground">
+      <Card className="w-full max-w-md shadow-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Login ALERTIA</CardTitle>
+          <CardDescription>
             Acesse sua conta para gerenciar programas de integridade.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {error && (
-            <Alert
-              variant="destructive"
-              className="mb-6 text-left shadow-md border-2 border-destructive/20 bg-destructive/5"
-            >
-              <AlertCircle className="h-5 w-5" />
-              <AlertTitle className="ml-2 font-bold">Erro</AlertTitle>
-              <AlertDescription className="ml-2 font-medium">
-                {error}
-              </AlertDescription>
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground text-base font-bold">
-                      Email
-                    </FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="seu@email.com"
-                        {...field}
-                        className="h-14 text-lg border-2 border-slate-400 dark:border-slate-600 focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm hover:border-slate-500 rounded-lg"
-                      />
+                      <Input placeholder="seu@email.com" {...field} />
                     </FormControl>
-                    <FormMessage className="font-semibold" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -139,29 +125,18 @@ export default function Login() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground text-base font-bold">
-                      Senha
-                    </FormLabel>
+                    <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="******"
-                        {...field}
-                        className="h-14 text-lg border-2 border-slate-400 dark:border-slate-600 focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm hover:border-slate-500 rounded-lg"
-                      />
+                      <Input type="password" placeholder="******" {...field} />
                     </FormControl>
-                    <FormMessage className="font-semibold" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button
-                type="submit"
-                className="w-full h-14 text-xl font-extrabold shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 active:translate-y-0 hover:brightness-110 rounded-lg"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...
                   </>
                 ) : (
