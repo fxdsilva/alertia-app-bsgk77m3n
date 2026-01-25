@@ -34,6 +34,12 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { toast } from 'sonner'
 import {
   CheckCircle2,
@@ -48,10 +54,233 @@ import { portalService } from '@/services/portalService'
 import { School } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
 
+const OCCURRENCE_TYPES = [
+  {
+    id: 'violencia_alunos',
+    title: '1. Violência contra alunos',
+    items: [
+      {
+        id: 'Bullying',
+        title: 'Bullying',
+        description:
+          'Agressões verbais ou humilhações, exclusão social, apelidos pejorativos.',
+      },
+      {
+        id: 'Cyberbullying',
+        title: 'Cyberbullying',
+        description:
+          'Ataques em redes sociais, difamação online, exposição de intimidade.',
+      },
+      {
+        id: 'Violência Física',
+        title: 'Violência Física',
+        description: 'Agressão corporal, brigas, uso de força desproporcional.',
+      },
+      {
+        id: 'Violência Psicológica',
+        title: 'Violência Psicológica',
+        description: 'Ameaças, humilhações, intimidação sistemática.',
+      },
+    ],
+  },
+  {
+    id: 'assedio_abuso',
+    title: '2. Assédio e abuso',
+    items: [
+      {
+        id: 'Assédio moral',
+        title: 'Assédio moral',
+        description: 'Cobranças excessivas, exposição vexatória, perseguição.',
+      },
+      {
+        id: 'Assédio sexual',
+        title: 'Assédio sexual',
+        description:
+          'Investidas não consentidas, toques inapropriados, comentários de cunho sexual.',
+      },
+      {
+        id: 'Abuso psicológico',
+        title: 'Abuso psicológico',
+        description: 'Manipulação emocional, gaslighting, chantagem.',
+      },
+    ],
+  },
+  {
+    id: 'discriminacao_preconceito',
+    title: '3. Discriminação e preconceito',
+    items: [
+      {
+        id: 'Racismo',
+        title: 'Racismo',
+        description:
+          'Ofensas raciais, segregação, tratamento desigual por cor/etnia.',
+      },
+      {
+        id: 'Intolerância religiosa',
+        title: 'Intolerância religiosa',
+        description:
+          'Desrespeito a crenças, proibição de símbolos religiosos, ofensas.',
+      },
+      {
+        id: 'LGBTQIfobia',
+        title: 'LGBTQIfobia',
+        description:
+          'Discriminação por orientação sexual ou identidade de gênero.',
+      },
+      {
+        id: 'Capacitismo',
+        title: 'Capacitismo',
+        description:
+          'Discriminação contra pessoas com deficiência, falta de adaptação.',
+      },
+      {
+        id: 'Machismo',
+        title: 'Machismo',
+        description:
+          'Estereótipos sexistas, tratamento desigual baseado em gênero.',
+      },
+      {
+        id: 'Xenofobia',
+        title: 'Xenofobia',
+        description: 'Discriminação por origem geográfica ou nacionalidade.',
+      },
+    ],
+  },
+  {
+    id: 'violacao_direitos',
+    title: '4. Violação de direitos educacionais',
+    items: [
+      {
+        id: 'Negação de matrícula',
+        title: 'Negação de matrícula',
+        description: 'Recusa injustificada de vaga.',
+      },
+      {
+        id: 'Falta de acessibilidade',
+        title: 'Falta de acessibilidade',
+        description: 'Ausência de rampas, materiais adaptados ou intérpretes.',
+      },
+      {
+        id: 'Cobranças indevidas',
+        title: 'Cobranças indevidas',
+        description: 'Taxas não previstas em contrato, venda casada.',
+      },
+      {
+        id: 'Suspensão ou expulsão irregular',
+        title: 'Suspensão ou expulsão irregular',
+        description: 'Punições sem devido processo legal.',
+      },
+    ],
+  },
+  {
+    id: 'irregularidades_admin',
+    title: '5. Irregularidades administrativas e financeiras',
+    items: [
+      {
+        id: 'Desvio de verbas',
+        title: 'Desvio de verbas',
+        description: 'Uso indevido de recursos da escola.',
+      },
+      {
+        id: 'Fraude em documentos',
+        title: 'Fraude em documentos',
+        description: 'Falsificação de notas, históricos ou diários de classe.',
+      },
+      {
+        id: 'Corrupção',
+        title: 'Corrupção',
+        description: 'Solicitação ou recebimento de vantagens indevidas.',
+      },
+      {
+        id: 'Nepotismo',
+        title: 'Nepotismo',
+        description: 'Favorecimento de parentes em contratações.',
+      },
+    ],
+  },
+  {
+    id: 'violacao_etica',
+    title: '6. Violação ética e profissional',
+    items: [
+      {
+        id: 'Negligência pedagógica',
+        title: 'Negligência pedagógica',
+        description: 'Falta de planejamento, aulas não ministradas, omissão.',
+      },
+      {
+        id: 'Linguagem ofensiva ou imprópria',
+        title: 'Linguagem ofensiva ou imprópria',
+        description: 'Uso de palavrões, gritos com alunos ou colegas.',
+      },
+      {
+        id: 'Exposição indevida de alunos',
+        title: 'Exposição indevida de alunos',
+        description: 'Divulgação de imagem ou dados sem autorização.',
+      },
+      {
+        id: 'Falta de urbanidade',
+        title: 'Falta de urbanidade',
+        description: 'Desrespeito no trato com a comunidade escolar.',
+      },
+    ],
+  },
+  {
+    id: 'violencia_institucional',
+    title: '7. Violência Institucional',
+    items: [
+      {
+        id: 'Abuso de poder',
+        title: 'Abuso de poder',
+        description: 'Autoritarismo, decisões arbitrárias da gestão.',
+      },
+      {
+        id: 'Retaliação ao denunciante',
+        title: 'Retaliação ao denunciante',
+        description: 'Perseguição após reclamações ou denúncias.',
+      },
+      {
+        id: 'Omissão diante de conflitos',
+        title: 'Omissão diante de conflitos',
+        description: 'Ignorar casos de bullying ou violência reportados.',
+      },
+    ],
+  },
+  {
+    id: 'seguranca_integridade',
+    title: '8. Segurança e integridade física',
+    items: [
+      {
+        id: 'Falta de vigilância ou monitoramento',
+        title: 'Falta de vigilância ou monitoramento',
+        description: 'Áreas inseguras, entrada de estranhos.',
+      },
+      {
+        id: 'Riscos estruturais',
+        title: 'Riscos estruturais',
+        description:
+          'Prédio em más condições, fiação exposta, buracos na quadra.',
+      },
+      {
+        id: 'Venda ou uso de substâncias ilícitas',
+        title: 'Venda ou uso de substâncias ilícitas',
+        description: 'Drogas ou álcool no ambiente escolar.',
+      },
+      {
+        id: 'Porte de armas ou objetos perigosos',
+        title: 'Porte de armas ou objetos perigosos',
+        description: 'Armas de fogo, facas, objetos cortantes.',
+      },
+    ],
+  },
+]
+
 const complaintSchema = z.object({
   escola_id: z
     .string({ required_error: 'Selecione uma escola.' })
     .min(1, 'Selecione uma escola.'),
+  categories: z
+    .array(z.string())
+    .min(1, 'Selecione pelo menos um tipo de ocorrência.'),
   description: z
     .string()
     .min(10, { message: 'A descrição deve ter pelo menos 10 caracteres.' }),
@@ -72,6 +301,7 @@ export default function ComplaintRegistration() {
     resolver: zodResolver(complaintSchema),
     defaultValues: {
       escola_id: selectedSchool?.id || '',
+      categories: [],
       description: '',
       anonimo: true,
     },
@@ -116,6 +346,7 @@ export default function ComplaintRegistration() {
         descricao: data.description,
         anonimo: isAnonymous,
         denunciante_id: user?.id,
+        categoria: data.categories,
       })
 
       setProtocol(result.protocolo)
@@ -199,7 +430,7 @@ export default function ComplaintRegistration() {
         </CardHeader>
         <CardContent className="pt-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
                 name="escola_id"
@@ -279,6 +510,90 @@ export default function ComplaintRegistration() {
 
               <FormField
                 control={form.control}
+                name="categories"
+                render={() => (
+                  <FormItem>
+                    <div className="mb-4">
+                      <FormLabel className="text-base">
+                        Tipo de Ocorrência
+                      </FormLabel>
+                      <FormDescription>
+                        Selecione uma ou mais categorias que melhor descrevem o
+                        ocorrido.
+                      </FormDescription>
+                    </div>
+                    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-2">
+                      <Accordion
+                        type="multiple"
+                        className="w-full"
+                        defaultValue={['violencia_alunos']}
+                      >
+                        {OCCURRENCE_TYPES.map((type) => (
+                          <AccordionItem key={type.id} value={type.id}>
+                            <AccordionTrigger className="px-4 hover:no-underline hover:bg-muted/50 rounded-lg">
+                              <span className="font-semibold text-left">
+                                {type.title}
+                              </span>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 pb-2 pt-2">
+                              <div className="grid gap-4 mt-2">
+                                {type.items.map((item) => (
+                                  <FormField
+                                    key={item.id}
+                                    control={form.control}
+                                    name="categories"
+                                    render={({ field }) => {
+                                      return (
+                                        <FormItem
+                                          key={item.id}
+                                          className="flex flex-row items-start space-x-3 space-y-0"
+                                        >
+                                          <FormControl>
+                                            <Checkbox
+                                              checked={field.value?.includes(
+                                                item.id,
+                                              )}
+                                              onCheckedChange={(checked) => {
+                                                return checked
+                                                  ? field.onChange([
+                                                      ...field.value,
+                                                      item.id,
+                                                    ])
+                                                  : field.onChange(
+                                                      field.value?.filter(
+                                                        (value) =>
+                                                          value !== item.id,
+                                                      ),
+                                                    )
+                                              }}
+                                            />
+                                          </FormControl>
+                                          <div className="space-y-1 leading-none">
+                                            <FormLabel className="font-bold text-sm cursor-pointer">
+                                              {item.title}
+                                            </FormLabel>
+                                            <FormDescription className="text-xs">
+                                              {item.description}
+                                            </FormDescription>
+                                          </div>
+                                        </FormItem>
+                                      )
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
@@ -302,7 +617,7 @@ export default function ComplaintRegistration() {
                 control={form.control}
                 name="anonimo"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -326,7 +641,7 @@ export default function ComplaintRegistration() {
 
               <Button
                 type="submit"
-                className="w-full h-12 text-lg"
+                className="w-full h-12 text-lg shadow-lg"
                 disabled={loading}
               >
                 {loading ? 'Enviando...' : 'Enviar Denúncia'}

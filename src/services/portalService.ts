@@ -90,6 +90,7 @@ export const portalService = {
     descricao: string
     anonimo: boolean
     denunciante_id?: string
+    categoria?: string[]
   }) {
     const protocol = generateProtocol()
 
@@ -105,6 +106,7 @@ export const portalService = {
         descricao: data.descricao,
         anonimo: finalAnonimo,
         denunciante_id: finalDenuncianteId,
+        categoria: data.categoria,
         status: 'pendente',
       })
       .select()
