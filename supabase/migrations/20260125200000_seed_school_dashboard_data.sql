@@ -48,10 +48,11 @@ BEGIN
     (v_escola_id, 'Segurança de Dados', 'LGPD na escola', true, false, NOW(), NOW() + INTERVAL '60 days');
 
     -- 5. Auditorias
+    -- Uses slugs 'concluida', 'agendada' to match status_auditoria table constraints
     INSERT INTO auditorias (escola_id, data_auditoria, tipo, responsavel, status, pendencias)
     VALUES 
-    (v_escola_id, NOW() - INTERVAL '1 month', 'Interna', 'Auditoria Central', 'Concluída', 0),
-    (v_escola_id, NOW() + INTERVAL '1 month', 'Externa', 'MEC', 'Agendada', 0);
+    (v_escola_id, NOW() - INTERVAL '1 month', 'Interna', 'Auditoria Central', 'concluida', 0),
+    (v_escola_id, NOW() + INTERVAL '1 month', 'Externa', 'MEC', 'agendada', 0);
 
     -- 6. Matriz de Riscos
     INSERT INTO matriz_riscos (escola_id, risco, probabilidade, impacto, nivel_risco_calculado)
@@ -60,19 +61,22 @@ BEGIN
     (v_escola_id, 'Falha na Segurança', 'Média', 'Alto', 'Alto');
 
     -- 7. Mediações
+    -- Uses slug 'em_andamento'
     INSERT INTO mediacoes (escola_id, caso, partes_envolvidas, status, data_inicio)
     VALUES 
-    (v_escola_id, 'Conflito entre alunos', 'Aluno A e Aluno B', 'Em Andamento', NOW());
+    (v_escola_id, 'Conflito entre alunos', 'Aluno A e Aluno B', 'em_andamento', NOW());
 
     -- 8. Due Diligence
+    -- Uses slug 'em_analise'
     INSERT INTO due_diligence (escola_id, fornecedor, status, nivel_risco)
     VALUES 
-    (v_escola_id, 'Fornecedor de Alimentos Ltda', 'Em Análise', 'Médio');
+    (v_escola_id, 'Fornecedor de Alimentos Ltda', 'em_analise', 'Médio');
 
     -- 9. Processos Disciplinares
+    -- Uses slug 'aberto'
     INSERT INTO processos_disciplinares (escola_id, titulo, status, created_at)
     VALUES 
-    (v_escola_id, 'Indisciplina recorrente', 'Aberto', NOW());
+    (v_escola_id, 'Indisciplina recorrente', 'aberto', NOW());
 
     -- 10. Relatórios IA (Mock entry if table structure allows)
     INSERT INTO relatorios_ia (escola_id, titulo, tipo, data_geracao, conteudo_json)

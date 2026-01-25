@@ -99,12 +99,12 @@ export const strategicDashboardService = {
       metrics.gestaoRiscos.count = riskCount || 0
       if ((riskCount || 0) > 5) metrics.gestaoRiscos.status = 'ATENÇÃO'
 
-      // 7. Auditorias (Not completed)
+      // 7. Auditorias (Filter by concluded status)
       const { count: auditCount } = await supabase
         .from('auditorias')
         .select('*', { count: 'exact', head: true })
         .eq('escola_id', schoolId)
-        .neq('status', 'Concluída')
+        .neq('status', 'concluida')
 
       metrics.auditorias.count = auditCount || 0
 
