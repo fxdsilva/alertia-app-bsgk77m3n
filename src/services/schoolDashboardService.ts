@@ -141,13 +141,20 @@ export const schoolDashboardService = {
   async getChartData(schoolId: string): Promise<ChartData[]> {
     // Mocking chart data for now as historical data might not be fully available in simple tables
     // In a real scenario, we would aggregate data from 'denuncias', 'auditorias' and history tables.
-    const months = ['2025-08', '2025-09', '2025-10', '2025-11', '2025-12', '2026-01']
-    
-    return months.map(date => ({
+    const months = [
+      '2025-08',
+      '2025-09',
+      '2025-10',
+      '2025-11',
+      '2025-12',
+      '2026-01',
+    ]
+
+    return months.map((date) => ({
       date,
       score: Math.floor(Math.random() * (100 - 60) + 60), // Random score between 60-100
       denuncias: Math.floor(Math.random() * 10),
-      auditorias: Math.floor(Math.random() * 2)
+      auditorias: Math.floor(Math.random() * 2),
     }))
-  }
+  },
 }

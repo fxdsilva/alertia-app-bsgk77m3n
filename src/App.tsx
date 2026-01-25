@@ -203,7 +203,7 @@ const App = () => (
               element={<InternalInvestigations />}
             />
             <Route path="/reports" element={<ReportGeneration />} />
-            
+
             {/* Redirects for direct sidebar access */}
             <Route path="/home" element={<Navigate to="/" replace />} />
           </Route>

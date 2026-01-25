@@ -240,15 +240,15 @@ const Layout = () => {
             <NavLink to="/school-management/dashboard" icon={LayoutGrid}>
               Dashboard Estratégico
             </NavLink>
-            
+
             <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
               Módulos
             </div>
             <NavLink to="/admin/code-of-conduct" icon={FileText}>
               Código de Conduta
             </NavLink>
-            <NavLink to="/admin/commitment" icon={Shield}>
-              Compromisso da Gestão
+            <NavLink to="/collaborator/training" icon={GraduationCap}>
+              Treinamentos
             </NavLink>
             <NavLink to="/school-admin/complaints" icon={AlertTriangle}>
               Denúncias
@@ -256,8 +256,8 @@ const Layout = () => {
             <NavLink to="/admin/reports" icon={BarChart3}>
               Relatórios
             </NavLink>
-            <NavLink to="/collaborator/training" icon={GraduationCap}>
-              Treinamentos
+            <NavLink to="/admin/commitment" icon={Shield}>
+              Compromisso Gestão
             </NavLink>
             <NavLink to="/manager/risks" icon={PieChart}>
               Gestão de Riscos
@@ -274,21 +274,31 @@ const Layout = () => {
             <NavLink to="/senior/decisions" icon={Gavel}>
               Decisões Disciplinares
             </NavLink>
-            <NavLink to="/senior/ai-reports" icon={BrainCircuit}>
-              Relatórios IA
-            </NavLink>
             <NavLink to="/senior/consolidated" icon={Building2}>
               Visão Consolidada
+            </NavLink>
+            <NavLink to="/senior/ai-reports" icon={BrainCircuit}>
+              Relatórios IA
             </NavLink>
 
             <div className="text-xs font-bold text-muted-foreground/80 uppercase tracking-wider px-3 mb-2 mt-4">
               Menu Principal
             </div>
-            <NavLink to="/home" icon={Home}>Início</NavLink>
-            <NavLink to="/share" icon={Share2}>Compartilhar App</NavLink>
-            <NavLink to="/messages" icon={MessageSquare}>Mensagens</NavLink>
-            <NavLink to="/support" icon={LifeBuoy}>Suporte</NavLink>
-            <NavLink to="/about" icon={Info}>Sobre</NavLink>
+            <NavLink to="/home" icon={Home}>
+              Início
+            </NavLink>
+            <NavLink to="/share" icon={Share2}>
+              Compartilhar App
+            </NavLink>
+            <NavLink to="/messages" icon={MessageSquare}>
+              Mensagens
+            </NavLink>
+            <NavLink to="/support" icon={LifeBuoy}>
+              Suporte
+            </NavLink>
+            <NavLink to="/about" icon={Info}>
+              Sobre
+            </NavLink>
           </>
         )}
 
