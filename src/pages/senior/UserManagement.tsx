@@ -11,12 +11,20 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Plus, Trash2, Search, Loader2 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Plus, Trash2, Search, Loader2, Pencil, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import useAppStore from '@/stores/useAppStore'
 import { seniorUserService, SeniorUser } from '@/services/seniorUserService'
 import { SeniorUserFormDialog } from '@/components/users/SeniorUserFormDialog'
 import { useNavigate } from 'react-router-dom'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export default function UserManagement() {
   const { profile, loading: appLoading } = useAppStore()
@@ -24,7 +32,9 @@ export default function UserManagement() {
   const [users, setUsers] = useState<SeniorUser[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterProfile, setFilterProfile] = useState<string>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<SeniorUser | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
@@ -70,25 +80,67 @@ export default function UserManagement() {
     }
   }
 
+  const handleStatusToggle = async (id: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus
+    try {
+      await seniorUserService.toggleUserStatus(id, newStatus)
+      setUsers(users.map((u) => (u.id === id ? { ...u, ativo: newStatus } : u)))
+      toast.success(
+        `Usuário ${newStatus ? 'ativado' : 'inativado'} com sucesso`,
+      )
+    } catch (error: any) {
+      toast.error('Erro ao atualizar status')
+    }
+  }
+
+  const handleCreate = () => {
+    setEditingUser(null)
+    setDialogOpen(true)
+  }
+
+  const handleEdit = (user: SeniorUser) => {
+    setEditingUser(user)
+    setDialogOpen(true)
+  }
+
   const handleSubmit = async (values: any) => {
     setActionLoading(true)
     try {
-      await seniorUserService.createUser(values)
-      toast.success('Usuário criado com sucesso')
+      if (editingUser) {
+        await seniorUserService.updateUser(editingUser.id, {
+          nome_usuario: values.nome,
+          email: values.email,
+          perfil: values.perfil,
+          escola_id: values.escola_id,
+          ativo: values.ativo,
+          cargo: values.cargo,
+          departamento: values.departamento,
+        })
+        toast.success('Usuário atualizado com sucesso')
+      } else {
+        await seniorUserService.createUser({
+          ...values,
+          nome: values.nome,
+        })
+        toast.success('Usuário criado com sucesso')
+      }
       setDialogOpen(false)
       fetchUsers()
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar usuário')
+      toast.error(error.message || 'Erro ao salvar usuário')
     } finally {
       setActionLoading(false)
     }
   }
 
-  const filteredUsers = users.filter(
-    (u) =>
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
       u.nome_usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesProfile = filterProfile === 'all' || u.perfil === filterProfile
+
+    return matchesSearch && matchesProfile
+  })
 
   if (appLoading || (loading && users.length === 0)) {
     return (
@@ -102,28 +154,53 @@ export default function UserManagement() {
     <div className="space-y-6 p-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Gestão Global de Usuários</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Users className="h-8 w-8 text-primary" />
+            Gestão Global de Usuários
+          </h1>
           <p className="text-muted-foreground">
-            Administre todos os usuários registrados na plataforma.
+            Administre perfis, permissões e status de acesso de todos os
+            usuários.
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+        <Button onClick={handleCreate} className="gap-2">
           <Plus className="h-4 w-4" /> Novo Usuário
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 max-w-sm">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome ou email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        <Select value={filterProfile} onValueChange={setFilterProfile}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="Filtrar Perfil" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Perfis</SelectItem>
+            <SelectItem value="DIRETOR_COMPLIANCE">
+              Diretor Compliance
+            </SelectItem>
+            <SelectItem value="ANALISTA_COMPLIANCE">
+              Analista Compliance
+            </SelectItem>
+            <SelectItem value="gestor">Gestor</SelectItem>
+            <SelectItem value="gestao_escola">Gestão Escolar</SelectItem>
+            <SelectItem value="colaborador">Colaborador</SelectItem>
+            <SelectItem value="professor">Professor</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Usuários ({filteredUsers.length})</CardTitle>
+          <CardTitle>Usuários Registrados ({filteredUsers.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -132,6 +209,7 @@ export default function UserManagement() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Perfil</TableHead>
+                <TableHead>Departamento</TableHead>
                 <TableHead>Escola</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -142,6 +220,9 @@ export default function UserManagement() {
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">
                     {u.nome_usuario}
+                    {u.cargo && (
+                      <p className="text-xs text-muted-foreground">{u.cargo}</p>
+                    )}
                   </TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell className="capitalize">
@@ -149,18 +230,33 @@ export default function UserManagement() {
                       {u.perfil.replace(/_/g, ' ')}
                     </Badge>
                   </TableCell>
+                  <TableCell>{u.departamento || '-'}</TableCell>
                   <TableCell>
                     {u.escolas_instituicoes?.nome_escola || 'N/A'}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={u.ativo ? 'default' : 'secondary'}
-                      className={u.ativo ? 'bg-green-600' : 'bg-gray-400'}
-                    >
-                      {u.ativo ? 'Ativo' : 'Inativo'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={u.ativo}
+                        onCheckedChange={() =>
+                          handleStatusToggle(u.id, u.ativo)
+                        }
+                        aria-label="Toggle status"
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {u.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(u)}
+                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -175,7 +271,7 @@ export default function UserManagement() {
               {filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center py-8 text-muted-foreground"
                   >
                     Nenhum usuário encontrado.
@@ -192,6 +288,7 @@ export default function UserManagement() {
         onOpenChange={setDialogOpen}
         onSubmit={handleSubmit}
         loading={actionLoading}
+        initialData={editingUser}
       />
     </div>
   )
