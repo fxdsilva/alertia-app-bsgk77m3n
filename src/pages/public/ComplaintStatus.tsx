@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Search, Loader2, AlertCircle } from 'lucide-react'
+import { Search, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { portalService } from '@/services/portalService'
 
 export default function ComplaintStatus() {
+  const navigate = useNavigate()
   const [protocol, setProtocol] = useState('')
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -41,7 +43,17 @@ export default function ComplaintStatus() {
   }
 
   return (
-    <div className="container mx-auto max-w-md space-y-6 pt-10">
+    <div className="container mx-auto max-w-md space-y-6 pt-10 pb-20 animate-fade-in">
+      <div className="flex items-center">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="text-slate-500 hover:text-slate-900 pl-0 hover:bg-transparent"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Voltar ao Início
+        </Button>
+      </div>
+
       <h1 className="text-2xl font-bold text-center">Acompanhar Denúncia</h1>
 
       <Card>
