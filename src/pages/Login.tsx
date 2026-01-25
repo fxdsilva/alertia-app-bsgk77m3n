@@ -89,12 +89,12 @@ export default function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-muted/20">
-      <Card className="w-full max-w-md shadow-2xl border-2 border-border/60">
+      <Card className="w-full max-w-md shadow-2xl border-2 border-border bg-card">
         <CardHeader className="text-center space-y-2 pb-8">
           <CardTitle className="text-3xl font-extrabold text-primary tracking-tight">
             Login ALERTIA
           </CardTitle>
-          <CardDescription className="text-base font-medium text-muted-foreground">
+          <CardDescription className="text-base font-medium text-foreground/80">
             Acesse sua conta para gerenciar programas de integridade.
           </CardDescription>
         </CardHeader>
@@ -102,7 +102,7 @@ export default function Login() {
           {error && (
             <Alert
               variant="destructive"
-              className="mb-6 text-left shadow-sm border-2"
+              className="mb-6 text-left shadow-sm border-2 border-destructive/20"
             >
               <AlertCircle className="h-5 w-5" />
               <AlertTitle className="ml-2 font-bold">Erro</AlertTitle>
