@@ -12,12 +12,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Card,
   CardContent,
-  CardFooter,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -35,11 +35,13 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import {
   CheckCircle2,
@@ -47,231 +49,50 @@ import {
   Loader2,
   ChevronsUpDown,
   Check,
+  UploadCloud,
+  X,
+  AlertTriangle,
+  ExternalLink,
 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
 import { portalService } from '@/services/portalService'
 import { School } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
-const OCCURRENCE_TYPES = [
-  {
-    id: 'violencia_alunos',
-    title: '1. Violência contra alunos',
-    items: [
-      {
-        id: 'Bullying',
-        title: 'Bullying',
-        description:
-          'Agressões verbais ou humilhações, exclusão social, apelidos pejorativos.',
-      },
-      {
-        id: 'Cyberbullying',
-        title: 'Cyberbullying',
-        description:
-          'Ataques em redes sociais, difamação online, exposição de intimidade.',
-      },
-      {
-        id: 'Violência Física',
-        title: 'Violência Física',
-        description: 'Agressão corporal, brigas, uso de força desproporcional.',
-      },
-      {
-        id: 'Violência Psicológica',
-        title: 'Violência Psicológica',
-        description: 'Ameaças, humilhações, intimidação sistemática.',
-      },
-    ],
-  },
-  {
-    id: 'assedio_abuso',
-    title: '2. Assédio e abuso',
-    items: [
-      {
-        id: 'Assédio moral',
-        title: 'Assédio moral',
-        description: 'Cobranças excessivas, exposição vexatória, perseguição.',
-      },
-      {
-        id: 'Assédio sexual',
-        title: 'Assédio sexual',
-        description:
-          'Investidas não consentidas, toques inapropriados, comentários de cunho sexual.',
-      },
-      {
-        id: 'Abuso psicológico',
-        title: 'Abuso psicológico',
-        description: 'Manipulação emocional, gaslighting, chantagem.',
-      },
-    ],
-  },
-  {
-    id: 'discriminacao_preconceito',
-    title: '3. Discriminação e preconceito',
-    items: [
-      {
-        id: 'Racismo',
-        title: 'Racismo',
-        description:
-          'Ofensas raciais, segregação, tratamento desigual por cor/etnia.',
-      },
-      {
-        id: 'Intolerância religiosa',
-        title: 'Intolerância religiosa',
-        description:
-          'Desrespeito a crenças, proibição de símbolos religiosos, ofensas.',
-      },
-      {
-        id: 'LGBTQIfobia',
-        title: 'LGBTQIfobia',
-        description:
-          'Discriminação por orientação sexual ou identidade de gênero.',
-      },
-      {
-        id: 'Capacitismo',
-        title: 'Capacitismo',
-        description:
-          'Discriminação contra pessoas com deficiência, falta de adaptação.',
-      },
-      {
-        id: 'Machismo',
-        title: 'Machismo',
-        description:
-          'Estereótipos sexistas, tratamento desigual baseado em gênero.',
-      },
-      {
-        id: 'Xenofobia',
-        title: 'Xenofobia',
-        description: 'Discriminação por origem geográfica ou nacionalidade.',
-      },
-    ],
-  },
-  {
-    id: 'violacao_direitos',
-    title: '4. Violação de direitos educacionais',
-    items: [
-      {
-        id: 'Negação de matrícula',
-        title: 'Negação de matrícula',
-        description: 'Recusa injustificada de vaga.',
-      },
-      {
-        id: 'Falta de acessibilidade',
-        title: 'Falta de acessibilidade',
-        description: 'Ausência de rampas, materiais adaptados ou intérpretes.',
-      },
-      {
-        id: 'Cobranças indevidas',
-        title: 'Cobranças indevidas',
-        description: 'Taxas não previstas em contrato, venda casada.',
-      },
-      {
-        id: 'Suspensão ou expulsão irregular',
-        title: 'Suspensão ou expulsão irregular',
-        description: 'Punições sem devido processo legal.',
-      },
-    ],
-  },
-  {
-    id: 'irregularidades_admin',
-    title: '5. Irregularidades administrativas e financeiras',
-    items: [
-      {
-        id: 'Desvio de verbas',
-        title: 'Desvio de verbas',
-        description: 'Uso indevido de recursos da escola.',
-      },
-      {
-        id: 'Fraude em documentos',
-        title: 'Fraude em documentos',
-        description: 'Falsificação de notas, históricos ou diários de classe.',
-      },
-      {
-        id: 'Corrupção',
-        title: 'Corrupção',
-        description: 'Solicitação ou recebimento de vantagens indevidas.',
-      },
-      {
-        id: 'Nepotismo',
-        title: 'Nepotismo',
-        description: 'Favorecimento de parentes em contratações.',
-      },
-    ],
-  },
-  {
-    id: 'violacao_etica',
-    title: '6. Violação ética e profissional',
-    items: [
-      {
-        id: 'Negligência pedagógica',
-        title: 'Negligência pedagógica',
-        description: 'Falta de planejamento, aulas não ministradas, omissão.',
-      },
-      {
-        id: 'Linguagem ofensiva ou imprópria',
-        title: 'Linguagem ofensiva ou imprópria',
-        description: 'Uso de palavrões, gritos com alunos ou colegas.',
-      },
-      {
-        id: 'Exposição indevida de alunos',
-        title: 'Exposição indevida de alunos',
-        description: 'Divulgação de imagem ou dados sem autorização.',
-      },
-      {
-        id: 'Falta de urbanidade',
-        title: 'Falta de urbanidade',
-        description: 'Desrespeito no trato com a comunidade escolar.',
-      },
-    ],
-  },
-  {
-    id: 'violencia_institucional',
-    title: '7. Violência Institucional',
-    items: [
-      {
-        id: 'Abuso de poder',
-        title: 'Abuso de poder',
-        description: 'Autoritarismo, decisões arbitrárias da gestão.',
-      },
-      {
-        id: 'Retaliação ao denunciante',
-        title: 'Retaliação ao denunciante',
-        description: 'Perseguição após reclamações ou denúncias.',
-      },
-      {
-        id: 'Omissão diante de conflitos',
-        title: 'Omissão diante de conflitos',
-        description: 'Ignorar casos de bullying ou violência reportados.',
-      },
-    ],
-  },
-  {
-    id: 'seguranca_integridade',
-    title: '8. Segurança e integridade física',
-    items: [
-      {
-        id: 'Falta de vigilância ou monitoramento',
-        title: 'Falta de vigilância ou monitoramento',
-        description: 'Áreas inseguras, entrada de estranhos.',
-      },
-      {
-        id: 'Riscos estruturais',
-        title: 'Riscos estruturais',
-        description:
-          'Prédio em más condições, fiação exposta, buracos na quadra.',
-      },
-      {
-        id: 'Venda ou uso de substâncias ilícitas',
-        title: 'Venda ou uso de substâncias ilícitas',
-        description: 'Drogas ou álcool no ambiente escolar.',
-      },
-      {
-        id: 'Porte de armas ou objetos perigosos',
-        title: 'Porte de armas ou objetos perigosos',
-        description: 'Armas de fogo, facas, objetos cortantes.',
-      },
-    ],
-  },
+const OCCURRENCE_CATEGORIES = [
+  'Bullying',
+  'Cyberbullying',
+  'Violência Física',
+  'Violência Psicológica',
+  'Assédio Moral',
+  'Assédio Sexual',
+  'Racismo',
+  'Intolerância Religiosa',
+  'LGBTQIfobia',
+  'Machismo',
+  'Xenofobia',
+  'Discriminação (Outros)',
+  'Furto/Roubo',
+  'Vandalismo',
+  'Uso de Drogas/Álcool',
+  'Porte de Armas',
+  'Fraude/Corrupção',
+  'Outro',
+]
+
+const ROLES = [
+  'Aluno',
+  'Professor',
+  'Funcionário',
+  'Coordenador',
+  'Diretor',
+  'Pai/Responsável',
+  'Prestador de Serviço',
+  'Comunidade',
+  'Não sei informar',
+  'Outro',
 ]
 
 const complaintSchema = z.object({
@@ -281,9 +102,18 @@ const complaintSchema = z.object({
   categories: z
     .array(z.string())
     .min(1, 'Selecione pelo menos um tipo de ocorrência.'),
+  // Victim
+  vitima_funcao: z.string().min(1, 'Selecione a função da vítima.'),
+  vitima_nome: z.string().optional(),
+  vitima_setor: z.string().optional(),
+  // Author
+  autor_funcao: z.string().min(1, 'Selecione a função/vínculo do autor.'),
+  autor_nome: z.string().optional(),
+  autor_descricao: z.string().optional(),
+  // Report
   description: z
     .string()
-    .min(10, { message: 'A descrição deve ter pelo menos 10 caracteres.' }),
+    .min(20, { message: 'A descrição deve ter pelo menos 20 caracteres.' }),
   anonimo: z.boolean().default(true),
 })
 
@@ -292,7 +122,9 @@ export default function ComplaintRegistration() {
   const [loading, setLoading] = useState(false)
   const [schools, setSchools] = useState<School[]>([])
   const [loadingSchools, setLoadingSchools] = useState(false)
-  const [open, setOpen] = useState(false)
+  const [openSchool, setOpenSchool] = useState(false)
+  const [openCategory, setOpenCategory] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
 
   const { selectedSchool, user } = useAppStore()
   const navigate = useNavigate()
@@ -304,13 +136,16 @@ export default function ComplaintRegistration() {
       categories: [],
       description: '',
       anonimo: true,
+      vitima_funcao: '',
+      vitima_nome: '',
+      vitima_setor: '',
+      autor_funcao: '',
+      autor_nome: '',
+      autor_descricao: '',
     },
   })
 
   useEffect(() => {
-    // Only fetch schools if we don't have a pre-selected school from context
-    // or if we want to allow switching. But usually fetching all is good practice
-    // for the combobox to work if the user needs to select.
     const fetchSchools = async () => {
       setLoadingSchools(true)
       try {
@@ -327,30 +162,69 @@ export default function ComplaintRegistration() {
     fetchSchools()
   }, [])
 
-  // Update escola_id if selectedSchool changes (e.g. from context)
   useEffect(() => {
     if (selectedSchool) {
       form.setValue('escola_id', selectedSchool.id)
     }
   }, [selectedSchool, form])
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files)
+      // Basic validation size limit (e.g. 5MB)
+      const validFiles = newFiles.filter((file) => file.size <= 5 * 1024 * 1024)
+
+      if (validFiles.length !== newFiles.length) {
+        toast.error('Alguns arquivos foram ignorados pois excedem 5MB.')
+      }
+
+      setFiles((prev) => [...prev, ...validFiles])
+    }
+  }
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
   const onSubmit = async (data: z.infer<typeof complaintSchema>) => {
     setLoading(true)
     try {
-      // For unauthenticated users, enforce anonymous
-      // Ideally this is also enforced by UI, but good to double check
+      // 1. Upload Evidence if any
+      let uploadedUrls: string[] = []
+      if (files.length > 0) {
+        uploadedUrls = await portalService.uploadEvidence(files)
+      }
+
+      // 2. Prepare Data
       const isAnonymous = !user ? true : data.anonimo
 
+      const envolvidos_detalhes = {
+        vitima: {
+          funcao: data.vitima_funcao,
+          nome: data.vitima_nome,
+          setor_turma: data.vitima_setor,
+        },
+        autor: {
+          funcao: data.autor_funcao,
+          nome: data.autor_nome,
+          descricao: data.autor_descricao,
+        },
+      }
+
+      // 3. Create Complaint
       const result = await portalService.createComplaint({
         escola_id: data.escola_id,
         descricao: data.description,
         anonimo: isAnonymous,
         denunciante_id: user?.id,
         categoria: data.categories,
+        envolvidos_detalhes,
+        evidencias_urls: uploadedUrls,
       })
 
       setProtocol(result.protocolo)
       toast.success('Denúncia registrada com sucesso.')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       console.error(error)
       toast.error('Erro ao registrar denúncia. Tente novamente.')
@@ -361,295 +235,604 @@ export default function ComplaintRegistration() {
 
   if (protocol) {
     return (
-      <div className="container mx-auto max-w-lg pt-10 text-center animate-fade-in pb-10">
-        <Card className="border-green-500 border-t-4 shadow-lg">
-          <CardHeader>
-            <div className="mx-auto bg-green-100 p-4 rounded-full mb-4">
-              <CheckCircle2 className="h-12 w-12 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl">Denúncia Registrada</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Sua denúncia foi recebida com segurança.
+      <div className="container mx-auto max-w-lg pt-10 text-center animate-fade-in pb-20">
+        <div className="flex justify-center mb-6">
+          <div className="bg-green-100 p-4 rounded-full">
+            <CheckCircle2 className="h-16 w-16 text-green-600" />
+          </div>
+        </div>
+        <h2 className="text-3xl font-bold text-slate-900 mb-2">
+          Denúncia Registrada
+        </h2>
+        <p className="text-slate-500 mb-8">
+          Sua denúncia foi recebida com segurança e será analisada.
+        </p>
+
+        <Card className="border-green-500 border-t-4 shadow-lg mb-8">
+          <CardContent className="pt-8 pb-8 space-y-4">
+            <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+              Seu Protocolo
             </p>
-            <div className="bg-muted p-6 rounded-lg border-dashed border-2">
-              <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Seu Protocolo
-              </p>
-              <p className="text-4xl font-mono font-bold text-primary mt-2 select-all">
-                {protocol}
-              </p>
-            </div>
-            <p className="text-sm text-red-500 font-medium">
-              Guarde este número! Ele é a única forma de acompanhar o andamento
-              da sua denúncia.
+            <p className="text-5xl font-mono font-bold text-primary select-all tracking-wider">
+              {protocol}
             </p>
+            <div className="bg-yellow-50 text-yellow-800 p-3 rounded-md text-sm mt-4 inline-block">
+              <AlertTriangle className="h-4 w-4 inline mr-2 mb-0.5" />
+              Guarde este número para acompanhar o andamento.
+            </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-2 justify-center">
-            <Button
-              className="w-full"
-              onClick={() => navigate('/public/complaint/status')}
-            >
-              Acompanhar Status
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => navigate('/')}
-            >
-              Voltar ao Início
-            </Button>
-          </CardFooter>
         </Card>
+
+        <div className="flex flex-col gap-3">
+          <Button
+            className="w-full h-12 text-lg"
+            onClick={() => navigate('/public/complaint/status')}
+          >
+            Acompanhar Status
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate('/')}
+          >
+            Voltar ao Início
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto max-w-2xl space-y-6 py-6 pb-20 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(selectedSchool ? '/public/portal' : '/')}
-        >
-          <ArrowLeft className="h-5 w-5 mr-2" /> Voltar
-        </Button>
-      </div>
+    <div className="min-h-screen bg-slate-50/50 pb-20">
+      <div className="container mx-auto max-w-3xl py-8 px-4 animate-fade-in space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() =>
+              navigate(selectedSchool ? '/public/portal' : '/login')
+            }
+            className="text-slate-500 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para Login
+          </Button>
+          <Button
+            variant="link"
+            className="text-blue-600 gap-2"
+            onClick={() => window.open('https://ouvidoria.gov.br', '_blank')}
+          >
+            Outros Canais Oficiais <ExternalLink className="h-3 w-3" />
+          </Button>
+        </div>
 
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold">Faça sua Denúncia</h1>
-        <p className="text-muted-foreground">
-          Relate irregularidades, desvios de conduta ou violações de ética.
-        </p>
-      </div>
+        <div className="text-center space-y-2">
+          <div className="mx-auto bg-red-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+            <AlertTriangle className="h-6 w-6 text-red-500" />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900">
+            Canal de Denúncias
+          </h1>
+          <p className="text-slate-500 max-w-lg mx-auto">
+            Este é um espaço seguro para relatar violações de ética, conduta ou
+            compliance. Sua identidade será preservada se desejar.
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Detalhe da Denúncia</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="escola_id"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Instituição de Ensino</FormLabel>
-                    <Popover open={open} onOpenChange={setOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={open}
-                            className={cn(
-                              'w-full justify-between',
-                              !field.value && 'text-muted-foreground',
-                            )}
-                            disabled={!!selectedSchool}
-                          >
-                            {field.value
-                              ? schools.find(
-                                  (school) => school.id === field.value,
-                                )?.name || selectedSchool?.name
-                              : 'Selecione a escola...'}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-[300px] sm:w-[600px] p-0"
-                        align="start"
-                      >
-                        <Command>
-                          <CommandInput placeholder="Buscar escola..." />
-                          <CommandList>
-                            <CommandEmpty>
-                              Nenhuma escola encontrada.
-                            </CommandEmpty>
-                            <CommandGroup>
-                              {loadingSchools && (
-                                <CommandItem disabled>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Carregando...
-                                </CommandItem>
-                              )}
-                              {schools.map((school) => (
-                                <CommandItem
-                                  key={school.id}
-                                  value={school.name}
-                                  onSelect={() => {
-                                    form.setValue('escola_id', school.id, {
-                                      shouldValidate: true,
-                                    })
-                                    setOpen(false)
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      'mr-2 h-4 w-4',
-                                      school.id === field.value
-                                        ? 'opacity-100'
-                                        : 'opacity-0',
-                                    )}
-                                  />
-                                  {school.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+          <div className="bg-blue-100 p-2 rounded-full mt-0.5">
+            <CheckCircle2 className="h-4 w-4 text-blue-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-blue-900 text-sm">
+              Como podemos ajudar?
+            </h4>
+            <p className="text-blue-700 text-sm">
+              Deseja registrar uma denúncia ou tem outras necessidades?
+            </p>
+          </div>
+        </div>
 
-              <FormField
-                control={form.control}
-                name="categories"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-4">
-                      <FormLabel className="text-base">
-                        Tipo de Ocorrência
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* 1. Instituição e Contexto */}
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
+                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
+                    1
+                  </span>
+                  Instituição e Contexto
+                </CardTitle>
+                <CardDescription>
+                  Identifique onde o fato ocorreu e a natureza da ocorrência.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="escola_id"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>
+                        INSTITUIÇÃO DE ENSINO{' '}
+                        <span className="text-red-500">*</span>
                       </FormLabel>
+                      <Popover open={openSchool} onOpenChange={setOpenSchool}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openSchool}
+                              className={cn(
+                                'w-full justify-between',
+                                !field.value && 'text-muted-foreground',
+                              )}
+                              disabled={!!selectedSchool}
+                            >
+                              {field.value
+                                ? schools.find((s) => s.id === field.value)
+                                    ?.name || selectedSchool?.name
+                                : 'Selecione a escola relacionada...'}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar escola..." />
+                            <CommandList>
+                              <CommandEmpty>
+                                Escola não encontrada.
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {loadingSchools && (
+                                  <CommandItem disabled>
+                                    Carregando...
+                                  </CommandItem>
+                                )}
+                                {schools.map((school) => (
+                                  <CommandItem
+                                    key={school.id}
+                                    value={school.name}
+                                    onSelect={() => {
+                                      form.setValue('escola_id', school.id)
+                                      setOpenSchool(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        school.id === field.value
+                                          ? 'opacity-100'
+                                          : 'opacity-0',
+                                      )}
+                                    />
+                                    {school.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="categories"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>
+                        TIPO DE OCORRÊNCIA{' '}
+                        <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Popover
+                        open={openCategory}
+                        onOpenChange={setOpenCategory}
+                      >
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                'w-full justify-between h-auto min-h-[40px]',
+                                !field.value?.length && 'text-muted-foreground',
+                              )}
+                            >
+                              {field.value?.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {field.value.map((cat) => (
+                                    <Badge
+                                      key={cat}
+                                      variant="secondary"
+                                      className="mr-1 mb-1"
+                                    >
+                                      {cat}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                'Selecione as categorias aplicáveis...'
+                              )}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar categoria..." />
+                            <CommandList>
+                              <CommandEmpty>
+                                Nenhuma categoria encontrada.
+                              </CommandEmpty>
+                              <CommandGroup className="max-h-64 overflow-auto">
+                                {OCCURRENCE_CATEGORIES.map((category) => (
+                                  <CommandItem
+                                    key={category}
+                                    value={category}
+                                    onSelect={() => {
+                                      const current = field.value || []
+                                      const updated = current.includes(category)
+                                        ? current.filter((c) => c !== category)
+                                        : [...current, category]
+                                      form.setValue('categories', updated, {
+                                        shouldValidate: true,
+                                      })
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        field.value?.includes(category)
+                                          ? 'opacity-100'
+                                          : 'opacity-0',
+                                      )}
+                                    />
+                                    {category}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormDescription>
-                        Selecione uma ou mais categorias que melhor descrevem o
+                        Selecione uma ou mais categorias que se enquadram no
                         ocorrido.
                       </FormDescription>
-                    </div>
-                    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-2">
-                      <Accordion
-                        type="multiple"
-                        className="w-full"
-                        defaultValue={['violencia_alunos']}
-                      >
-                        {OCCURRENCE_TYPES.map((type) => (
-                          <AccordionItem key={type.id} value={type.id}>
-                            <AccordionTrigger className="px-4 hover:no-underline hover:bg-muted/50 rounded-lg">
-                              <span className="font-semibold text-left">
-                                {type.title}
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent className="px-4 pb-2 pt-2">
-                              <div className="grid gap-4 mt-2">
-                                {type.items.map((item) => (
-                                  <FormField
-                                    key={item.id}
-                                    control={form.control}
-                                    name="categories"
-                                    render={({ field }) => {
-                                      return (
-                                        <FormItem
-                                          key={item.id}
-                                          className="flex flex-row items-start space-x-3 space-y-0"
-                                        >
-                                          <FormControl>
-                                            <Checkbox
-                                              checked={field.value?.includes(
-                                                item.id,
-                                              )}
-                                              onCheckedChange={(checked) => {
-                                                return checked
-                                                  ? field.onChange([
-                                                      ...field.value,
-                                                      item.id,
-                                                    ])
-                                                  : field.onChange(
-                                                      field.value?.filter(
-                                                        (value) =>
-                                                          value !== item.id,
-                                                      ),
-                                                    )
-                                              }}
-                                            />
-                                          </FormControl>
-                                          <div className="space-y-1 leading-none">
-                                            <FormLabel className="font-bold text-sm cursor-pointer">
-                                              {item.title}
-                                            </FormLabel>
-                                            <FormDescription className="text-xs">
-                                              {item.description}
-                                            </FormDescription>
-                                          </div>
-                                        </FormItem>
-                                      )
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição Detalhada</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Descreva o que aconteceu com o máximo de detalhes possível."
-                        className="min-h-[200px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Forneça detalhes como: O que? Quando? Onde? Quem?
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="anonimo"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={!user} // Force check if user is not logged in (public)
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
+            {/* 2. Quem sofreu o ocorrido? */}
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
+                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
+                    2
+                  </span>
+                  Quem sofreu o ocorrido?
+                </CardTitle>
+                <CardDescription>
+                  Informe quem foi afetado pela situação relatada. Pode ser você
+                  ou outra pessoa.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="vitima_funcao"
+                  render={({ field }) => (
+                    <FormItem>
                       <FormLabel>
-                        Desejo realizar a denúncia de forma anônima
+                        QUAL A FUNÇÃO DA VÍTIMA?{' '}
+                        <span className="text-red-500">*</span>
                       </FormLabel>
-                      <FormDescription>
-                        {!user
-                          ? 'Para denúncias públicas, o anonimato é obrigatório.'
-                          : 'Seus dados não serão vinculados à denúncia.'}
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a função..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="vitima_nome"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>NOME DA VÍTIMA (SE SOUBER)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Maria Souza" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="vitima_setor"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SETOR/TURMA/SALA DA VÍTIMA</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ex: 9º ano B, Secretaria, etc."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-              <Button
-                type="submit"
-                className="w-full h-12 text-lg shadow-lg"
-                disabled={loading}
-              >
-                {loading ? 'Enviando...' : 'Enviar Denúncia'}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            {/* 3. Quem praticou a ação? */}
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
+                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
+                    3
+                  </span>
+                  Quem praticou a ação?
+                </CardTitle>
+                <CardDescription>
+                  Selecione a função ou vínculo da pessoa que praticou a ação ou
+                  omissão.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="autor_funcao"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        FUNÇÃO / VÍNCULO DO AUTOR{' '}
+                        <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o vínculo..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="autor_nome"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>NOME DA PESSOA (SE SOUBER)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: João Silva" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Preencha apenas se souber.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="autor_descricao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>DESCRIÇÃO (SE NÃO SOUBER O NOME)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ex: professor de matemática do 8º ano, turno da manhã..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 4. Relato Detalhado */}
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
+                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
+                    4
+                  </span>
+                  Relato Detalhado
+                </CardTitle>
+                <CardDescription>
+                  Descreva o que aconteceu e anexe provas se tiver.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        DESCRIÇÃO DA OCORRÊNCIA{' '}
+                        <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Descreva o que aconteceu, quando, onde e quem estava envolvido. Quanto mais detalhes, melhor será a apuração."
+                          className="min-h-[150px] resize-y"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Relate os fatos de forma clara e objetiva. Mínimo de 20
+                        caracteres.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-3">
+                  <FormLabel>Anexar Evidências (Opcional)</FormLabel>
+                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors">
+                    <UploadCloud className="h-10 w-10 text-slate-400 mb-2" />
+                    <p className="text-sm font-medium text-slate-700">
+                      Clique para adicionar documentos
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Suporta JPG, PNG e PDF (Máx 5MB)
+                    </p>
+                    <Input
+                      type="file"
+                      multiple
+                      accept="image/*,application/pdf,audio/*,video/*"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={handleFileChange}
+                      // Hack to allow same file selection again if cleared, technically optional here since we control the input
+                      value=""
+                    />
+                    <div className="mt-4 w-full relative z-10 pointer-events-none">
+                      {/* This div is just to push content down if needed, actual file display is below */}
+                    </div>
+                  </div>
+
+                  {files.length > 0 && (
+                    <div className="space-y-2">
+                      {files.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-white border p-2 rounded-md shadow-sm"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <div className="bg-slate-100 p-1 rounded">
+                              <UploadCloud className="h-4 w-4 text-slate-500" />
+                            </div>
+                            <span className="text-sm truncate max-w-[200px] sm:max-w-xs">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:bg-red-50"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 5. Identificação */}
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
+                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
+                    5
+                  </span>
+                  Identificação
+                </CardTitle>
+                <CardDescription>
+                  Escolha se deseja se identificar ou manter o anonimato.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="anonimo"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-bold">
+                          DENÚNCIA ANÔNIMA
+                        </FormLabel>
+                        <FormDescription>
+                          Seus dados não serão identificados na apuração.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={!user} // If public (not logged in), default true and maybe force it? Or allow identification?
+                          // User story says: "choose between a named or anonymous report".
+                          // If user is NOT logged in, we can't auto-fill "denunciante_id", but we could ask for name/email if they want.
+                          // However, current schema relies on "denunciante_id" (Supabase User ID).
+                          // So for public users without account, it is effectively anonymous regarding the system user.
+                          // But we will stick to the Switch logic.
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Button
+              type="submit"
+              className="w-full h-14 text-lg font-bold bg-teal-700 hover:bg-teal-800 shadow-lg"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                'Enviar Denúncia'
+              )}
+            </Button>
+          </form>
+        </Form>
+      </div>
     </div>
   )
 }

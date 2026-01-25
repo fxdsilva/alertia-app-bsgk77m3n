@@ -9,6 +9,16 @@ export interface DocumentRecord {
   created_at: string
 }
 
+export interface ComplaintData {
+  escola_id: string
+  descricao: string
+  anonimo: boolean
+  denunciante_id?: string
+  categoria?: string[]
+  envolvidos_detalhes?: Record<string, any>
+  evidencias_urls?: string[]
+}
+
 export const portalService = {
   async searchSchools(query: string): Promise<School[]> {
     if (!query.trim()) return []
@@ -42,7 +52,6 @@ export const portalService = {
   },
 
   async getSchools(): Promise<School[]> {
-    // Selecting specific columns as per requirements, but ensuring we have enough for the interface
     const { data, error } = await supabase
       .from('escolas_instituicoes')
       .select('id, nome_escola, ativo')
@@ -54,7 +63,6 @@ export const portalService = {
     return data.map((item: any) => ({
       id: item.id,
       name: item.nome_escola,
-      // Default values for fields not fetched in this specific query
       network: 'Municipal',
       modality: 'Urbana',
       municipality: 'N/A',
@@ -85,13 +93,36 @@ export const portalService = {
     return data as DocumentRecord | null
   },
 
-  async createComplaint(data: {
-    escola_id: string
-    descricao: string
-    anonimo: boolean
-    denunciante_id?: string
-    categoria?: string[]
-  }) {
+  async uploadEvidence(files: File[]): Promise<string[]> {
+    const urls: string[] = []
+
+    for (const file of files) {
+      // Sanitize filename to avoid issues
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
+      const filePath = `${fileName}`
+
+      // NOTE: Ensure the bucket 'complaint-evidence' exists in Supabase Storage and is public
+      const { error: uploadError } = await supabase.storage
+        .from('complaint-evidence')
+        .upload(filePath, file)
+
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError)
+        throw new Error('Falha no upload de evidências. Verifique sua conexão.')
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('complaint-evidence').getPublicUrl(filePath)
+
+      urls.push(publicUrl)
+    }
+
+    return urls
+  },
+
+  async createComplaint(data: ComplaintData) {
     const protocol = generateProtocol()
 
     // Enforce logic: if anonymous is true, denunciante_id must be null
@@ -108,6 +139,8 @@ export const portalService = {
         denunciante_id: finalDenuncianteId,
         categoria: data.categoria,
         status: 'pendente',
+        envolvidos_detalhes: data.envolvidos_detalhes,
+        evidencias_urls: data.evidencias_urls,
       })
       .select()
       .single()
