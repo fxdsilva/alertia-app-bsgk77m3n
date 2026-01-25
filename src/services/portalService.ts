@@ -110,17 +110,23 @@ export const portalService = {
     const urls: string[] = []
 
     for (const file of files) {
-      const fileExt = file.name.split('.').pop()
+      const nameParts = file.name.split('.')
+      const fileExt = nameParts.length > 1 ? nameParts.pop() : 'bin'
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
       const filePath = `${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('complaint-evidence')
-        .upload(filePath, file)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        })
 
       if (uploadError) {
         console.error('Error uploading file:', uploadError)
-        throw new Error('Falha no upload de evidências. Verifique sua conexão.')
+        throw new Error(
+          `Falha no upload de evidências: ${uploadError.message}. Verifique sua conexão.`,
+        )
       }
 
       const {

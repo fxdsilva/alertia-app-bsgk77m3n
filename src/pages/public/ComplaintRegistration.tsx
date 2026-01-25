@@ -283,7 +283,11 @@ export default function ComplaintRegistration() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       console.error(error)
-      toast.error('Erro ao registrar denúncia. Tente novamente.')
+      if (error instanceof Error) {
+        toast.error(error.message)
+      } else {
+        toast.error('Erro ao registrar denúncia. Tente novamente.')
+      }
     } finally {
       setLoading(false)
     }
