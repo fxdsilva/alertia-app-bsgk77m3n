@@ -114,7 +114,6 @@ export const portalService = {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
       const filePath = `${fileName}`
 
-      // NOTE: Ensure the bucket 'complaint-evidence' exists in Supabase Storage and is public
       const { error: uploadError } = await supabase.storage
         .from('complaint-evidence')
         .upload(filePath, file)

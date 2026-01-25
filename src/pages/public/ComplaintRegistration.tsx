@@ -57,6 +57,7 @@ import {
   FileText,
   Shield,
   FileSearch,
+  HelpCircle,
 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
@@ -233,7 +234,8 @@ export default function ComplaintRegistration() {
       }
 
       // 2. Prepare Data
-      const isAnonymous = !user ? true : data.anonimo
+      // If user is not logged in, force anonymous just in case, but data.anonimo handles the choice
+      const isAnonymous = data.anonimo
 
       const envolvidos_detalhes = {
         vitima: {
@@ -352,6 +354,24 @@ export default function ComplaintRegistration() {
             compliance. Sua identidade será preservada se desejar.
           </p>
         </div>
+
+        {/* Assistance Card */}
+        <Card className="bg-white border shadow-sm">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="bg-blue-50 p-2 rounded-full">
+              <HelpCircle className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">
+                Como podemos ajudar?
+              </p>
+              <p className="text-sm text-slate-500">
+                Deseja registrar uma denúncia ou consultar canais oficiais?
+              </p>
+            </div>
+            <ExternalLink className="h-4 w-4 text-slate-400 ml-auto" />
+          </CardContent>
+        </Card>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -834,7 +854,7 @@ export default function ComplaintRegistration() {
 
                 <div className="space-y-3">
                   <FormLabel>Anexar Evidências (Opcional)</FormLabel>
-                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors">
+                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors relative">
                     <UploadCloud className="h-10 w-10 text-slate-400 mb-2" />
                     <p className="text-sm font-medium text-slate-700">
                       Clique para adicionar documentos
@@ -851,7 +871,6 @@ export default function ComplaintRegistration() {
                       // Hack to allow same file selection again if cleared
                       value=""
                     />
-                    <div className="mt-4 w-full relative z-10 pointer-events-none"></div>
                   </div>
 
                   {files.length > 0 && (
@@ -907,7 +926,7 @@ export default function ComplaintRegistration() {
                   control={form.control}
                   name="anonimo"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm bg-white">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base font-bold">
                           DENÚNCIA ANÔNIMA
@@ -920,7 +939,7 @@ export default function ComplaintRegistration() {
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                          disabled={!user}
+                          className="data-[state=checked]:bg-green-600"
                         />
                       </FormControl>
                     </FormItem>
