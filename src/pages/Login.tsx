@@ -50,7 +50,7 @@ export default function Login() {
   useEffect(() => {
     if (!appLoading && user && profile) {
       if (profile === 'senior') {
-        navigate('/senior/schools')
+        navigate('/senior/dashboard')
       } else if (profile === 'administrador' || profile === 'admin_gestor') {
         navigate('/admin/dashboard')
       } else if (profile === 'colaborador') {

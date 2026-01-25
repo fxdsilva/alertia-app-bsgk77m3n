@@ -27,6 +27,7 @@ import DueDiligence from '@/pages/senior/DueDiligence'
 import DisciplinaryDecisions from '@/pages/senior/DisciplinaryDecisions'
 import AIReports from '@/pages/senior/AIReports'
 import SchoolManagement from '@/pages/senior/SchoolManagement'
+import SeniorDashboard from '@/pages/senior/SeniorDashboard'
 
 import InternalInvestigations from '@/pages/InternalInvestigations'
 import ReportGeneration from '@/pages/ReportGeneration'
@@ -133,6 +134,7 @@ const App = () => (
             <Route path="/manager/mediations" element={<Mediations />} />
 
             {/* Senior Management Pages */}
+            <Route path="/senior/dashboard" element={<SeniorDashboard />} />
             <Route path="/senior/consolidated" element={<ConsolidatedData />} />
             <Route path="/senior/due-diligence" element={<DueDiligence />} />
             <Route
