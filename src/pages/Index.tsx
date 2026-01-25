@@ -40,46 +40,48 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 animate-fade-in">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-muted/40 p-4 animate-fade-in">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="h-20 w-20 bg-primary rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
-              <Shield className="h-10 w-10 text-primary-foreground" />
+            <div className="h-24 w-24 bg-primary rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300 ring-4 ring-white/50">
+              <Shield className="h-12 w-12 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
+          <h1 className="text-5xl font-black text-foreground tracking-tight drop-shadow-sm">
             ALERTIA
           </h1>
-          <p className="mt-3 text-lg text-muted-foreground font-medium">
+          <p className="mt-3 text-xl text-muted-foreground font-semibold">
             Plataforma de Ética, Integridade e Compliance
           </p>
         </div>
 
-        <Card className="shadow-xl border-border/50">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Bem-vindo</CardTitle>
-            <CardDescription className="text-center text-base">
+        <Card className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] border-2 border-slate-200 dark:border-slate-800 bg-card z-10">
+          <CardHeader className="space-y-2 pb-6">
+            <CardTitle className="text-3xl text-center font-extrabold text-foreground">
+              Bem-vindo
+            </CardTitle>
+            <CardDescription className="text-center text-base font-medium text-muted-foreground">
               Acesse sua conta para gerenciar e monitorar os programas de
               integridade.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-6">
             <Button
-              className="w-full h-12 text-base font-semibold shadow-md"
+              className="w-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 active:translate-y-0 hover:brightness-110 rounded-lg"
               size="lg"
               onClick={() => navigate('/login')}
             >
               Entrar na Plataforma
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-2 h-6 w-6" />
             </Button>
 
-            <div className="relative">
+            <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
+                <span className="w-full border-t-2 border-slate-200 dark:border-slate-700" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground font-semibold tracking-wider">
+                <span className="bg-card px-2 text-muted-foreground font-bold tracking-wider">
                   Acesso Público
                 </span>
               </div>
@@ -87,7 +89,7 @@ const Index = () => {
 
             <Button
               variant="outline"
-              className="w-full h-12 text-base font-semibold border-2 hover:bg-secondary hover:text-foreground"
+              className="w-full h-14 text-lg font-bold border-2 border-slate-300 hover:border-slate-400 hover:bg-secondary/50 rounded-lg"
               onClick={() => navigate('/public/complaint/new')}
             >
               Realizar Denúncia
@@ -95,7 +97,7 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-muted-foreground font-medium">
+        <p className="text-center text-sm text-muted-foreground font-bold">
           © {new Date().getFullYear()} ALERTIA. Integridade em primeiro lugar.
         </p>
       </div>

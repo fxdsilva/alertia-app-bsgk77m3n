@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Email inválido.' }),
@@ -88,13 +89,13 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-muted/20">
-      <Card className="w-full max-w-md shadow-2xl border-2 border-border bg-card">
-        <CardHeader className="text-center space-y-2 pb-8">
-          <CardTitle className="text-3xl font-extrabold text-primary tracking-tight">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-muted/40">
+      <Card className="w-full max-w-md shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] border-2 border-slate-200 dark:border-slate-800 bg-card z-10">
+        <CardHeader className="text-center space-y-3 pb-8">
+          <CardTitle className="text-3xl font-extrabold text-foreground tracking-tight drop-shadow-sm">
             Login ALERTIA
           </CardTitle>
-          <CardDescription className="text-base font-medium text-foreground/80">
+          <CardDescription className="text-base font-semibold text-muted-foreground">
             Acesse sua conta para gerenciar programas de integridade.
           </CardDescription>
         </CardHeader>
@@ -102,7 +103,7 @@ export default function Login() {
           {error && (
             <Alert
               variant="destructive"
-              className="mb-6 text-left shadow-sm border-2 border-destructive/20"
+              className="mb-6 text-left shadow-md border-2 border-destructive/20 bg-destructive/5"
             >
               <AlertCircle className="h-5 w-5" />
               <AlertTitle className="ml-2 font-bold">Erro</AlertTitle>
@@ -126,7 +127,7 @@ export default function Login() {
                       <Input
                         placeholder="seu@email.com"
                         {...field}
-                        className="h-12 text-base border-2 border-slate-300 dark:border-slate-700 focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary transition-all shadow-sm"
+                        className="h-14 text-lg border-2 border-slate-400 dark:border-slate-600 focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm hover:border-slate-500 rounded-lg"
                       />
                     </FormControl>
                     <FormMessage className="font-semibold" />
@@ -146,7 +147,7 @@ export default function Login() {
                         type="password"
                         placeholder="******"
                         {...field}
-                        className="h-12 text-base border-2 border-slate-300 dark:border-slate-700 focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary transition-all shadow-sm"
+                        className="h-14 text-lg border-2 border-slate-400 dark:border-slate-600 focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm hover:border-slate-500 rounded-lg"
                       />
                     </FormControl>
                     <FormMessage className="font-semibold" />
@@ -155,12 +156,12 @@ export default function Login() {
               />
               <Button
                 type="submit"
-                className="w-full h-12 text-lg font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 active:translate-y-0"
+                className="w-full h-14 text-xl font-extrabold shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 active:translate-y-0 hover:brightness-110 rounded-lg"
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                     Entrando...
                   </>
                 ) : (
