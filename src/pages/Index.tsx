@@ -37,6 +37,8 @@ const Index = () => {
         navigate('/compliance/analyst/dashboard')
       } else if (profile === 'gestao_escola') {
         navigate('/school-management/dashboard')
+      } else if (profile === 'SECRETARIA DE EDUCAÇÃO') {
+        navigate('/secretary/dashboard')
       }
     }
   }, [user, profile, loading, navigate])

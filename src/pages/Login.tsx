@@ -61,6 +61,8 @@ export default function Login() {
         navigate('/manager/risks')
       } else if (profile === 'gestao_escola') {
         navigate('/school-management/dashboard')
+      } else if (profile === 'SECRETARIA DE EDUCAÇÃO') {
+        navigate('/secretary/dashboard')
       } else {
         navigate('/')
       }

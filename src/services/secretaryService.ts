@@ -38,8 +38,6 @@ export const secretaryService = {
       const { data: complaintsData, error: complaintsError } = await supabase
         .from('denuncias')
         .select('escola_id, status')
-        // We consider active complaints everything that is not archived or fully resolved/closed if those statuses exist
-        // Based on other files, status might be 'pendente', 'em_analise', 'investigado', 'resolvido', 'arquivado'
         .not('status', 'in', '("arquivado","resolvido")')
 
       if (complaintsError) throw complaintsError
@@ -48,7 +46,7 @@ export const secretaryService = {
       const { data: investigationsData, error: invError } = await supabase
         .from('investigacoes')
         .select('escola_id, status')
-        .neq('status', 'concluida') // Assuming 'concluida' is the closed status
+        .neq('status', 'concluida')
 
       if (invError) throw invError
 
@@ -133,7 +131,7 @@ export const secretaryService = {
         }
       })
 
-      // Calculate totals based on the fetched raw data (before client-side filtering)
+      // Calculate totals based on the fetched raw data
       const totalComplaints = complaintsData?.length || 0
       const totalInvestigations = investigationsData?.length || 0
       const totalMediations = mediationsData?.length || 0
