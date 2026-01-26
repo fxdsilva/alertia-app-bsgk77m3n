@@ -23,8 +23,8 @@ RETURNS TRIGGER AS $$
 DECLARE
     completed_status_id UUID;
     director_ids UUID[];
+    director_id_var UUID;
     audit_record RECORD;
-    school_name TEXT;
 BEGIN
     -- Get 'Concluída' status ID
     SELECT id INTO completed_status_id FROM public.status_auditoria WHERE nome_status = 'Concluída';
@@ -73,13 +73,16 @@ EXECUTE FUNCTION notify_audit_completion();
 -- Seed some findings for demo purposes (if audit exists)
 DO $$
 DECLARE
-    audit_id UUID;
+    v_audit_id UUID;
 BEGIN
-    SELECT id INTO audit_id FROM public.auditorias LIMIT 1;
-    IF audit_id IS NOT NULL THEN
-        INSERT INTO public.audit_findings (audit_id, description, recommendation, severity)
-        VALUES 
-        (audit_id, 'Ausência de assinatura no termo de compromisso.', 'Coletar assinaturas de todos os colaboradores.', 'Média'),
-        (audit_id, 'Documentação de extintores vencida.', 'Renovar licença do corpo de bombeiros.', 'Alta');
+    SELECT id INTO v_audit_id FROM public.auditorias LIMIT 1;
+    IF v_audit_id IS NOT NULL THEN
+        -- Check if findings already exist to avoid duplicates on re-run
+        IF NOT EXISTS (SELECT 1 FROM public.audit_findings WHERE audit_id = v_audit_id) THEN
+            INSERT INTO public.audit_findings (audit_id, description, recommendation, severity)
+            VALUES 
+            (v_audit_id, 'Ausência de assinatura no termo de compromisso.', 'Coletar assinaturas de todos os colaboradores.', 'Média'),
+            (v_audit_id, 'Documentação de extintores vencida.', 'Renovar licença do corpo de bombeiros.', 'Alta');
+        END IF;
     END IF;
 END $$;
