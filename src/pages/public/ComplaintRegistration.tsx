@@ -336,10 +336,13 @@ export default function ComplaintRegistration() {
     } catch (error: any) {
       // Avoid logging the full error object to prevent "FormData object could not be cloned" error
       // which happens when the error object contains references to the request FormData
-      console.error('Registration failed:', error?.message || 'Unknown error')
-
+      // We safely extract only the message string
       const errorMsg =
-        error?.message || 'Erro ao registrar denúncia. Tente novamente.'
+        typeof error === 'object' && error !== null && 'message' in error
+          ? String(error.message)
+          : 'Erro ao registrar denúncia. Tente novamente.'
+
+      console.error('Registration failed:', errorMsg)
       toast.error(errorMsg)
     } finally {
       setLoading(false)

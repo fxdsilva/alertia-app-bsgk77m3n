@@ -20,6 +20,17 @@ export interface ComplaintData {
   evidencias_urls?: string[]
 }
 
+// Helper to safely extract error message without cloning objects that might contain FormData
+const getErrorMessage = (error: unknown): string => {
+  if (!error) return 'Erro desconhecido'
+  if (error instanceof Error) return error.message
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as any).message)
+  }
+  if (typeof error === 'string') return error
+  return 'Erro desconhecido'
+}
+
 export const portalService = {
   async searchSchools(query: string): Promise<School[]> {
     if (!query.trim()) return []
@@ -127,9 +138,10 @@ export const portalService = {
 
         if (uploadError) {
           // IMPORTANT: Extract the message string immediately.
-          // Do NOT throw or log the uploadError object directly, as it may contain the FormData (request body),
-          // which causes "FormData object could not be cloned" errors in some environments/devtools.
-          throw new Error(uploadError.message)
+          // We intentionally access .message to prevent leaking the full error object
+          // which might contain non-serializable data like FormData
+          const msg = getErrorMessage(uploadError)
+          throw new Error(msg)
         }
 
         const {
@@ -139,7 +151,8 @@ export const portalService = {
         urls.push(publicUrl)
       } catch (err: any) {
         // Safe logging that doesn't try to clone complex error objects
-        const errorMessage = err?.message || 'Erro desconhecido'
+        const errorMessage = getErrorMessage(err)
+
         // Log the string message only, never the error object itself if it's coming from Supabase/Axios
         console.error(`Evidence upload failed for ${file.name}:`, errorMessage)
 
@@ -161,29 +174,36 @@ export const portalService = {
     // Use the WORKFLOW_STATUS.REGISTERED ('Denúncia registrada')
     const initialStatus = WORKFLOW_STATUS.REGISTERED
 
-    const { data: result, error } = await supabase
-      .from('denuncias')
-      .insert({
-        escola_id: data.escola_id,
-        protocolo: protocol,
-        descricao: data.descricao,
-        anonimo: data.anonimo, // Pass the original boolean flag
-        denunciante_id: finalDenuncianteId,
-        categoria: data.categoria,
-        status: initialStatus,
-        envolvidos_detalhes: data.envolvidos_detalhes as any,
-        evidencias_urls: data.evidencias_urls,
-      })
-      .select()
-      .single()
+    try {
+      const { data: result, error } = await supabase
+        .from('denuncias')
+        .insert({
+          escola_id: data.escola_id,
+          protocolo: protocol,
+          descricao: data.descricao,
+          anonimo: data.anonimo, // Pass the original boolean flag
+          denunciante_id: finalDenuncianteId,
+          categoria: data.categoria,
+          status: initialStatus,
+          envolvidos_detalhes: data.envolvidos_detalhes as any,
+          evidencias_urls: data.evidencias_urls,
+        })
+        .select()
+        .single()
 
-    if (error) {
-      // Sanitize error before throwing to prevent any potential cloning issues
-      console.error('Error creating complaint:', error.message)
-      throw new Error(error.message)
+      if (error) {
+        // Sanitize error before throwing to prevent any potential cloning issues
+        const msg = getErrorMessage(error)
+        console.error('Error creating complaint:', msg)
+        throw new Error(msg)
+      }
+
+      return result
+    } catch (err) {
+      const msg = getErrorMessage(err)
+      console.error('Unexpected error in createComplaint:', msg)
+      throw new Error(msg)
     }
-
-    return result
   },
 
   async getComplaintStatus(protocol: string) {
