@@ -21,7 +21,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { toast } from 'sonner'
 
@@ -94,7 +94,16 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-muted/40">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-muted/40 relative">
+      <Button
+        variant="ghost"
+        className="absolute top-4 left-4 md:top-8 md:left-8 gap-2"
+        onClick={() => navigate('/')}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Voltar para o Início
+      </Button>
+
       <Card className="w-full max-w-md shadow-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Login ALERTIA</CardTitle>
