@@ -3,130 +3,31 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Form } from '@/components/ui/form'
+import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import {
   CheckCircle2,
   ArrowLeft,
   Loader2,
-  ChevronsUpDown,
-  Check,
-  UploadCloud,
-  X,
   AlertTriangle,
   ExternalLink,
-  FileText,
-  Shield,
-  FileSearch,
   HelpCircle,
-  FileImage,
-  FileVideo,
-  FileAudio,
 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
-import { portalService, DocumentRecord } from '@/services/portalService'
+import { portalService } from '@/services/portalService'
 import { School } from '@/lib/mockData'
-import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
-
-const CATEGORY_GROUPS = [
-  {
-    heading: 'Violências contra estudantes',
-    items: [
-      'Bullying',
-      'Cyberbullying',
-      'Violência física',
-      'Violência psicológica',
-    ],
-  },
-  {
-    heading: 'Assédio e abuso',
-    items: ['Assédio moral', 'Assédio sexual', 'Abuso psicológico'],
-  },
-  {
-    heading: 'Discriminação e preconceito',
-    items: [
-      'Racismo',
-      'Intolerância religiosa',
-      'LGBTfobia',
-      'Capacitismo',
-      'Machismo',
-      'Xenofobia',
-    ],
-  },
-  {
-    heading: 'Outras Ocorrências',
-    items: [
-      'Violações de direitos educacionais',
-      'Irregularidades administrativas e financeiras',
-      'Violação ética e profissional',
-      'Violência institucional',
-      'Segurança e integridade física',
-      'Outro',
-    ],
-  },
-]
-
-const ROLES = [
-  'Aluno',
-  'Professor',
-  'Funcionário',
-  'Coordenador',
-  'Diretor',
-  'Pai/Responsável',
-  'Prestador de Serviço',
-  'Comunidade',
-  'Não sei informar',
-  'Outro',
-]
-
-// Enhanced file validation constants
-const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
-// Added support for audio and video extensions
-const ACCEPTED_FILE_TYPES_STRING =
-  '.jpg,.jpeg,.png,.gif,.webp,.pdf,.mp3,.wav,.m4a,.mp4,.mov,.avi'
-// While accept string helps selection, we also validate mime types or extensions in JS
-const ALLOWED_MIME_PREFIXES = ['image/', 'audio/', 'video/', 'application/pdf']
+import { InstitutionStep } from '@/components/complaint-form/InstitutionStep'
+import { VictimStep } from '@/components/complaint-form/VictimStep'
+import { AuthorStep } from '@/components/complaint-form/AuthorStep'
+import { DetailsStep } from '@/components/complaint-form/DetailsStep'
+import { IdentificationStep } from '@/components/complaint-form/IdentificationStep'
+import {
+  MAX_FILE_SIZE,
+  ALLOWED_MIME_PREFIXES,
+  ACCEPTED_FILE_TYPES_STRING,
+} from '@/components/complaint-form/constants'
 
 const complaintSchema = z.object({
   escola_id: z
@@ -156,16 +57,7 @@ export default function ComplaintRegistration() {
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [schools, setSchools] = useState<School[]>([])
   const [loadingSchools, setLoadingSchools] = useState(false)
-  const [openSchool, setOpenSchool] = useState(false)
-  const [openCategory, setOpenCategory] = useState(false)
   const [files, setFiles] = useState<File[]>([])
-
-  // Documents State
-  const [documents, setDocuments] = useState<{
-    code: DocumentRecord | null
-    commitment: DocumentRecord | null
-  }>({ code: null, commitment: null })
-  const [loadingDocs, setLoadingDocs] = useState(false)
 
   const { selectedSchool, user } = useAppStore()
   const navigate = useNavigate()
@@ -185,8 +77,6 @@ export default function ComplaintRegistration() {
       autor_descricao: '',
     },
   })
-
-  const selectedSchoolId = form.watch('escola_id')
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -211,47 +101,20 @@ export default function ComplaintRegistration() {
     }
   }, [selectedSchool, form])
 
-  // Fetch Documents when School Changes
-  useEffect(() => {
-    const fetchDocs = async () => {
-      if (!selectedSchoolId) {
-        setDocuments({ code: null, commitment: null })
-        return
-      }
-      setLoadingDocs(true)
-      try {
-        const [code, commitment] = await Promise.all([
-          portalService.getCodeOfConduct(selectedSchoolId),
-          portalService.getManagementCommitment(selectedSchoolId),
-        ])
-        setDocuments({ code, commitment })
-      } catch (error) {
-        console.error('Error fetching documents:', error)
-      } finally {
-        setLoadingDocs(false)
-      }
-    }
-
-    fetchDocs()
-  }, [selectedSchoolId])
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files)
 
       const validFiles = newFiles.filter((file) => {
-        // Size Check
         if (file.size > MAX_FILE_SIZE) {
           toast.error(`O arquivo ${file.name} excede o limite de 50MB.`)
           return false
         }
 
-        // Type Check
         const isValidType =
           ALLOWED_MIME_PREFIXES.some((prefix) =>
             file.type.startsWith(prefix),
           ) ||
-          // Fallback check for extensions if mime type is generic
           ACCEPTED_FILE_TYPES_STRING.split(',').some((ext) =>
             file.name.toLowerCase().endsWith(ext),
           )
@@ -272,29 +135,11 @@ export default function ComplaintRegistration() {
     setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const getFileIcon = (type: string, name: string) => {
-    // Check mime type first, then extension
-    if (type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(name))
-      return <FileImage className="h-4 w-4 text-blue-500" />
-
-    if (type.startsWith('video/') || /\.(mp4|mov|avi|webm)$/i.test(name))
-      return <FileVideo className="h-4 w-4 text-purple-500" />
-
-    if (type.startsWith('audio/') || /\.(mp3|wav|m4a|aac)$/i.test(name))
-      return <FileAudio className="h-4 w-4 text-orange-500" />
-
-    if (type.includes('pdf') || /\.pdf$/i.test(name))
-      return <FileText className="h-4 w-4 text-red-500" />
-
-    return <FileText className="h-4 w-4 text-slate-500" />
-  }
-
   const onSubmit = async (data: z.infer<typeof complaintSchema>) => {
     setLoading(true)
     setUploadStatus('')
 
     try {
-      // 1. Upload Evidence if any
       let uploadedUrls: string[] = []
       if (files.length > 0) {
         setUploadStatus(`Enviando ${files.length} arquivo(s)...`)
@@ -302,9 +147,6 @@ export default function ComplaintRegistration() {
       }
 
       setUploadStatus('Finalizando registro...')
-
-      // 2. Prepare Data
-      const isAnonymous = data.anonimo
 
       const envolvidos_detalhes = {
         vitima: {
@@ -319,11 +161,10 @@ export default function ComplaintRegistration() {
         },
       }
 
-      // 3. Create Complaint
       const result = await portalService.createComplaint({
         escola_id: data.escola_id,
         descricao: data.description,
-        anonimo: isAnonymous,
+        anonimo: data.anonimo,
         denunciante_id: user?.id,
         categoria: data.categories,
         envolvidos_detalhes,
@@ -334,17 +175,12 @@ export default function ComplaintRegistration() {
       toast.success('Denúncia registrada com sucesso.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error: any) {
-      // CRITICAL FIX: "FormData object could not be cloned" error
-      // This happens when the error object contains references to Request/Response objects (like FormData)
-      // and something (like a console logger extension or postMessage in dev tools) tries to clone it.
-      // We must extract a clean string message and NEVER log the raw error object if it's suspicious.
-
+      // Prevents "FormData object could not be cloned" error by strictly using string messages
       const errorMsg =
         typeof error === 'object' && error !== null && 'message' in error
           ? String(error.message)
           : 'Erro ao registrar denúncia. Tente novamente.'
 
-      // Only log the clean string
       console.error('Registration failed:', errorMsg)
       toast.error(errorMsg)
     } finally {
@@ -405,7 +241,6 @@ export default function ComplaintRegistration() {
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
       <div className="container mx-auto max-w-3xl py-8 px-4 animate-fade-in space-y-8">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
@@ -436,7 +271,6 @@ export default function ComplaintRegistration() {
           </p>
         </div>
 
-        {/* Assistance Card */}
         <Card className="bg-white border shadow-sm">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="bg-blue-50 p-2 rounded-full">
@@ -456,595 +290,23 @@ export default function ComplaintRegistration() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* 1. Instituição e Contexto */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
-                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
-                    1
-                  </span>
-                  Instituição e Contexto
-                </CardTitle>
-                <CardDescription>
-                  Identifique onde o fato ocorreu e a natureza da ocorrência.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="escola_id"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>
-                        INSTITUIÇÃO DE ENSINO{' '}
-                        <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Popover open={openSchool} onOpenChange={setOpenSchool}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={openSchool}
-                              className={cn(
-                                'w-full justify-between',
-                                !field.value && 'text-muted-foreground',
-                              )}
-                              disabled={!!selectedSchool}
-                            >
-                              {field.value
-                                ? schools.find((s) => s.id === field.value)
-                                    ?.name || selectedSchool?.name
-                                : 'Selecione a escola relacionada...'}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                          <Command>
-                            <CommandInput placeholder="Buscar escola..." />
-                            <CommandList>
-                              <CommandEmpty>
-                                Escola não encontrada.
-                              </CommandEmpty>
-                              {loadingSchools && (
-                                <div className="p-4 text-sm text-center text-muted-foreground">
-                                  Carregando...
-                                </div>
-                              )}
-                              <CommandGroup>
-                                {schools.map((school) => (
-                                  <CommandItem
-                                    key={school.id}
-                                    value={school.name}
-                                    onSelect={() => {
-                                      form.setValue('escola_id', school.id)
-                                      setOpenSchool(false)
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        'mr-2 h-4 w-4',
-                                        school.id === field.value
-                                          ? 'opacity-100'
-                                          : 'opacity-0',
-                                      )}
-                                    />
-                                    {school.name}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <InstitutionStep
+              schools={schools}
+              loadingSchools={loadingSchools}
+              selectedSchool={selectedSchool}
+            />
 
-                {/* Institutional Documents Section */}
-                {selectedSchoolId && (
-                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <FileSearch className="h-4 w-4 text-slate-500" />
-                      <h4 className="text-sm font-semibold text-slate-700">
-                        Documentos de Integridade
-                      </h4>
-                    </div>
+            <VictimStep />
 
-                    {loadingDocs ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Skeleton className="h-16 w-full" />
-                        <Skeleton className="h-16 w-full" />
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Código de Conduta */}
-                        {documents.code ? (
-                          <a
-                            href={documents.code.arquivo_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block"
-                          >
-                            <div className="bg-white border hover:border-blue-400 hover:shadow-sm transition-all rounded-md p-3 flex items-center gap-3 cursor-pointer h-full">
-                              <div className="bg-blue-50 p-2 rounded-full">
-                                <FileText className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-slate-900">
-                                  Código de Conduta
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  Ler documento
-                                </p>
-                              </div>
-                              <ExternalLink className="h-3 w-3 text-slate-400" />
-                            </div>
-                          </a>
-                        ) : (
-                          <div className="bg-slate-100/50 border border-slate-100 rounded-md p-3 flex items-center gap-3 h-full opacity-60">
-                            <div className="bg-slate-200 p-2 rounded-full">
-                              <FileText className="h-5 w-5 text-slate-400" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-slate-500">
-                                Código de Conduta
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                Não disponível
-                              </p>
-                            </div>
-                          </div>
-                        )}
+            <AuthorStep />
 
-                        {/* Compromisso Alta Gestão */}
-                        {documents.commitment ? (
-                          <a
-                            href={documents.commitment.arquivo_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block"
-                          >
-                            <div className="bg-white border hover:border-blue-400 hover:shadow-sm transition-all rounded-md p-3 flex items-center gap-3 cursor-pointer h-full">
-                              <div className="bg-blue-50 p-2 rounded-full">
-                                <Shield className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-slate-900">
-                                  Compromisso de Gestão
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  Ler documento
-                                </p>
-                              </div>
-                              <ExternalLink className="h-3 w-3 text-slate-400" />
-                            </div>
-                          </a>
-                        ) : (
-                          <div className="bg-slate-100/50 border border-slate-100 rounded-md p-3 flex items-center gap-3 h-full opacity-60">
-                            <div className="bg-slate-200 p-2 rounded-full">
-                              <Shield className="h-5 w-5 text-slate-400" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-slate-500">
-                                Compromisso de Gestão
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                Não disponível
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+            <DetailsStep
+              files={files}
+              onFileChange={handleFileChange}
+              onRemoveFile={removeFile}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="categories"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>
-                        TIPO DE OCORRÊNCIA{' '}
-                        <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Popover
-                        open={openCategory}
-                        onOpenChange={setOpenCategory}
-                      >
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className={cn(
-                                'w-full justify-between h-auto min-h-[40px]',
-                                !field.value?.length && 'text-muted-foreground',
-                              )}
-                            >
-                              {field.value?.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {field.value.map((cat) => (
-                                    <Badge
-                                      key={cat}
-                                      variant="secondary"
-                                      className="mr-1 mb-1"
-                                    >
-                                      {cat}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              ) : (
-                                'Selecione as categorias aplicáveis...'
-                              )}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                          <Command>
-                            <CommandInput placeholder="Buscar categoria..." />
-                            <CommandList>
-                              <CommandEmpty>
-                                Nenhuma categoria encontrada.
-                              </CommandEmpty>
-                              <div className="max-h-[300px] overflow-y-auto">
-                                {CATEGORY_GROUPS.map((group) => (
-                                  <CommandGroup
-                                    key={group.heading}
-                                    heading={group.heading}
-                                  >
-                                    {group.items.map((category) => (
-                                      <CommandItem
-                                        key={category}
-                                        value={category}
-                                        onSelect={() => {
-                                          const current = field.value || []
-                                          const updated = current.includes(
-                                            category,
-                                          )
-                                            ? current.filter(
-                                                (c) => c !== category,
-                                              )
-                                            : [...current, category]
-                                          form.setValue('categories', updated, {
-                                            shouldValidate: true,
-                                          })
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            'mr-2 h-4 w-4',
-                                            field.value?.includes(category)
-                                              ? 'opacity-100'
-                                              : 'opacity-0',
-                                          )}
-                                        />
-                                        {category}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                ))}
-                              </div>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        Selecione uma ou mais categorias que se enquadram no
-                        ocorrido.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* 2. Quem sofreu o ocorrido? */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
-                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
-                    2
-                  </span>
-                  Quem sofreu o ocorrido?
-                </CardTitle>
-                <CardDescription>
-                  Informe quem foi afetado pela situação relatada. Pode ser você
-                  ou outra pessoa.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="vitima_funcao"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        QUAL A FUNÇÃO DA VÍTIMA?{' '}
-                        <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a função..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {ROLES.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="vitima_nome"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>NOME DA VÍTIMA (SE SOUBER)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Maria Souza" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="vitima_setor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SETOR/TURMA/SALA DA VÍTIMA</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ex: 9º ano B, Secretaria, etc."
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 3. Quem praticou a ação? */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
-                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
-                    3
-                  </span>
-                  Quem praticou a ação?
-                </CardTitle>
-                <CardDescription>
-                  Selecione a função ou vínculo da pessoa que praticou a ação ou
-                  omissão.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="autor_funcao"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        FUNÇÃO / VÍNCULO DO AUTOR{' '}
-                        <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o vínculo..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {ROLES.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="autor_nome"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>NOME DA PESSOA (SE SOUBER)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: João Silva" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Preencha apenas se souber.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="autor_descricao"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>DESCRIÇÃO (SE NÃO SOUBER O NOME)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ex: professor de matemática do 8º ano, turno da manhã..."
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 4. Relato Detalhado */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
-                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
-                    4
-                  </span>
-                  Relato Detalhado
-                </CardTitle>
-                <CardDescription>
-                  Descreva o que aconteceu e anexe provas se tiver.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        DESCRIÇÃO DA OCORRÊNCIA{' '}
-                        <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Descreva o que aconteceu, quando, onde e quem estava envolvido. Quanto mais detalhes, melhor será a apuração."
-                          className="min-h-[150px] resize-y"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Relate os fatos de forma clara e objetiva. Mínimo de 20
-                        caracteres.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="space-y-3">
-                  <FormLabel>Anexar Evidências (Opcional)</FormLabel>
-                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors relative">
-                    <UploadCloud className="h-10 w-10 text-slate-400 mb-2" />
-                    <p className="text-sm font-medium text-slate-700">
-                      Clique para adicionar documentos, fotos, vídeos ou áudios
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1 max-w-sm">
-                      Suporta Imagens, PDF, Áudio (MP3, WAV, M4A) e Vídeo (MP4,
-                      MOV, AVI) até 50MB
-                    </p>
-                    <Input
-                      type="file"
-                      multiple
-                      accept={ACCEPTED_FILE_TYPES_STRING}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      onChange={handleFileChange}
-                      // Hack to allow same file selection again if cleared
-                      value=""
-                    />
-                  </div>
-
-                  {files.length > 0 && (
-                    <div className="space-y-2">
-                      {files.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between bg-white border p-2 rounded-md shadow-sm"
-                        >
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            <div className="bg-slate-100 p-2 rounded">
-                              {getFileIcon(file.type, file.name)}
-                            </div>
-                            <div className="flex flex-col overflow-hidden">
-                              <span className="text-sm truncate max-w-[200px] sm:max-w-xs font-medium">
-                                {file.name}
-                              </span>
-                              <span className="text-xs text-slate-500">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB •{' '}
-                                {file.type.split('/')[1] ||
-                                  file.name.split('.').pop() ||
-                                  'arquivo'}
-                              </span>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-500 hover:bg-red-50"
-                            onClick={() => removeFile(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 5. Identificação */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg text-teal-700 flex items-center gap-2">
-                  <span className="border border-teal-200 bg-teal-50 w-6 h-6 rounded flex items-center justify-center text-xs">
-                    5
-                  </span>
-                  Identificação
-                </CardTitle>
-                <CardDescription>
-                  Escolha se deseja se identificar ou manter o anonimato.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="anonimo"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm bg-white">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base font-bold">
-                          DENÚNCIA ANÔNIMA
-                        </FormLabel>
-                        <FormDescription>
-                          Seus dados não serão identificados na apuração.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="data-[state=checked]:bg-green-600"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+            <IdentificationStep />
 
             <Button
               type="submit"

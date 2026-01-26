@@ -132,7 +132,19 @@ export const portalService = {
     }
 
     if (!data) {
-      throw new Error(`Status não encontrado no sistema: ${name}`)
+      // Create status if not found (fallback)
+      const { data: newData, error: createError } = await supabase
+        .from('status_denuncia')
+        .insert({ nome_status: name })
+        .select('id')
+        .single()
+
+      if (createError) {
+        throw new Error(
+          `Status não encontrado e não foi possível criar: ${name}`,
+        )
+      }
+      return newData.id
     }
 
     return data.id
@@ -195,7 +207,7 @@ export const portalService = {
           anonimo: data.anonimo,
           denunciante_id: finalDenuncianteId,
           categoria: data.categoria,
-          status: initialStatusId, // Use ID, not string
+          status: initialStatusId,
           envolvidos_detalhes: data.envolvidos_detalhes as any,
           evidencias_urls: data.evidencias_urls,
         })
@@ -208,38 +220,14 @@ export const portalService = {
         throw new Error(msg)
       }
 
-      // 2. Immediate Transition to "Aguardando designação..."
-      try {
-        const nextStatusId = await this.getStatusId(
-          WORKFLOW_STATUS.WAITING_ANALYST_1,
-        )
+      // Auto-transition to next step
+      this.triggerAutoTransition(result.id, initialStatusId).catch(
+        console.error,
+      )
 
-        const { error: transitionError } = await supabase
-          .from('denuncias')
-          .update({ status: nextStatusId })
-          .eq('id', result.id)
-
-        if (transitionError) {
-          console.error('Failed to auto-transition status', transitionError)
-        } else {
-          // Log transition
-          await supabase.from('compliance_workflow_logs').insert({
-            complaint_id: result.id,
-            previous_status: initialStatusId, // Best effort logging
-            new_status: nextStatusId,
-            comments: 'Transição automática de entrada (Portal)',
-          })
-        }
-
-        return {
-          ...result,
-          status: transitionError ? initialStatusId : nextStatusId,
-          protocolo,
-        }
-      } catch (transitionErr) {
-        console.error('Transition error:', transitionErr)
-        // Return result anyway since complaint was created
-        return { ...result, protocolo }
+      return {
+        ...result,
+        protocolo,
       }
     } catch (err) {
       const msg = getErrorMessage(err)
@@ -248,9 +236,31 @@ export const portalService = {
     }
   },
 
+  async triggerAutoTransition(complaintId: string, initialStatusId: string) {
+    try {
+      const nextStatusId = await this.getStatusId(
+        WORKFLOW_STATUS.WAITING_ANALYST_1,
+      )
+
+      const { error: transitionError } = await supabase
+        .from('denuncias')
+        .update({ status: nextStatusId })
+        .eq('id', complaintId)
+
+      if (!transitionError) {
+        await supabase.from('compliance_workflow_logs').insert({
+          complaint_id: complaintId,
+          previous_status: initialStatusId,
+          new_status: nextStatusId,
+          comments: 'Transição automática de entrada (Portal)',
+        })
+      }
+    } catch (error) {
+      console.error('Auto transition failed', error)
+    }
+  },
+
   async getComplaintStatus(protocol: string) {
-    // Note: This RPC might return status names or IDs depending on implementation.
-    // If it returns IDs, we might need to fetch the name for display.
     const { data, error } = await supabase.rpc('get_complaint_by_protocol', {
       protocol_query: protocol,
     })
