@@ -333,8 +333,10 @@ export default function ComplaintRegistration() {
       toast.success('Denúncia registrada com sucesso.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error: any) {
-      console.error('Registration failed:', error)
-      // Display only the message to the user, safe from complex objects
+      // Avoid logging the full error object to prevent "FormData object could not be cloned" error
+      // which happens when the error object contains references to the request FormData
+      console.error('Registration failed:', error?.message || 'Unknown error')
+
       const errorMsg =
         error?.message || 'Erro ao registrar denúncia. Tente novamente.'
       toast.error(errorMsg)

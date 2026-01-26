@@ -127,7 +127,7 @@ export const portalService = {
 
         if (uploadError) {
           // IMPORTANT: Extract the message string immediately.
-          // Do NOT throw the uploadError object directly, as it may contain the FormData (request body),
+          // Do NOT throw or log the uploadError object directly, as it may contain the FormData (request body),
           // which causes "FormData object could not be cloned" errors in some environments/devtools.
           throw new Error(uploadError.message)
         }
@@ -139,10 +139,12 @@ export const portalService = {
         urls.push(publicUrl)
       } catch (err: any) {
         // Safe logging that doesn't try to clone complex error objects
-        console.error(`Evidence upload failed for ${file.name}:`, err.message)
+        const errorMessage = err?.message || 'Erro desconhecido'
+        console.error(`Evidence upload failed for ${file.name}:`, errorMessage)
 
+        // Always throw a clean Error object with a string message
         throw new Error(
-          err.message || `Falha ao fazer upload do arquivo ${file.name}`,
+          errorMessage || `Falha ao fazer upload do arquivo ${file.name}`,
         )
       }
     }
@@ -174,7 +176,12 @@ export const portalService = {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      // Sanitize error before throwing to prevent any potential cloning issues
+      console.error('Error creating complaint:', error.message)
+      throw new Error(error.message)
+    }
+
     return result
   },
 
