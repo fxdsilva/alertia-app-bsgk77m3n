@@ -282,13 +282,18 @@ export const complianceService = {
   },
 
   async getComplaintsForTriage() {
-    // For Director to see all complaints that need attention
+    // For Director to see all complaints that need attention (Strictly Unassigned)
+    // A report is considered unassigned if all analyst fields are null
     const { data, error } = await supabase
       .from('denuncias')
       .select(
         'id, protocolo, categoria, status, gravidade, created_at, descricao, escola_id, escolas_instituicoes(nome_escola), autorizado_gestao, analista_id',
       )
-      .or('analista_id.is.null,status.eq.pendente')
+      .is('analista_id', null)
+      .is('analista_1_id', null)
+      .is('analista_2_id', null)
+      .is('analista_3_id', null)
+      .not('status', 'in', '("resolvido","arquivado","concluido")') // Optional: filter out closed ones
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -326,10 +331,13 @@ export const complianceService = {
     schoolId: string,
   ) {
     // Assign analyst and update status to indicate investigation started
+    // In new workflow, this usually maps to assigning Analyst 1 or 2
+    // For legacy support or direct assignment:
     const { error } = await supabase
       .from('denuncias')
       .update({
-        analista_id: analystId,
+        analista_id: analystId, // Legacy field
+        analista_1_id: analystId, // Assume first analyst in workflow
         status: 'em_analise', // Or 'investigacao' based on status table
       })
       .eq('id', complaintId)
@@ -675,13 +683,6 @@ export const complianceService = {
   // --- DASHBOARD STATISTICS METHODS ---
 
   async getActiveComplaintsCount() {
-    // Get complaints that are NOT 'resolvido' or 'arquivado' (assuming these are final statuses)
-    // Since status might be a FK to status_denuncia, we'll assume string based on usage in other files
-    // or we check the status_denuncia names if needed.
-    // Based on previous code, status is treated as a string value in 'denuncias' table result
-    // (likely due to Supabase returning joined value or denormalized, but schema says FK)
-    // Safest bet is to filter by exclusion if status is text, or fetch all and filter in memory if volume low.
-    // Let's assume 'status' column in 'denuncias' is textual based on existing code usage.
     const { count, error } = await supabase
       .from('denuncias')
       .select('*', { count: 'exact', head: true })

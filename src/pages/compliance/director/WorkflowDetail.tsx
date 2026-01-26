@@ -60,7 +60,13 @@ export default function WorkflowDetail() {
       if (complaint.status === WORKFLOW_STATUS.REVIEW_3) phase = 3
 
       await workflowService.approvePhase(complaint.id, phase, approved, comment)
-      toast.success(approved ? 'Fase aprovada' : 'Fase devolvida/reprovada')
+      toast.success(
+        approved
+          ? phase === 1
+            ? 'Procedência Aprovada. Investigação Criada.'
+            : 'Fase aprovada com sucesso'
+          : 'Devolvido para ajustes do analista',
+      )
       navigate('/compliance/director/workflow')
     } catch (error) {
       toast.error('Erro ao processar aprovação')
@@ -105,6 +111,8 @@ export default function WorkflowDetail() {
     WORKFLOW_STATUS.REVIEW_2,
     WORKFLOW_STATUS.REVIEW_3,
   ].includes(complaint.status)
+
+  const isPhase1Review = complaint.status === WORKFLOW_STATUS.REVIEW_1
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 pb-20">
@@ -204,13 +212,18 @@ export default function WorkflowDetail() {
       {/* Reports View */}
       <Card>
         <CardHeader>
-          <CardTitle>Pareceres e Relatórios</CardTitle>
+          <CardTitle>Pareceres e Relatórios (Submissões)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {complaint.parecer_1 && (
             <div>
-              <h3 className="font-semibold mb-2">
-                Parecer de Procedência (Analista 1)
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                Parecer e Recomendação do Analista (Fase 1)
+                {isPhase1Review && (
+                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                    Aguardando Aprovação
+                  </Badge>
+                )}
               </h3>
               <div className="bg-slate-50 p-4 rounded border whitespace-pre-wrap">
                 {complaint.parecer_1}
@@ -248,7 +261,7 @@ export default function WorkflowDetail() {
           </CardHeader>
           <CardContent className="space-y-4 p-6">
             <Textarea
-              placeholder="Insira observações, justificativas ou instruções de revisão..."
+              placeholder="Insira observações, justificativas ou instruções de ajuste..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
@@ -267,13 +280,16 @@ export default function WorkflowDetail() {
                 onClick={() => handleApproval(false)}
                 disabled={processing}
               >
-                <X className="mr-2 h-4 w-4" /> Devolver para Revisão
+                <X className="mr-2 h-4 w-4" /> Devolver para Ajustes
               </Button>
               <Button
                 onClick={() => handleApproval(true)}
                 disabled={processing}
               >
-                <Check className="mr-2 h-4 w-4" /> Aprovar e Avançar
+                <Check className="mr-2 h-4 w-4" />
+                {isPhase1Review
+                  ? 'Aprovar para Investigação'
+                  : 'Aprovar e Avançar'}
               </Button>
             </div>
           </CardContent>

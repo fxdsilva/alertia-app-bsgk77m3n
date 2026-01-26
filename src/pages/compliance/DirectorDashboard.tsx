@@ -96,17 +96,17 @@ export default function DirectorDashboard() {
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Workflow de Denúncias
+              Gestão de Workflow
             </CardTitle>
             <GitPullRequest className="h-4 w-4 text-teal-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-teal-700">Gestão</div>
+            <div className="text-2xl font-bold text-teal-700">Fila</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Fases 1, 2 e 3 + SoD
+              Feedback de Analistas
             </p>
             <div className="mt-4 flex items-center text-sm text-teal-600 font-medium group-hover:translate-x-1 transition-transform">
-              Acessar Workflow &rarr;
+              Aprovar Fases &rarr;
             </div>
           </CardContent>
         </Card>
@@ -118,7 +118,7 @@ export default function DirectorDashboard() {
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Triagem Rápida
+              Triagem de Denúncias
             </CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
@@ -126,11 +126,9 @@ export default function DirectorDashboard() {
             <div className="text-2xl font-bold text-red-700">
               {stats.activeComplaints}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Ocorrências em andamento
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Não atribuídas</p>
             <div className="mt-4 flex items-center text-sm text-red-600 font-medium group-hover:translate-x-1 transition-transform">
-              Ver Triagem &rarr;
+              Realizar Triagem &rarr;
             </div>
           </CardContent>
         </Card>

@@ -210,14 +210,33 @@ export const workflowService = {
       newStatusName = WORKFLOW_STATUS.INVESTIGATION_2
       logMsg = 'Analista 2 (Investigação) designado'
 
-      // Create Investigation Record
-      await supabase.from('investigacoes').insert({
-        denuncia_id: complaintId,
-        escola_id: complaint.escola_id,
-        analista_id: analystId,
-        status: 'em_andamento',
-        data_inicio: new Date().toISOString(),
-      })
+      // Check if investigation record exists (possibly created by Director approval)
+      const { data: existingInv } = await supabase
+        .from('investigacoes')
+        .select('id')
+        .eq('denuncia_id', complaintId)
+        .single()
+
+      if (existingInv) {
+        // Update existing investigation
+        await supabase
+          .from('investigacoes')
+          .update({
+            analista_id: analystId,
+            status: 'em_andamento',
+            data_inicio: new Date().toISOString(),
+          })
+          .eq('id', existingInv.id)
+      } else {
+        // Create Investigation Record (Fallback)
+        await supabase.from('investigacoes').insert({
+          denuncia_id: complaintId,
+          escola_id: complaint.escola_id,
+          analista_id: analystId,
+          status: 'em_andamento',
+          data_inicio: new Date().toISOString(),
+        })
+      }
     } else if (phase === 3) {
       updates.analista_3_id = analystId
       updates.tipo_resolucao = resolutionType
@@ -349,6 +368,33 @@ export const workflowService = {
         newStatusName = WORKFLOW_STATUS.RETURNED_1
       } else {
         newStatusName = WORKFLOW_STATUS.APPROVED_PROCEDURE
+        // Create Investigation Record (Placeholder for Phase 2)
+        // Fetch school_id first
+        const { data: complaint } = await supabase
+          .from('denuncias')
+          .select('escola_id')
+          .eq('id', complaintId)
+          .single()
+
+        if (complaint) {
+          // Check if already exists to avoid dupes
+          const { data: existing } = await supabase
+            .from('investigacoes')
+            .select('id')
+            .eq('denuncia_id', complaintId)
+            .maybeSingle()
+
+          if (!existing) {
+            await supabase.from('investigacoes').insert({
+              denuncia_id: complaintId,
+              escola_id: complaint.escola_id,
+              analista_id: null, // No analyst assigned yet
+              status: 'Pendente',
+              created_at: new Date().toISOString(),
+              data_inicio: new Date().toISOString(),
+            })
+          }
+        }
       }
     } else if (phase === 2) {
       if (!approved) {
@@ -389,7 +435,7 @@ export const workflowService = {
     await this.logTransition(
       complaintId,
       newStatusName,
-      `Decisão Fase ${phase}: ${approved ? 'Aprovado' : 'Revisão Solicitada'}. ${comments || ''}`,
+      `Decisão Fase ${phase}: ${approved ? 'Aprovado' : 'Devolvido para Ajustes'}. ${comments || ''}`,
     )
   },
 
