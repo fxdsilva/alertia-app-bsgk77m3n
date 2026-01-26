@@ -103,7 +103,10 @@ export default function ComplaintWorkflow() {
       const searchMatch =
         !search ||
         c.protocolo.toLowerCase().includes(search.toLowerCase()) ||
-        c.descricao.toLowerCase().includes(search.toLowerCase())
+        c.descricao.toLowerCase().includes(search.toLowerCase()) ||
+        c.escolas_instituicoes?.nome_escola
+          ?.toLowerCase()
+          .includes(search.toLowerCase())
 
       // 2. Gravity Filter
       const gravityMatch =
@@ -265,6 +268,11 @@ export default function ComplaintWorkflow() {
                 Sem categoria
               </span>
             )}
+          </div>
+          <div className="text-xs text-muted-foreground mt-2">
+            {c.analista_1 && <span>A1: {c.analista_1.nome_usuario}</span>}
+            {c.analista_2 && <span> | A2: {c.analista_2.nome_usuario}</span>}
+            {c.analista_3 && <span> | A3: {c.analista_3.nome_usuario}</span>}
           </div>
         </CardContent>
         <CardFooter className="bg-slate-50/50 p-3 px-5 flex justify-between items-center border-t">
