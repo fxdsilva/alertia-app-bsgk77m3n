@@ -11,6 +11,7 @@ import {
   Clock,
   ArrowRight,
   PanelLeft,
+  Globe,
 } from 'lucide-react'
 
 const Index = () => {
@@ -170,6 +171,16 @@ const Index = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* External Links Button */}
+          <Button
+            variant="outline"
+            className="w-full h-14 bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-sm transition-all text-base gap-3"
+            onClick={() => navigate('/public/official-channels')}
+          >
+            <Globe className="h-5 w-5" />
+            Outros Canais Oficiais (MT e Brasil)
+          </Button>
         </div>
       </main>
 

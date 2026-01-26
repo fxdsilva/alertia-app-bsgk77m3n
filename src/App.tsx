@@ -10,6 +10,7 @@ import Login from '@/pages/Login'
 import NotFound from '@/pages/NotFound'
 import Support from '@/pages/Support'
 import PortalHome from '@/pages/public/PortalHome'
+import OfficialChannels from '@/pages/public/OfficialChannels'
 
 import CodeOfConduct from '@/pages/public/CodeOfConduct'
 import ManagementCommitment from '@/pages/public/ManagementCommitment'
@@ -196,6 +197,10 @@ const App = () => (
             <Route
               path="/public/complaint/status"
               element={<ComplaintStatus />}
+            />
+            <Route
+              path="/public/official-channels"
+              element={<OfficialChannels />}
             />
 
             {/* Collaborator Pages */}
