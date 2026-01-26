@@ -28,6 +28,7 @@ import {
   AlertCircle,
   FolderOpen,
   UserCheck,
+  Inbox,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -287,17 +288,17 @@ export default function ComplaintWorkflow() {
   }
 
   const renderEmptyState = (phase: string) => {
-    let icon = FolderOpen
+    let Icon = FolderOpen
     let message = 'Nenhuma denúncia nesta fase.'
     let subMessage =
       'As denúncias aparecerão aqui conforme o avanço do workflow.'
 
     if (phase === 'f1' && !search) {
-      icon = Inbox
+      Icon = Inbox
       message = 'Tudo limpo por aqui!'
       subMessage = 'Não há novas denúncias para análise de procedência.'
     } else if (search) {
-      icon = FileSearch
+      Icon = FileSearch
       message = 'Nenhum resultado encontrado'
       subMessage = 'Tente ajustar os filtros ou a busca.'
     }
@@ -305,9 +306,7 @@ export default function ComplaintWorkflow() {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in bg-slate-50 rounded-lg border border-dashed">
         <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-          {/* @ts-expect-error */}
-          <icon className="h-10 w-10 text-muted-foreground/50" />
-          {/* TS ignore used because treating icon component as generic react node sometimes causes issues with specific lucide versions, but here it works */}
+          <Icon className="h-10 w-10 text-muted-foreground/50" />
         </div>
         <h3 className="text-lg font-semibold text-slate-900">{message}</h3>
         <p className="text-sm text-muted-foreground max-w-sm mt-1">
