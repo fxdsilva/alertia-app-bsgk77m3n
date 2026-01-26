@@ -25,6 +25,11 @@ export interface ComplaintData {
   denunciante_vinculo?: string | null
 }
 
+export interface ComplaintStatusResult {
+  status: string
+  updated_at: string
+}
+
 const getErrorMessage = (error: unknown): string => {
   if (!error) return 'Erro desconhecido'
   if (error instanceof Error) return error.message
@@ -305,7 +310,9 @@ export const portalService = {
     }
   },
 
-  async getComplaintStatus(protocol: string) {
+  async getComplaintStatus(
+    protocol: string,
+  ): Promise<ComplaintStatusResult | null> {
     return fetchWithRetry(async () => {
       const { data, error } = await supabase.rpc('get_complaint_by_protocol', {
         protocol_query: protocol,

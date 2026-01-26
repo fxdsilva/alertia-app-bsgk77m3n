@@ -66,6 +66,9 @@ export default function ComplaintStatus() {
               placeholder="Ex: 20231216-123456"
               value={protocol}
               onChange={(e) => setProtocol(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearch()
+              }}
             />
             <Button onClick={handleSearch} disabled={loading}>
               {loading ? (
@@ -80,16 +83,25 @@ export default function ComplaintStatus() {
 
       {result && (
         <Card className="animate-fade-in-up border-l-4 border-l-primary">
-          <CardHeader>
-            <CardTitle>
-              Status: <span className="capitalize">{result.status}</span>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-muted-foreground">
+                Situação atual:
+              </span>
+              <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-3 py-1 text-base font-semibold text-primary">
+                {result.status}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-2">
+            <p className="text-sm text-muted-foreground mb-4">
               Última atualização: {result.lastUpdate}
             </p>
-            <p className="font-medium">{result.message}</p>
+            <div className="bg-muted/50 p-4 rounded-md">
+              <p className="font-medium text-sm text-foreground">
+                {result.message}
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
