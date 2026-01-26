@@ -122,6 +122,7 @@ const ROLES = [
 
 // Enhanced file validation constants
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+// Added support for audio and video extensions
 const ACCEPTED_FILE_TYPES_STRING =
   '.jpg,.jpeg,.png,.gif,.webp,.pdf,.mp3,.wav,.m4a,.mp4,.mov,.avi'
 // While accept string helps selection, we also validate mime types or extensions in JS

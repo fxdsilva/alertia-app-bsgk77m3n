@@ -140,6 +140,7 @@ export const portalService = {
       } catch (err: any) {
         // Safe logging that doesn't try to clone complex error objects
         const errorMessage = err?.message || 'Erro desconhecido'
+        // Log the string message only, never the error object itself if it's coming from Supabase/Axios
         console.error(`Evidence upload failed for ${file.name}:`, errorMessage)
 
         // Always throw a clean Error object with a string message
