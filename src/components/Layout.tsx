@@ -22,6 +22,7 @@ import {
   Info,
   BarChart3,
   GitPullRequest,
+  Settings,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -43,6 +44,7 @@ const Layout = () => {
     [
       '/',
       '/login',
+      '/support', // Support is now public
       '/admin/auth',
       '/auth/forgot-password',
       '/auth/reset-password',
@@ -164,6 +166,9 @@ const Layout = () => {
             </NavLink>
             <NavLink to="/admin/complaints" icon={AlertTriangle}>
               Todas Denúncias
+            </NavLink>
+            <NavLink to="/senior/support-config" icon={Settings}>
+              Configuração Suporte
             </NavLink>
           </>
         )}

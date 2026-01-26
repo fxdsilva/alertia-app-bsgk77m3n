@@ -16,13 +16,45 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { PanelLeft, Mail, Phone, ArrowLeft, Send } from 'lucide-react'
-import { useState } from 'react'
+import {
+  PanelLeft,
+  Mail,
+  Phone,
+  ArrowLeft,
+  Send,
+  MessageCircle,
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import {
+  settingsService,
+  SupportContactInfo,
+  FAQItem,
+} from '@/services/settingsService'
 
 export default function Support() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [contactInfo, setContactInfo] = useState<SupportContactInfo | null>(
+    null,
+  )
+  const [faqs, setFaqs] = useState<FAQItem[]>([])
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const [info, faqData] = await Promise.all([
+          settingsService.getSupportContactInfo(),
+          settingsService.getSupportFAQs(),
+        ])
+        setContactInfo(info)
+        if (faqData) setFaqs(faqData)
+      } catch (error) {
+        console.error('Error loading support settings:', error)
+      }
+    }
+    fetchSettings()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,7 +162,7 @@ export default function Support() {
                   </div>
                   <h3 className="font-semibold">Email</h3>
                   <p className="text-sm text-slate-500">
-                    suporte@alertia.com.br
+                    {contactInfo?.email || 'Carregando...'}
                   </p>
                 </CardContent>
               </Card>
@@ -140,9 +172,26 @@ export default function Support() {
                     <Phone className="h-6 w-6" />
                   </div>
                   <h3 className="font-semibold">Telefone</h3>
-                  <p className="text-sm text-slate-500">0800 123 4567</p>
+                  <p className="text-sm text-slate-500">
+                    {contactInfo?.phone || 'Carregando...'}
+                  </p>
                 </CardContent>
               </Card>
+              {contactInfo?.whatsapp && (
+                <Card
+                  className="sm:col-span-2 hover:bg-slate-50 transition-colors cursor-pointer"
+                  onClick={() => window.open(contactInfo.whatsapp, '_blank')}
+                >
+                  <CardContent className="p-4 flex items-center justify-center gap-3">
+                    <div className="p-2 bg-green-100 rounded-full text-green-700">
+                      <MessageCircle className="h-5 w-5" />
+                    </div>
+                    <span className="font-semibold text-green-800">
+                      Atendimento via WhatsApp
+                    </span>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* FAQ */}
@@ -150,49 +199,24 @@ export default function Support() {
               <h2 className="text-2xl font-bold tracking-tight">
                 Perguntas Frequentes
               </h2>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>
-                    Como faço uma denúncia anônima?
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    Para fazer uma denúncia anônima, acesse a página inicial e
-                    clique em "Registrar Denúncia". No formulário, certifique-se
-                    de marcar a opção "Denúncia Anônima" na etapa de
-                    identificação.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>
-                    Como acompanhar meu protocolo?
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    Você pode acompanhar o status da sua denúncia acessando a
-                    opção "Consultar Status" na página inicial e informando o
-                    número do protocolo gerado no momento do registro.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-3">
-                  <AccordionTrigger>
-                    Esqueci minha senha, o que fazer?
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    Na tela de login, clique em "Esqueceu a senha?" e siga as
-                    instruções enviadas para o seu e-mail cadastrado para
-                    redefinir sua senha de acesso.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-4">
-                  <AccordionTrigger>
-                    Os meus dados estão seguros?
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    Sim. O ALERTIA utiliza criptografia de ponta a ponta e segue
-                    rigorosos padrões de segurança e privacidade em conformidade
-                    com a LGPD para proteger todas as informações.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+              {faqs.length > 0 ? (
+                <Accordion type="single" collapsible className="w-full">
+                  {faqs.map((faq) => (
+                    <AccordionItem key={faq.id} value={faq.id}>
+                      <AccordionTrigger className="text-left">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="whitespace-pre-wrap">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  Carregando perguntas frequentes...
+                </p>
+              )}
             </div>
           </div>
         </div>

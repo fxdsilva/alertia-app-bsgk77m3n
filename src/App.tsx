@@ -36,6 +36,7 @@ import AuditLogs from '@/pages/senior/AuditLogs'
 import PendingReports from '@/pages/senior/PendingReports'
 import NetworkWorkflow from '@/pages/senior/NetworkWorkflow'
 import WorkflowDetailMaster from '@/pages/senior/WorkflowDetailMaster'
+import SupportManager from '@/pages/senior/SupportManager'
 
 import InternalInvestigations from '@/pages/InternalInvestigations'
 import ReportGeneration from '@/pages/ReportGeneration'
@@ -253,6 +254,7 @@ const App = () => (
               path="/senior/workflow/:id"
               element={<WorkflowDetailMaster />}
             />
+            <Route path="/senior/support-config" element={<SupportManager />} />
 
             {/* Shared Pages */}
             <Route
