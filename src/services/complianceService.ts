@@ -99,8 +99,6 @@ export interface AnalystAssignment {
 }
 
 export const complianceService = {
-  // ... existing methods like ensureStatusId, getAnalysts, createAnalyst, updateAnalyst, toggleAnalystStatus, getSchools, getSchoolsWithPendingComplaints, getSchoolsWithUnassignedComplaints, getUnassignedComplaints ...
-
   async getAnalysts() {
     const { data, error } = await supabase
       .from('usuarios_escola')
@@ -165,8 +163,6 @@ export const complianceService = {
     if (error) throw error
     return data
   },
-
-  // ... keep other existing methods ...
 
   async getComplaintsForTriage() {
     // For Director to see all complaints that need attention
@@ -261,7 +257,6 @@ export const complianceService = {
     )
   },
 
-  // ... keep getAnalystAssignments, upsertAnalystAssignment, etc. ...
   async getAnalystAssignments(analystId?: string) {
     let query = supabase
       .from('analyst_assignments')
@@ -352,7 +347,6 @@ export const complianceService = {
     return data
   },
 
-  // ... keep other methods (getComplaintFullDetail, createTask, getTasks, etc)
   async getTasks(filters?: { directorId?: string; analystId?: string }) {
     let query = supabase
       .from('compliance_tasks')
@@ -518,6 +512,20 @@ export const complianceService = {
 
     if (error) {
       console.error('Error fetching active complaints count', error)
+      return 0
+    }
+    return count || 0
+  },
+
+  // NEW METHOD: Counts unassigned complaints for triage
+  async getUnassignedComplaintsCount() {
+    const { count, error } = await supabase
+      .from('denuncias')
+      .select('*', { count: 'exact', head: true })
+      .is('analista_id', null)
+
+    if (error) {
+      console.error('Error fetching unassigned complaints count', error)
       return 0
     }
     return count || 0

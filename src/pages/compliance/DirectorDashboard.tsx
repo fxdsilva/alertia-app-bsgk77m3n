@@ -39,6 +39,7 @@ export default function DirectorDashboard() {
     pendingTasks: 0,
     completedTasks: 0,
     activeComplaints: 0,
+    unassignedComplaints: 0,
   })
   const [recentAudits, setRecentAudits] = useState<any[]>([])
 
@@ -49,17 +50,20 @@ export default function DirectorDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true)
     try {
-      const [tasks, activeComplaintsCount, audits] = await Promise.all([
-        complianceService.getTasks(),
-        complianceService.getActiveComplaintsCount(),
-        complianceService.getRecentAudits(),
-      ])
+      const [tasks, activeComplaintsCount, unassignedCount, audits] =
+        await Promise.all([
+          complianceService.getTasks(),
+          complianceService.getActiveComplaintsCount(),
+          complianceService.getUnassignedComplaintsCount(),
+          complianceService.getRecentAudits(),
+        ])
 
       setStats({
         totalTasks: tasks.length,
         pendingTasks: tasks.filter((t) => t.status === 'pendente').length,
         completedTasks: tasks.filter((t) => t.status === 'concluido').length,
         activeComplaints: activeComplaintsCount,
+        unassignedComplaints: unassignedCount,
       })
       setRecentAudits(audits || [])
     } catch (error) {
@@ -111,7 +115,7 @@ export default function DirectorDashboard() {
           </CardContent>
         </Card>
 
-        {/* Active Complaints Card */}
+        {/* Unassigned Complaints Card (Triage) */}
         <Card
           className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-red-500"
           onClick={() => navigate('/compliance/director/complaints')}
@@ -124,7 +128,7 @@ export default function DirectorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-700">
-              {stats.activeComplaints}
+              {stats.unassignedComplaints}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Não atribuídas</p>
             <div className="mt-4 flex items-center text-sm text-red-600 font-medium group-hover:translate-x-1 transition-transform">
