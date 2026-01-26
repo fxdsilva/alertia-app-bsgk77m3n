@@ -267,10 +267,33 @@ export const workflowService = {
     await this.logTransition(complaintId, newStatusName, logMsg)
   },
 
+  async saveReportDraft(
+    complaintId: string,
+    phase: 0 | 1 | 2 | 3,
+    content: string,
+  ) {
+    const updates: any = {}
+    if (phase === 0 || phase === 1) {
+      updates.parecer_1 = content
+    } else if (phase === 2) {
+      updates.relatorio_2 = content
+    } else if (phase === 3) {
+      updates.relatorio_3 = content
+    }
+
+    const { error } = await supabase
+      .from('denuncias')
+      .update(updates)
+      .eq('id', complaintId)
+
+    if (error) throw error
+  },
+
   async submitReport(
     complaintId: string,
     phase: 0 | 1 | 2 | 3,
     content: string,
+    recommendation?: string,
   ) {
     const updates: any = {}
     let newStatusName = ''
@@ -300,10 +323,15 @@ export const workflowService = {
 
     if (error) throw error
 
+    const baseMsg = `Relatório Fase ${phase} enviado/atualizado`
+    const logMsg = recommendation
+      ? `${baseMsg}. Recomendação: ${recommendation}`
+      : baseMsg
+
     await this.logTransition(
       complaintId,
       newStatusName || 'Atualização de Relatório',
-      `Relatório Fase ${phase} enviado/atualizado`,
+      logMsg,
     )
   },
 
