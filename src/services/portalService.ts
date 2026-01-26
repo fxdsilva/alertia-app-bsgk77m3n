@@ -165,8 +165,6 @@ export const portalService = {
       }
 
       if (!data) {
-        // Critical error: The system expects the status to exist.
-        // We do NOT attempt to create it here as public users likely lack permissions.
         console.error(
           `CRITICAL: Status "${name}" not found in database. Please run migrations.`,
         )
@@ -188,9 +186,13 @@ export const portalService = {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
 
       try {
+        // Fix for "FormData object could not be cloned" error:
+        // Convert File to ArrayBuffer to pass as binary body instead of using FormData
+        const fileBuffer = await file.arrayBuffer()
+
         const { data, error: uploadError } = await supabase.storage
           .from('complaint-evidence')
-          .upload(fileName, file, {
+          .upload(fileName, fileBuffer, {
             cacheControl: '3600',
             upsert: false,
             contentType: file.type || 'application/octet-stream',
@@ -282,8 +284,6 @@ export const portalService = {
         .eq('id', complaintId)
 
       if (!transitionError) {
-        // Log transition - public users might fail here if they don't have permission on logs
-        // So we wrap in try/catch to avoid noise, but ideally logs should be server-side or allowed
         await supabase.from('compliance_workflow_logs').insert({
           complaint_id: complaintId,
           previous_status: initialStatusId,
@@ -292,7 +292,6 @@ export const portalService = {
         })
       }
     } catch (error) {
-      // Just log locally, do not throw as this is a background process for the user
       console.warn('Auto transition background process failed/skipped:', error)
     }
   },

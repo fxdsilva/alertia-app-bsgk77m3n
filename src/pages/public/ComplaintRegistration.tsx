@@ -183,7 +183,11 @@ export default function ComplaintRegistration() {
 
       console.error('Registration failed:', error)
 
-      if (
+      if (errorMsg.includes('FormData object could not be cloned')) {
+        toast.error(
+          'Erro de compatibilidade no upload. Tente outro navegador ou contate o suporte.',
+        )
+      } else if (
         errorMsg.includes('Failed to fetch') ||
         errorMsg.includes('Network request failed')
       ) {
