@@ -18,6 +18,11 @@ export interface ComplaintData {
   categoria?: string[]
   envolvidos_detalhes?: Record<string, any>
   evidencias_urls?: string[]
+  // New identification fields
+  denunciante_nome?: string | null
+  denunciante_email?: string | null
+  denunciante_telefone?: string | null
+  denunciante_vinculo?: string | null
 }
 
 const getErrorMessage = (error: unknown): string => {
@@ -219,7 +224,7 @@ export const portalService = {
   },
 
   async createComplaint(data: ComplaintData) {
-    const protocolo = generateProtocol() // Correct variable name
+    const protocolo = generateProtocol()
     const finalDenuncianteId = data.anonimo ? null : data.denunciante_id || null
 
     return fetchWithRetry(async () => {
@@ -228,19 +233,29 @@ export const portalService = {
           WORKFLOW_STATUS.REGISTERED,
         )
 
+        const insertPayload: any = {
+          escola_id: data.escola_id,
+          protocolo: protocolo,
+          descricao: data.descricao,
+          anonimo: data.anonimo,
+          denunciante_id: finalDenuncianteId,
+          categoria: data.categoria,
+          status: initialStatusId,
+          envolvidos_detalhes: data.envolvidos_detalhes as any,
+          evidencias_urls: data.evidencias_urls,
+        }
+
+        // Add identification fields if provided and not anonymous
+        if (!data.anonimo) {
+          insertPayload.denunciante_nome = data.denunciante_nome
+          insertPayload.denunciante_email = data.denunciante_email
+          insertPayload.denunciante_telefone = data.denunciante_telefone
+          insertPayload.denunciante_vinculo = data.denunciante_vinculo
+        }
+
         const { data: result, error } = await supabase
           .from('denuncias')
-          .insert({
-            escola_id: data.escola_id,
-            protocolo: protocolo,
-            descricao: data.descricao,
-            anonimo: data.anonimo,
-            denunciante_id: finalDenuncianteId,
-            categoria: data.categoria,
-            status: initialStatusId,
-            envolvidos_detalhes: data.envolvidos_detalhes as any,
-            evidencias_urls: data.evidencias_urls,
-          })
+          .insert(insertPayload)
           .select()
           .single()
 
@@ -254,7 +269,6 @@ export const portalService = {
           console.error('Auto transition warning:', err),
         )
 
-        // Ensure protocolo is returned even if not in result (though it should be)
         return {
           ...result,
           protocolo: result?.protocolo || protocolo,

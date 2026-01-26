@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import {
-  workflowService,
-  WorkflowComplaint,
-  WORKFLOW_STATUS,
-} from '@/services/workflowService'
+import { workflowService, WorkflowComplaint } from '@/services/workflowService'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -14,7 +10,7 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, ArrowLeft, History, Building2 } from 'lucide-react'
+import { Loader2, ArrowLeft, History, Building2, User } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Table,
@@ -85,6 +81,38 @@ export default function WorkflowDetailMaster() {
           {complaint.protocolo}
         </Badge>
       </div>
+
+      {/* Identification Alert */}
+      {!complaint.anonimo && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-4">
+          <div className="bg-blue-100 p-2 rounded-full">
+            <User className="h-5 w-5 text-blue-700" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-blue-900">
+              Denunciante Identificado
+            </h3>
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 text-sm text-blue-800">
+              <p>
+                <span className="font-medium">Nome:</span>{' '}
+                {complaint.denunciante_nome}
+              </p>
+              <p>
+                <span className="font-medium">Email:</span>{' '}
+                {complaint.denunciante_email}
+              </p>
+              <p>
+                <span className="font-medium">Telefone:</span>{' '}
+                {complaint.denunciante_telefone || 'N/A'}
+              </p>
+              <p>
+                <span className="font-medium">Vínculo:</span>{' '}
+                {complaint.denunciante_vinculo}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2">

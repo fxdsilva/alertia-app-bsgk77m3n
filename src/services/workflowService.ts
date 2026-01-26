@@ -17,6 +17,11 @@ export interface WorkflowComplaint {
   relatorio_2?: string
   relatorio_3?: string
   tipo_resolucao?: string
+  anonimo?: boolean
+  denunciante_nome?: string | null
+  denunciante_email?: string | null
+  denunciante_telefone?: string | null
+  denunciante_vinculo?: string | null
   escolas_instituicoes?: { nome_escola: string }
   analista_1?: { nome_usuario: string }
   analista_2?: { nome_usuario: string }

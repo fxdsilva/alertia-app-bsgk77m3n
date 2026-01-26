@@ -29,27 +29,61 @@ import {
   ACCEPTED_FILE_TYPES_STRING,
 } from '@/components/complaint-form/constants'
 
-const complaintSchema = z.object({
-  escola_id: z
-    .string({ required_error: 'Selecione uma escola.' })
-    .min(1, 'Selecione uma escola.'),
-  categories: z
-    .array(z.string())
-    .min(1, 'Selecione pelo menos um tipo de ocorrência.'),
-  // Victim
-  vitima_funcao: z.string().min(1, 'Selecione a função da vítima.'),
-  vitima_nome: z.string().optional(),
-  vitima_setor: z.string().optional(),
-  // Author
-  autor_funcao: z.string().min(1, 'Selecione a função/vínculo do autor.'),
-  autor_nome: z.string().optional(),
-  autor_descricao: z.string().optional(),
-  // Report
-  description: z
-    .string()
-    .min(20, { message: 'A descrição deve ter pelo menos 20 caracteres.' }),
-  anonimo: z.boolean().default(true),
-})
+const complaintSchema = z
+  .object({
+    escola_id: z
+      .string({ required_error: 'Selecione uma escola.' })
+      .min(1, 'Selecione uma escola.'),
+    categories: z
+      .array(z.string())
+      .min(1, 'Selecione pelo menos um tipo de ocorrência.'),
+    // Victim
+    vitima_funcao: z.string().min(1, 'Selecione a função da vítima.'),
+    vitima_nome: z.string().optional(),
+    vitima_setor: z.string().optional(),
+    // Author
+    autor_funcao: z.string().min(1, 'Selecione a função/vínculo do autor.'),
+    autor_nome: z.string().optional(),
+    autor_descricao: z.string().optional(),
+    // Report
+    description: z
+      .string()
+      .min(20, { message: 'A descrição deve ter pelo menos 20 caracteres.' }),
+    anonimo: z.boolean().default(true),
+    // Identification fields (conditional)
+    denunciante_nome: z.string().optional(),
+    denunciante_email: z.string().optional(),
+    denunciante_telefone: z.string().optional(),
+    denunciante_vinculo: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.anonimo) {
+      if (!data.denunciante_nome || data.denunciante_nome.trim().length < 3) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Nome é obrigatório (mín. 3 caracteres).',
+          path: ['denunciante_nome'],
+        })
+      }
+      if (
+        !data.denunciante_email ||
+        !z.string().email().safeParse(data.denunciante_email).success
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Email válido é obrigatório.',
+          path: ['denunciante_email'],
+        })
+      }
+      if (!data.denunciante_vinculo) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Informe seu vínculo com a instituição.',
+          path: ['denunciante_vinculo'],
+        })
+      }
+    }
+  })
 
 export default function ComplaintRegistration() {
   const [protocol, setProtocol] = useState<string | null>(null)
@@ -75,6 +109,10 @@ export default function ComplaintRegistration() {
       autor_funcao: '',
       autor_nome: '',
       autor_descricao: '',
+      denunciante_nome: '',
+      denunciante_email: '',
+      denunciante_telefone: '',
+      denunciante_vinculo: '',
     },
   })
 
@@ -169,6 +207,11 @@ export default function ComplaintRegistration() {
         categoria: data.categories,
         envolvidos_detalhes,
         evidencias_urls: uploadedUrls,
+        // Pass extra fields only if not anonymous (double check logic is in service too)
+        denunciante_nome: !data.anonimo ? data.denunciante_nome : null,
+        denunciante_email: !data.anonimo ? data.denunciante_email : null,
+        denunciante_telefone: !data.anonimo ? data.denunciante_telefone : null,
+        denunciante_vinculo: !data.anonimo ? data.denunciante_vinculo : null,
       })
 
       setProtocol(result.protocolo)
