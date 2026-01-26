@@ -22,13 +22,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -50,7 +43,7 @@ export default function PendingReports() {
 
   useEffect(() => {
     if (!appLoading) {
-      if (profile !== 'senior' && profile !== 'DIRETOR_COMPLIANCE') {
+      if (profile !== 'senior') {
         navigate('/')
         return
       }
@@ -71,19 +64,6 @@ export default function PendingReports() {
     }
   }
 
-  const handleStatusUpdate = async (status: string) => {
-    if (!selectedReport) return
-    try {
-      await adminService.updateComplaintStatus(selectedReport.id, status)
-      toast.success('Status atualizado com sucesso')
-      setDetailOpen(false)
-      fetchReports()
-    } catch (error) {
-      console.error(error)
-      toast.error('Erro ao atualizar status')
-    }
-  }
-
   const handleOpenDetails = (report: Complaint) => {
     setSelectedReport(report)
     setDetailOpen(true)
@@ -96,7 +76,7 @@ export default function PendingReports() {
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <AlertTriangle className="h-8 w-8 text-orange-600" />
-          Denúncias Pendentes
+          Fila de Pendências
         </h1>
         <p className="text-muted-foreground">
           Ocorrências que aguardam triagem ou análise inicial em toda a rede.
@@ -145,7 +125,7 @@ export default function PendingReports() {
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200">
-                        Pendente
+                        {r.status_denuncia?.nome_status || 'Pendente'}
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-[250px] truncate">
@@ -200,21 +180,9 @@ export default function PendingReports() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Status Atual</Label>
-                  <Select
-                    defaultValue={selectedReport.status}
-                    onValueChange={handleStatusUpdate}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pendente">Pendente</SelectItem>
-                      <SelectItem value="em_analise">Em Análise</SelectItem>
-                      <SelectItem value="investigado">Investigado</SelectItem>
-                      <SelectItem value="resolvido">Resolvido</SelectItem>
-                      <SelectItem value="arquivado">Arquivado</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Badge className="mt-1">
+                    {selectedReport.status_denuncia?.nome_status || 'Pendente'}
+                  </Badge>
                 </div>
               </div>
 

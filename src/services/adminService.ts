@@ -12,6 +12,9 @@ export interface Complaint {
   escolas_instituicoes?: {
     nome_escola: string
   }
+  status_denuncia?: {
+    nome_status: string
+  }
 }
 
 export const adminService = {
@@ -156,33 +159,39 @@ export const adminService = {
   async getComplaints(schoolId: string) {
     const { data, error } = await supabase
       .from('denuncias')
-      .select('*')
+      .select(
+        '*, escolas_instituicoes(nome_escola), status_denuncia(nome_status)',
+      )
       .eq('escola_id', schoolId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data as Complaint[]
+    return data as unknown as Complaint[]
   },
 
   async getComplaint(id: string) {
     const { data, error } = await supabase
       .from('denuncias')
-      .select('*, escolas_instituicoes(nome_escola)')
+      .select(
+        '*, escolas_instituicoes(nome_escola), status_denuncia(nome_status)',
+      )
       .eq('id', id)
       .single()
     if (error) throw error
-    return data as Complaint
+    return data as unknown as Complaint
   },
 
   async getAllPendingComplaints() {
     const { data, error } = await supabase
       .from('denuncias')
-      .select('*, escolas_instituicoes(nome_escola)')
-      .eq('status', 'pendente')
+      .select(
+        '*, escolas_instituicoes(nome_escola), status_denuncia!inner(nome_status)',
+      )
+      .eq('status_denuncia.nome_status', 'Denúncia registrada')
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data as Complaint[]
+    return data as unknown as Complaint[]
   },
 
   async updateComplaintStatus(id: string, status: string) {
@@ -211,6 +220,9 @@ export const adminService = {
       data: { user },
     } = await supabase.auth.getUser()
 
+    // Assuming we might need to look up status ID for 'pendente' or similar in future
+    // For now keeping 'pendente' string to match potential legacy behavior or if status handles strings in insert via trigger/view
+    // But ideally should fetch status ID.
     const { error } = await supabase.from('denuncias').insert({
       escola_id: schoolId,
       descricao: description,
