@@ -110,30 +110,39 @@ export const portalService = {
     const urls: string[] = []
 
     for (const file of files) {
-      const nameParts = file.name.split('.')
-      const fileExt = nameParts.length > 1 ? nameParts.pop() : 'bin'
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
-      const filePath = `${fileName}`
+      try {
+        const nameParts = file.name.split('.')
+        const fileExt = nameParts.length > 1 ? nameParts.pop() : 'bin'
+        // Create a safe filename to avoid character issues
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('complaint-evidence')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        })
+        // Ensure we are passing the file object correctly
+        // Supabase storage upload expects: path, file, options
+        const { data, error: uploadError } = await supabase.storage
+          .from('complaint-evidence')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false,
+          })
 
-      if (uploadError) {
-        console.error('Error uploading file:', uploadError)
+        if (uploadError) {
+          // Explicitly throw a clean Error object to avoid "FormData could not be cloned" issues
+          // if the error object itself is complex or contains the FormData
+          throw new Error(`Erro ao enviar ${file.name}: ${uploadError.message}`)
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('complaint-evidence').getPublicUrl(fileName)
+
+        urls.push(publicUrl)
+      } catch (err: any) {
+        console.error('Evidence upload failed:', err)
+        // Rethrow a simple error string wrapped in an Error object
         throw new Error(
-          `Falha no upload de evidências: ${uploadError.message}. Verifique sua conexão.`,
+          err.message || `Falha ao fazer upload do arquivo ${file.name}`,
         )
       }
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('complaint-evidence').getPublicUrl(filePath)
-
-      urls.push(publicUrl)
     }
 
     return urls

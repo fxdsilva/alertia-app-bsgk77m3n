@@ -58,6 +58,9 @@ import {
   Shield,
   FileSearch,
   HelpCircle,
+  FileImage,
+  FileVideo,
+  FileAudio,
 } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
@@ -142,6 +145,7 @@ const complaintSchema = z.object({
 export default function ComplaintRegistration() {
   const [protocol, setProtocol] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState<string>('')
   const [schools, setSchools] = useState<School[]>([])
   const [loadingSchools, setLoadingSchools] = useState(false)
   const [openSchool, setOpenSchool] = useState(false)
@@ -226,12 +230,16 @@ export default function ComplaintRegistration() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files)
-      // Basic validation size limit (e.g. 5MB)
-      const validFiles = newFiles.filter((file) => file.size <= 5 * 1024 * 1024)
-
-      if (validFiles.length !== newFiles.length) {
-        toast.error('Alguns arquivos foram ignorados pois excedem 5MB.')
-      }
+      // Enhanced validation
+      // 50MB limit
+      const MAX_SIZE = 50 * 1024 * 1024
+      const validFiles = newFiles.filter((file) => {
+        if (file.size > MAX_SIZE) {
+          toast.error(`O arquivo ${file.name} excede o limite de 50MB.`)
+          return false
+        }
+        return true
+      })
 
       setFiles((prev) => [...prev, ...validFiles])
     }
@@ -241,14 +249,31 @@ export default function ComplaintRegistration() {
     setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/'))
+      return <FileImage className="h-4 w-4 text-blue-500" />
+    if (type.startsWith('video/'))
+      return <FileVideo className="h-4 w-4 text-purple-500" />
+    if (type.startsWith('audio/'))
+      return <FileAudio className="h-4 w-4 text-orange-500" />
+    if (type.includes('pdf'))
+      return <FileText className="h-4 w-4 text-red-500" />
+    return <FileText className="h-4 w-4 text-slate-500" />
+  }
+
   const onSubmit = async (data: z.infer<typeof complaintSchema>) => {
     setLoading(true)
+    setUploadStatus('')
+
     try {
       // 1. Upload Evidence if any
       let uploadedUrls: string[] = []
       if (files.length > 0) {
+        setUploadStatus(`Enviando ${files.length} arquivo(s)...`)
         uploadedUrls = await portalService.uploadEvidence(files)
       }
+
+      setUploadStatus('Finalizando registro...')
 
       // 2. Prepare Data
       // If user is not logged in, force anonymous just in case, but data.anonimo handles the choice
@@ -281,15 +306,15 @@ export default function ComplaintRegistration() {
       setProtocol(result.protocolo)
       toast.success('Denúncia registrada com sucesso.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      if (error instanceof Error) {
-        toast.error(error.message)
-      } else {
-        toast.error('Erro ao registrar denúncia. Tente novamente.')
-      }
+      // Ensure we display string message only
+      const errorMsg =
+        error?.message || 'Erro ao registrar denúncia. Tente novamente.'
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
+      setUploadStatus('')
     }
   }
 
@@ -889,10 +914,10 @@ export default function ComplaintRegistration() {
                   <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors relative">
                     <UploadCloud className="h-10 w-10 text-slate-400 mb-2" />
                     <p className="text-sm font-medium text-slate-700">
-                      Clique para adicionar documentos
+                      Clique para adicionar documentos, fotos, vídeos ou áudios
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Suporta JPG, PNG e PDF (Máx 5MB)
+                      Suporta Imagens, PDF, Áudio e Vídeo (Máx 50MB)
                     </p>
                     <Input
                       type="file"
@@ -913,15 +938,18 @@ export default function ComplaintRegistration() {
                           className="flex items-center justify-between bg-white border p-2 rounded-md shadow-sm"
                         >
                           <div className="flex items-center gap-2 overflow-hidden">
-                            <div className="bg-slate-100 p-1 rounded">
-                              <UploadCloud className="h-4 w-4 text-slate-500" />
+                            <div className="bg-slate-100 p-2 rounded">
+                              {getFileIcon(file.type)}
                             </div>
-                            <span className="text-sm truncate max-w-[200px] sm:max-w-xs">
-                              {file.name}
-                            </span>
-                            <span className="text-xs text-slate-400">
-                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                            </span>
+                            <div className="flex flex-col overflow-hidden">
+                              <span className="text-sm truncate max-w-[200px] sm:max-w-xs font-medium">
+                                {file.name}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB •{' '}
+                                {file.type.split('/')[1] || 'arquivo'}
+                              </span>
+                            </div>
                           </div>
                           <Button
                             type="button"
@@ -988,7 +1016,7 @@ export default function ComplaintRegistration() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Enviando...
+                  {uploadStatus || 'Enviando...'}
                 </>
               ) : (
                 'Enviar Denúncia'
