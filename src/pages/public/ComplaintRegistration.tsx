@@ -120,6 +120,13 @@ const ROLES = [
   'Outro',
 ]
 
+// Enhanced file validation constants
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+const ACCEPTED_FILE_TYPES_STRING =
+  '.jpg,.jpeg,.png,.gif,.webp,.pdf,.mp3,.wav,.m4a,.mp4,.mov,.avi'
+// While accept string helps selection, we also validate mime types or extensions in JS
+const ALLOWED_MIME_PREFIXES = ['image/', 'audio/', 'video/', 'application/pdf']
+
 const complaintSchema = z.object({
   escola_id: z
     .string({ required_error: 'Selecione uma escola.' })
@@ -230,14 +237,29 @@ export default function ComplaintRegistration() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files)
-      // Enhanced validation
-      // 50MB limit
-      const MAX_SIZE = 50 * 1024 * 1024
+
       const validFiles = newFiles.filter((file) => {
-        if (file.size > MAX_SIZE) {
+        // Size Check
+        if (file.size > MAX_FILE_SIZE) {
           toast.error(`O arquivo ${file.name} excede o limite de 50MB.`)
           return false
         }
+
+        // Type Check
+        const isValidType =
+          ALLOWED_MIME_PREFIXES.some((prefix) =>
+            file.type.startsWith(prefix),
+          ) ||
+          // Fallback check for extensions if mime type is generic
+          ACCEPTED_FILE_TYPES_STRING.split(',').some((ext) =>
+            file.name.toLowerCase().endsWith(ext),
+          )
+
+        if (!isValidType) {
+          toast.error(`Formato de arquivo não suportado: ${file.name}`)
+          return false
+        }
+
         return true
       })
 
@@ -249,15 +271,20 @@ export default function ComplaintRegistration() {
     setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/'))
+  const getFileIcon = (type: string, name: string) => {
+    // Check mime type first, then extension
+    if (type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(name))
       return <FileImage className="h-4 w-4 text-blue-500" />
-    if (type.startsWith('video/'))
+
+    if (type.startsWith('video/') || /\.(mp4|mov|avi|webm)$/i.test(name))
       return <FileVideo className="h-4 w-4 text-purple-500" />
-    if (type.startsWith('audio/'))
+
+    if (type.startsWith('audio/') || /\.(mp3|wav|m4a|aac)$/i.test(name))
       return <FileAudio className="h-4 w-4 text-orange-500" />
-    if (type.includes('pdf'))
+
+    if (type.includes('pdf') || /\.pdf$/i.test(name))
       return <FileText className="h-4 w-4 text-red-500" />
+
     return <FileText className="h-4 w-4 text-slate-500" />
   }
 
@@ -276,7 +303,6 @@ export default function ComplaintRegistration() {
       setUploadStatus('Finalizando registro...')
 
       // 2. Prepare Data
-      // If user is not logged in, force anonymous just in case, but data.anonimo handles the choice
       const isAnonymous = data.anonimo
 
       const envolvidos_detalhes = {
@@ -307,8 +333,8 @@ export default function ComplaintRegistration() {
       toast.success('Denúncia registrada com sucesso.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error: any) {
-      console.error(error)
-      // Ensure we display string message only
+      console.error('Registration failed:', error)
+      // Display only the message to the user, safe from complex objects
       const errorMsg =
         error?.message || 'Erro ao registrar denúncia. Tente novamente.'
       toast.error(errorMsg)
@@ -916,13 +942,14 @@ export default function ComplaintRegistration() {
                     <p className="text-sm font-medium text-slate-700">
                       Clique para adicionar documentos, fotos, vídeos ou áudios
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Suporta Imagens, PDF, Áudio e Vídeo (Máx 50MB)
+                    <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                      Suporta Imagens, PDF, Áudio (MP3, WAV, M4A) e Vídeo (MP4,
+                      MOV, AVI) até 50MB
                     </p>
                     <Input
                       type="file"
                       multiple
-                      accept="image/*,application/pdf,audio/*,video/*"
+                      accept={ACCEPTED_FILE_TYPES_STRING}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       onChange={handleFileChange}
                       // Hack to allow same file selection again if cleared
@@ -939,7 +966,7 @@ export default function ComplaintRegistration() {
                         >
                           <div className="flex items-center gap-2 overflow-hidden">
                             <div className="bg-slate-100 p-2 rounded">
-                              {getFileIcon(file.type)}
+                              {getFileIcon(file.type, file.name)}
                             </div>
                             <div className="flex flex-col overflow-hidden">
                               <span className="text-sm truncate max-w-[200px] sm:max-w-xs font-medium">
@@ -947,7 +974,9 @@ export default function ComplaintRegistration() {
                               </span>
                               <span className="text-xs text-slate-500">
                                 {(file.size / 1024 / 1024).toFixed(2)} MB •{' '}
-                                {file.type.split('/')[1] || 'arquivo'}
+                                {file.type.split('/')[1] ||
+                                  file.name.split('.').pop() ||
+                                  'arquivo'}
                               </span>
                             </div>
                           </div>

@@ -110,25 +110,26 @@ export const portalService = {
     const urls: string[] = []
 
     for (const file of files) {
-      try {
-        const nameParts = file.name.split('.')
-        const fileExt = nameParts.length > 1 ? nameParts.pop() : 'bin'
-        // Create a safe filename to avoid character issues
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
+      // Clean filename to avoid issues
+      const nameParts = file.name.split('.')
+      const fileExt = nameParts.length > 1 ? nameParts.pop() : 'bin'
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
 
-        // Ensure we are passing the file object correctly
-        // Supabase storage upload expects: path, file, options
+      try {
+        // Upload with explicit content type and robust error handling
         const { data, error: uploadError } = await supabase.storage
           .from('complaint-evidence')
           .upload(fileName, file, {
             cacheControl: '3600',
             upsert: false,
+            contentType: file.type || 'application/octet-stream',
           })
 
         if (uploadError) {
-          // Explicitly throw a clean Error object to avoid "FormData could not be cloned" issues
-          // if the error object itself is complex or contains the FormData
-          throw new Error(`Erro ao enviar ${file.name}: ${uploadError.message}`)
+          // IMPORTANT: Extract the message string immediately.
+          // Do NOT throw the uploadError object directly, as it may contain the FormData (request body),
+          // which causes "FormData object could not be cloned" errors in some environments/devtools.
+          throw new Error(uploadError.message)
         }
 
         const {
@@ -137,8 +138,9 @@ export const portalService = {
 
         urls.push(publicUrl)
       } catch (err: any) {
-        console.error('Evidence upload failed:', err)
-        // Rethrow a simple error string wrapped in an Error object
+        // Safe logging that doesn't try to clone complex error objects
+        console.error(`Evidence upload failed for ${file.name}:`, err.message)
+
         throw new Error(
           err.message || `Falha ao fazer upload do arquivo ${file.name}`,
         )
