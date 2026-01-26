@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Info,
   BarChart3,
+  GitPullRequest,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -134,6 +135,9 @@ const Layout = () => {
             <NavLink to="/senior/dashboard" icon={LayoutGrid}>
               Dashboard
             </NavLink>
+            <NavLink to="/senior/workflow" icon={GitPullRequest}>
+              Workflow de Rede
+            </NavLink>
             <NavLink to="/senior/schools" icon={Building2}>
               Escolas
             </NavLink>
@@ -172,6 +176,9 @@ const Layout = () => {
             </div>
             <NavLink to="/compliance/director/dashboard" icon={LayoutGrid}>
               Dashboard
+            </NavLink>
+            <NavLink to="/compliance/director/workflow" icon={GitPullRequest}>
+              Workflow
             </NavLink>
             <NavLink to="/compliance/director/analysts" icon={Users}>
               Equipe

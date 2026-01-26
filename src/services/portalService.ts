@@ -186,8 +186,6 @@ export const portalService = {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
 
       try {
-        // Fix for "FormData object could not be cloned" error:
-        // Convert File to ArrayBuffer to pass as binary body instead of using FormData
         const fileBuffer = await file.arrayBuffer()
 
         const { data, error: uploadError } = await supabase.storage
@@ -211,7 +209,6 @@ export const portalService = {
       } catch (err: any) {
         const errorMessage = getErrorMessage(err)
         console.error(`Evidence upload failed for ${file.name}:`, errorMessage)
-        // Throw a clean error string to avoid cloning issues
         throw new Error(
           errorMessage || `Falha ao fazer upload do arquivo ${file.name}`,
         )
@@ -222,13 +219,11 @@ export const portalService = {
   },
 
   async createComplaint(data: ComplaintData) {
-    const protocol = generateProtocol()
+    const protocolo = generateProtocol() // Correct variable name
     const finalDenuncianteId = data.anonimo ? null : data.denunciante_id || null
 
-    // Use retry for the entire creation process to handle transient failures
     return fetchWithRetry(async () => {
       try {
-        // Fetch Status IDs first to ensure valid FKs
         const initialStatusId = await this.getStatusId(
           WORKFLOW_STATUS.REGISTERED,
         )
@@ -237,7 +232,7 @@ export const portalService = {
           .from('denuncias')
           .insert({
             escola_id: data.escola_id,
-            protocolo: protocol,
+            protocolo: protocolo,
             descricao: data.descricao,
             anonimo: data.anonimo,
             denunciante_id: finalDenuncianteId,
@@ -255,14 +250,14 @@ export const portalService = {
           throw new Error(msg)
         }
 
-        // Auto-transition to next step (Best effort, non-blocking)
         this.triggerAutoTransition(result.id, initialStatusId).catch((err) =>
           console.error('Auto transition warning:', err),
         )
 
+        // Ensure protocolo is returned even if not in result (though it should be)
         return {
           ...result,
-          protocolo,
+          protocolo: result?.protocolo || protocolo,
         }
       } catch (err) {
         const msg = getErrorMessage(err)

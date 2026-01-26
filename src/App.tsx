@@ -33,6 +33,8 @@ import SeniorDashboard from '@/pages/senior/SeniorDashboard'
 import SeniorUserManagement from '@/pages/senior/UserManagement'
 import AuditLogs from '@/pages/senior/AuditLogs'
 import PendingReports from '@/pages/senior/PendingReports'
+import NetworkWorkflow from '@/pages/senior/NetworkWorkflow'
+import WorkflowDetailMaster from '@/pages/senior/WorkflowDetailMaster'
 
 import InternalInvestigations from '@/pages/InternalInvestigations'
 import ReportGeneration from '@/pages/ReportGeneration'
@@ -240,6 +242,11 @@ const App = () => (
             <Route
               path="/senior/pending-reports"
               element={<PendingReports />}
+            />
+            <Route path="/senior/workflow" element={<NetworkWorkflow />} />
+            <Route
+              path="/senior/workflow/:id"
+              element={<WorkflowDetailMaster />}
             />
 
             {/* Shared Pages */}
