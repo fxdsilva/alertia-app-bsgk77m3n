@@ -41,38 +41,66 @@ import {
   EyeOff,
   User,
   Inbox,
+  Filter,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { complianceService } from '@/services/complianceService'
 import { SchoolUser } from '@/services/schoolAdminService'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { DateRangePicker } from '@/components/DateRangePicker'
+import { DateRange } from 'react-day-picker'
 
 export default function ComplaintTriage() {
   const [complaints, setComplaints] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [analysts, setAnalysts] = useState<SchoolUser[]>([])
+  const [schools, setSchools] = useState<any[]>([])
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null)
   const [selectedAnalyst, setSelectedAnalyst] = useState<string>('')
   const [assignOpen, setAssignOpen] = useState(false)
   const [assigning, setAssigning] = useState(false)
 
+  // Filters
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
+  const [selectedSchool, setSelectedSchool] = useState<string>('all')
+  const [selectedGravity, setSelectedGravity] = useState<string>('all')
+
   // Details Modal
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   useEffect(() => {
-    fetchData()
+    fetchInitialData()
   }, [])
 
-  const fetchData = async () => {
+  useEffect(() => {
+    fetchComplaints()
+  }, [dateRange, selectedSchool, selectedGravity])
+
+  const fetchInitialData = async () => {
+    try {
+      const [analystsData, schoolsData] = await Promise.all([
+        complianceService.getAnalysts(),
+        complianceService.getSchools(),
+      ])
+      setAnalysts(analystsData)
+      setSchools(schoolsData)
+    } catch (error) {
+      console.error('Error fetching initial data', error)
+      toast.error('Erro ao carregar dados iniciais')
+    }
+  }
+
+  const fetchComplaints = async () => {
     setLoading(true)
     try {
-      const [complaintsData, analystsData] = await Promise.all([
-        complianceService.getComplaintsForTriage(),
-        complianceService.getAnalysts(),
-      ])
-      setComplaints(complaintsData)
-      setAnalysts(analystsData)
+      const data = await complianceService.getComplaintsForTriage({
+        schoolId: selectedSchool,
+        gravity: selectedGravity,
+        startDate: dateRange?.from,
+        endDate: dateRange?.to,
+      })
+      setComplaints(data || [])
     } catch (error) {
       console.error(error)
       toast.error('Erro ao carregar denúncias')
@@ -103,7 +131,7 @@ export default function ComplaintTriage() {
       )
       toast.success('Analista designado para apuração com sucesso')
       setAssignOpen(false)
-      fetchData() // Refresh list to remove assigned complaint
+      fetchComplaints() // Refresh list
     } catch (error) {
       toast.error('Erro ao designar investigador')
     } finally {
@@ -118,8 +146,50 @@ export default function ComplaintTriage() {
           Entrada de Denúncias
         </h1>
         <p className="text-muted-foreground">
-          Triagem e designação de novas denúncias recebidas.
+          Triagem e designação de novas denúncias recebidas (Status: A
+          designar).
         </p>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4 items-end bg-card p-4 rounded-lg border">
+        <div className="space-y-2 w-full md:w-auto">
+          <Label>Período</Label>
+          <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+        </div>
+        <div className="space-y-2 w-full md:w-[250px]">
+          <Label>Escola</Label>
+          <Select value={selectedSchool} onValueChange={setSelectedSchool}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas as escolas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as escolas</SelectItem>
+              {schools.map((school) => (
+                <SelectItem key={school.id} value={school.id}>
+                  {school.nome_escola}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2 w-full md:w-[200px]">
+          <Label>Gravidade</Label>
+          <Select value={selectedGravity} onValueChange={setSelectedGravity}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="Alta">Alta</SelectItem>
+              <SelectItem value="Média">Média</SelectItem>
+              <SelectItem value="Baixa">Baixa</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2 pb-1 text-sm text-muted-foreground ml-auto">
+          <Filter className="h-4 w-4" />
+          <span>{complaints.length} registro(s) encontrado(s)</span>
+        </div>
       </div>
 
       <Card className="border-t-4 border-t-primary">
@@ -129,7 +199,7 @@ export default function ComplaintTriage() {
             <CardTitle>Aguardando Designação</CardTitle>
           </div>
           <CardDescription>
-            Lista de denúncias recém-chegadas com status "A designar".
+            Lista estrita de denúncias pendentes de designação de analista.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -142,7 +212,7 @@ export default function ComplaintTriage() {
               <AlertCircle className="h-12 w-12 mb-3 opacity-20" />
               <p className="text-lg font-medium">Tudo limpo por aqui!</p>
               <p className="text-sm">
-                Não há denúncias pendentes de designação no momento.
+                Não há denúncias pendentes de designação com os filtros atuais.
               </p>
             </div>
           ) : (
@@ -153,6 +223,7 @@ export default function ComplaintTriage() {
                     <TableHead>Protocolo</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Escola</TableHead>
+                    <TableHead>Gravidade</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Confidencialidade</TableHead>
                     <TableHead className="text-right">Ação</TableHead>
@@ -175,6 +246,20 @@ export default function ComplaintTriage() {
                             {c.escolas_instituicoes?.nome_escola || 'N/A'}
                           </span>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            c.gravidade === 'Alta'
+                              ? 'border-red-500 text-red-600 bg-red-50'
+                              : c.gravidade === 'Média'
+                                ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
+                                : 'border-blue-200 text-blue-600 bg-blue-50'
+                          }
+                        >
+                          {c.gravidade || 'N/A'}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -331,7 +416,16 @@ export default function ComplaintTriage() {
                   <span className="text-muted-foreground block text-xs uppercase tracking-wider">
                     Gravidade
                   </span>
-                  <Badge variant="outline">
+                  <Badge
+                    variant="outline"
+                    className={
+                      selectedComplaint.gravidade === 'Alta'
+                        ? 'border-red-500 text-red-600 bg-red-50'
+                        : selectedComplaint.gravidade === 'Média'
+                          ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
+                          : 'border-blue-200 text-blue-600 bg-blue-50'
+                    }
+                  >
                     {selectedComplaint.gravidade || 'Não classificado'}
                   </Badge>
                 </div>

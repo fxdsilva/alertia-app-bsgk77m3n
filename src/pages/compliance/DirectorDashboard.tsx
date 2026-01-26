@@ -6,9 +6,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import {
-  ClipboardList,
   UserCog,
   Loader2,
   Activity,
@@ -30,6 +28,7 @@ import {
 } from '@/components/ui/table'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { AuditDetailsSheet } from '@/components/audit/AuditDetailsSheet'
 
 export default function DirectorDashboard() {
   const navigate = useNavigate()
@@ -42,6 +41,10 @@ export default function DirectorDashboard() {
     unassignedComplaints: 0,
   })
   const [recentAudits, setRecentAudits] = useState<any[]>([])
+
+  // Audit Sheet State
+  const [selectedAudit, setSelectedAudit] = useState<any>(null)
+  const [isAuditSheetOpen, setIsAuditSheetOpen] = useState(false)
 
   useEffect(() => {
     fetchDashboardData()
@@ -73,6 +76,11 @@ export default function DirectorDashboard() {
     }
   }
 
+  const handleAuditClick = (audit: any) => {
+    setSelectedAudit(audit)
+    setIsAuditSheetOpen(true)
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
@@ -93,7 +101,7 @@ export default function DirectorDashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Workflow Card - NEW */}
+        {/* Workflow Card */}
         <Card
           className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-teal-500 bg-teal-50/20"
           onClick={() => navigate('/compliance/director/workflow')}
@@ -209,7 +217,11 @@ export default function DirectorDashboard() {
                 </TableHeader>
                 <TableBody>
                   {recentAudits.map((audit) => (
-                    <TableRow key={audit.id}>
+                    <TableRow
+                      key={audit.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleAuditClick(audit)}
+                    >
                       <TableCell className="font-medium">
                         {format(new Date(audit.data_auditoria), 'dd/MM/yyyy', {
                           locale: ptBR,
@@ -249,6 +261,12 @@ export default function DirectorDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <AuditDetailsSheet
+        open={isAuditSheetOpen}
+        onOpenChange={setIsAuditSheetOpen}
+        audit={selectedAudit}
+      />
     </div>
   )
 }

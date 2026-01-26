@@ -98,6 +98,23 @@ export interface AnalystAssignment {
   }
 }
 
+export interface AuditFinding {
+  id: string
+  audit_id: string
+  description: string
+  recommendation: string
+  severity: 'Alta' | 'Média' | 'Baixa'
+  status: 'Pendente' | 'Resolvido'
+  created_at: string
+}
+
+export interface TriageFilters {
+  schoolId?: string
+  gravity?: string
+  startDate?: Date
+  endDate?: Date
+}
+
 export const complianceService = {
   async getAnalysts() {
     const { data, error } = await supabase
@@ -164,18 +181,38 @@ export const complianceService = {
     return data
   },
 
-  async getComplaintsForTriage() {
+  async getComplaintsForTriage(filters?: TriageFilters) {
     // For Director to see all complaints that need attention
     // Specifically Status "A designar" AND no analyst assigned
-    const { data, error } = await supabase
+    let query = supabase
       .from('denuncias')
       .select(
         'id, protocolo, categoria, status, gravidade, created_at, descricao, escola_id, escolas_instituicoes(nome_escola), autorizado_gestao, analista_id, anonimo, status_denuncia!inner(nome_status)',
       )
       .eq('status_denuncia.nome_status', 'A designar')
       .is('analista_id', null)
-      .order('created_at', { ascending: false })
 
+    if (filters) {
+      if (filters.schoolId && filters.schoolId !== 'all') {
+        query = query.eq('escola_id', filters.schoolId)
+      }
+      if (filters.gravity && filters.gravity !== 'all') {
+        query = query.eq('gravidade', filters.gravity)
+      }
+      if (filters.startDate) {
+        query = query.gte('created_at', filters.startDate.toISOString())
+      }
+      if (filters.endDate) {
+        // Add 1 day to end date to include the whole day
+        const end = new Date(filters.endDate)
+        end.setDate(end.getDate() + 1)
+        query = query.lt('created_at', end.toISOString())
+      }
+    }
+
+    query = query.order('created_at', { ascending: false })
+
+    const { data, error } = await query
     if (error) throw error
     return data
   },
@@ -538,9 +575,24 @@ export const complianceService = {
         '*, escolas_instituicoes(nome_escola), status_auditoria(nome_status)',
       )
       .order('data_auditoria', { ascending: false })
-      .limit(5)
+      .limit(10)
 
     if (error) throw error
     return data
+  },
+
+  async getAuditFindings(auditId: string) {
+    const { data, error } = await supabase
+      .from('audit_findings')
+      .select('*')
+      .eq('audit_id', auditId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      // Gracefully handle if table doesn't exist yet (during migration overlap)
+      console.warn('Could not fetch audit findings', error)
+      return []
+    }
+    return data as AuditFinding[]
   },
 }
