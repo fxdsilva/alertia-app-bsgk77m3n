@@ -154,8 +154,8 @@ export const portalService = {
 
   async createComplaint(data: ComplaintData) {
     const protocol = generateProtocol()
-    const finalAnonimo = data.anonimo
-    const finalDenuncianteId = data.anonimo ? null : data.denunciante_id
+    // Ensure we explicitly pass null if anonymous OR if denunciante_id is undefined/empty
+    const finalDenuncianteId = data.anonimo ? null : data.denunciante_id || null
 
     // Use the WORKFLOW_STATUS.REGISTERED ('Denúncia registrada')
     const initialStatus = WORKFLOW_STATUS.REGISTERED
@@ -166,7 +166,7 @@ export const portalService = {
         escola_id: data.escola_id,
         protocolo: protocol,
         descricao: data.descricao,
-        anonimo: finalAnonimo,
+        anonimo: data.anonimo, // Pass the original boolean flag
         denunciante_id: finalDenuncianteId,
         categoria: data.categoria,
         status: initialStatus,
