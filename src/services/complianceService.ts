@@ -546,6 +546,19 @@ export const complianceService = {
     return data
   },
 
+  async getAnalystDueDiligence(analystId: string) {
+    const { data, error } = await supabase
+      .from('due_diligence')
+      .select(
+        '*, escolas_instituicoes(nome_escola), status_due_diligence(nome_status)',
+      )
+      .eq('analista_id', analystId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
   async getInvestigation(id: string) {
     const { data, error } = await supabase
       .from('investigacoes')
