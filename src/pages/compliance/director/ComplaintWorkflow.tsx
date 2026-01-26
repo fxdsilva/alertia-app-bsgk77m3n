@@ -255,6 +255,7 @@ export default function ComplaintWorkflow() {
       </div>
 
       <WorkflowAssignmentDialog
+        key={selectedComplaint?.id ?? 'list'}
         open={assignOpen}
         onOpenChange={setAssignOpen}
         complaint={selectedComplaint}

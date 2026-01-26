@@ -76,6 +76,11 @@ export function TaskAssignmentDialog({
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
+      analista_id: '',
+      escola_id: '',
+      tipo_modulo: '',
+      descricao: '',
+      prazo: '',
       institutional_docs_auth: false,
       doc_permissions_code: false,
       doc_permissions_commitment: false,
@@ -94,6 +99,11 @@ export function TaskAssignmentDialog({
     if (open) {
       loadResources()
       form.reset({
+        analista_id: '',
+        escola_id: '',
+        tipo_modulo: '',
+        descricao: '',
+        prazo: '',
         institutional_docs_auth: false,
         doc_permissions_code: false,
         doc_permissions_commitment: false,
@@ -171,11 +181,6 @@ export function TaskAssignmentDialog({
       payload.institutional_docs_auth = values.institutional_docs_auth
 
       if (values.institutional_docs_auth) {
-        // We might store these specific permissions in a JSON field if DB supports it,
-        // or just rely on the boolean flag implying all for now, but user requested specificity.
-        // Assuming we store it in metadata or description for now if no dedicated column exists
-        // or just log it. In a real scenario, we'd add columns or a jsonb column.
-        // We will append to description for visibility if no column.
         const permissions = []
         if (values.doc_permissions_code) permissions.push('Código de Conduta')
         if (values.doc_permissions_commitment)
@@ -236,7 +241,7 @@ export function TaskAssignmentDialog({
                       <FormLabel>Instituição de Ensino</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -264,7 +269,7 @@ export function TaskAssignmentDialog({
                       <FormLabel>Analista Responsável</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -294,7 +299,7 @@ export function TaskAssignmentDialog({
                       <FormLabel>Módulo / Tipo</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -486,7 +491,7 @@ export function TaskAssignmentDialog({
                         </FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           disabled={
                             !selectedSchoolId || selectedSchoolId === 'none'
                           }
