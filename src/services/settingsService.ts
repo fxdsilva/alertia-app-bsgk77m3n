@@ -4,11 +4,19 @@ export interface OfficialChannel {
   name: string
   description: string
   url: string
+  label?: string
+}
+
+export interface EmergencyContact {
+  number: string
+  name: string
+  description?: string
 }
 
 export interface OfficialChannelsData {
   mato_grosso: OfficialChannel[]
   brasil: OfficialChannel[]
+  emergency?: EmergencyContact[]
 }
 
 export const settingsService = {

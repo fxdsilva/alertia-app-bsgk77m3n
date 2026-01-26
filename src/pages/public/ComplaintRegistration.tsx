@@ -310,8 +310,8 @@ export default function ComplaintRegistration() {
           </Button>
           <Button
             variant="link"
-            className="text-blue-600 gap-2"
-            onClick={() => window.open('https://ouvidoria.gov.br', '_blank')}
+            className="text-blue-600 gap-2 hover:text-blue-800"
+            onClick={() => navigate('/public/official-channels')}
           >
             Outros Canais Oficiais <ExternalLink className="h-3 w-3" />
           </Button>
@@ -343,7 +343,10 @@ export default function ComplaintRegistration() {
                 Deseja registrar uma denúncia ou consultar canais oficiais?
               </p>
             </div>
-            <ExternalLink className="h-4 w-4 text-slate-400 ml-auto" />
+            <ExternalLink
+              className="h-4 w-4 text-slate-400 ml-auto cursor-pointer hover:text-blue-600"
+              onClick={() => navigate('/public/official-channels')}
+            />
           </CardContent>
         </Card>
 
