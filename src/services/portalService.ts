@@ -30,124 +30,153 @@ const getErrorMessage = (error: unknown): string => {
   return 'Erro desconhecido'
 }
 
+// Helper to retry operations on network failure
+async function fetchWithRetry<T>(
+  operation: () => Promise<T>,
+  retries = 3,
+  delay = 1000,
+): Promise<T> {
+  try {
+    return await operation()
+  } catch (error: any) {
+    // Retry on network errors or specific fetch failures
+    if (
+      retries > 0 &&
+      (error?.message?.includes('Failed to fetch') ||
+        error?.message?.includes('Network request failed') ||
+        error?.status === 503 ||
+        error?.status === 504)
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      return fetchWithRetry(operation, retries - 1, delay * 1.5)
+    }
+    throw error
+  }
+}
+
 export const portalService = {
   async searchSchools(query: string): Promise<School[]> {
     if (!query.trim()) return []
 
-    const { data, error } = await supabase
-      .from('escolas_instituicoes')
-      .select(
-        'id, nome_escola, rede_municipal, rede_estadual, rede_federal, rede_particular, localizacao, endereco, ativo',
-      )
-      .eq('ativo', true)
-      .ilike('nome_escola', `%${query}%`)
-      .limit(10)
+    return fetchWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('escolas_instituicoes')
+        .select(
+          'id, nome_escola, rede_municipal, rede_estadual, rede_federal, rede_particular, localizacao, endereco, ativo',
+        )
+        .eq('ativo', true)
+        .ilike('nome_escola', `%${query}%`)
+        .limit(10)
 
-    if (error) throw error
+      if (error) throw error
 
-    return data.map((item: any) => ({
-      id: item.id,
-      name: item.nome_escola,
-      network: item.rede_municipal
-        ? 'Municipal'
-        : item.rede_estadual
-          ? 'Estadual'
-          : item.rede_federal
-            ? 'Federal'
-            : item.rede_particular
-              ? 'Privada'
-              : 'Pública',
-      modality: (item.localizacao as 'Urbana' | 'Rural') || 'Urbana',
-      municipality: item.endereco || 'N/A',
-      state: 'N/A',
-      active: item.ativo,
-    }))
+      return data.map((item: any) => ({
+        id: item.id,
+        name: item.nome_escola,
+        network: item.rede_municipal
+          ? 'Municipal'
+          : item.rede_estadual
+            ? 'Estadual'
+            : item.rede_federal
+              ? 'Federal'
+              : item.rede_particular
+                ? 'Privada'
+                : 'Pública',
+        modality: (item.localizacao as 'Urbana' | 'Rural') || 'Urbana',
+        municipality: item.endereco || 'N/A',
+        state: 'N/A',
+        active: item.ativo,
+      }))
+    })
   },
 
   async getSchools(): Promise<School[]> {
-    const { data, error } = await supabase
-      .from('escolas_instituicoes')
-      .select(
-        'id, nome_escola, rede_municipal, rede_estadual, rede_federal, rede_particular, localizacao, endereco, ativo',
-      )
-      .eq('ativo', true)
-      .order('nome_escola')
+    return fetchWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('escolas_instituicoes')
+        .select(
+          'id, nome_escola, rede_municipal, rede_estadual, rede_federal, rede_particular, localizacao, endereco, ativo',
+        )
+        .eq('ativo', true)
+        .order('nome_escola')
 
-    if (error) throw error
+      if (error) throw error
 
-    return data.map((item: any) => ({
-      id: item.id,
-      name: item.nome_escola,
-      network: item.rede_municipal
-        ? 'Municipal'
-        : item.rede_estadual
-          ? 'Estadual'
-          : item.rede_federal
-            ? 'Federal'
-            : item.rede_particular
-              ? 'Privada'
-              : 'Pública',
-      modality: (item.localizacao as 'Urbana' | 'Rural') || 'Urbana',
-      municipality: item.endereco || 'N/A',
-      state: 'N/A',
-      active: item.ativo,
-    }))
+      return data.map((item: any) => ({
+        id: item.id,
+        name: item.nome_escola,
+        network: item.rede_municipal
+          ? 'Municipal'
+          : item.rede_estadual
+            ? 'Estadual'
+            : item.rede_federal
+              ? 'Federal'
+              : item.rede_particular
+                ? 'Privada'
+                : 'Pública',
+        modality: (item.localizacao as 'Urbana' | 'Rural') || 'Urbana',
+        municipality: item.endereco || 'N/A',
+        state: 'N/A',
+        active: item.ativo,
+      }))
+    })
   },
 
   async getManagementCommitment(escolaId: string) {
-    const { data, error } = await supabase
-      .from('compromisso_alta_gestao')
-      .select('*')
-      .eq('escola_id', escolaId)
-      .maybeSingle()
+    return fetchWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('compromisso_alta_gestao')
+        .select('*')
+        .eq('escola_id', escolaId)
+        .maybeSingle()
 
-    if (error) throw error
-    return data as DocumentRecord | null
+      if (error) throw error
+      return data as DocumentRecord | null
+    })
   },
 
   async getCodeOfConduct(escolaId: string) {
-    const { data, error } = await supabase
-      .from('codigo_conduta')
-      .select('*')
-      .eq('escola_id', escolaId)
-      .maybeSingle()
+    return fetchWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('codigo_conduta')
+        .select('*')
+        .eq('escola_id', escolaId)
+        .maybeSingle()
 
-    if (error) throw error
-    return data as DocumentRecord | null
+      if (error) throw error
+      return data as DocumentRecord | null
+    })
   },
 
   async getStatusId(name: string): Promise<string> {
-    const { data, error } = await supabase
-      .from('status_denuncia')
-      .select('id')
-      .eq('nome_status', name)
-      .maybeSingle()
-
-    if (error) {
-      console.error(
-        `Error fetching status ID for ${name}:`,
-        getErrorMessage(error),
-      )
-      throw new Error(`Erro ao buscar status: ${name}`)
-    }
-
-    if (!data) {
-      // Create status if not found (fallback)
-      const { data: newData, error: createError } = await supabase
+    return fetchWithRetry(async () => {
+      const { data, error } = await supabase
         .from('status_denuncia')
-        .insert({ nome_status: name })
         .select('id')
-        .single()
+        .eq('nome_status', name)
+        .maybeSingle()
 
-      if (createError) {
+      if (error) {
+        console.error(
+          `Error fetching status ID for ${name}:`,
+          getErrorMessage(error),
+        )
+        throw new Error(`Erro ao buscar status: ${name}`)
+      }
+
+      if (!data) {
+        // Critical error: The system expects the status to exist.
+        // We do NOT attempt to create it here as public users likely lack permissions.
+        console.error(
+          `CRITICAL: Status "${name}" not found in database. Please run migrations.`,
+        )
         throw new Error(
-          `Status não encontrado e não foi possível criar: ${name}`,
+          `Configuração de sistema incompleta: Status "${name}" não encontrado.`,
         )
       }
-      return newData.id
-    }
 
-    return data.id
+      return data.id
+    })
   },
 
   async uploadEvidence(files: File[]): Promise<string[]> {
@@ -194,46 +223,51 @@ export const portalService = {
     const protocol = generateProtocol()
     const finalDenuncianteId = data.anonimo ? null : data.denunciante_id || null
 
-    try {
-      // Fetch Status IDs first to ensure valid FKs
-      const initialStatusId = await this.getStatusId(WORKFLOW_STATUS.REGISTERED)
+    // Use retry for the entire creation process to handle transient failures
+    return fetchWithRetry(async () => {
+      try {
+        // Fetch Status IDs first to ensure valid FKs
+        const initialStatusId = await this.getStatusId(
+          WORKFLOW_STATUS.REGISTERED,
+        )
 
-      const { data: result, error } = await supabase
-        .from('denuncias')
-        .insert({
-          escola_id: data.escola_id,
-          protocolo: protocol,
-          descricao: data.descricao,
-          anonimo: data.anonimo,
-          denunciante_id: finalDenuncianteId,
-          categoria: data.categoria,
-          status: initialStatusId,
-          envolvidos_detalhes: data.envolvidos_detalhes as any,
-          evidencias_urls: data.evidencias_urls,
-        })
-        .select()
-        .single()
+        const { data: result, error } = await supabase
+          .from('denuncias')
+          .insert({
+            escola_id: data.escola_id,
+            protocolo: protocol,
+            descricao: data.descricao,
+            anonimo: data.anonimo,
+            denunciante_id: finalDenuncianteId,
+            categoria: data.categoria,
+            status: initialStatusId,
+            envolvidos_detalhes: data.envolvidos_detalhes as any,
+            evidencias_urls: data.evidencias_urls,
+          })
+          .select()
+          .single()
 
-      if (error) {
-        const msg = getErrorMessage(error)
-        console.error('Error creating complaint:', msg)
+        if (error) {
+          const msg = getErrorMessage(error)
+          console.error('Error creating complaint:', msg)
+          throw new Error(msg)
+        }
+
+        // Auto-transition to next step (Best effort, non-blocking)
+        this.triggerAutoTransition(result.id, initialStatusId).catch((err) =>
+          console.error('Auto transition warning:', err),
+        )
+
+        return {
+          ...result,
+          protocolo,
+        }
+      } catch (err) {
+        const msg = getErrorMessage(err)
+        console.error('Unexpected error in createComplaint:', msg)
         throw new Error(msg)
       }
-
-      // Auto-transition to next step
-      this.triggerAutoTransition(result.id, initialStatusId).catch(
-        console.error,
-      )
-
-      return {
-        ...result,
-        protocolo,
-      }
-    } catch (err) {
-      const msg = getErrorMessage(err)
-      console.error('Unexpected error in createComplaint:', msg)
-      throw new Error(msg)
-    }
+    })
   },
 
   async triggerAutoTransition(complaintId: string, initialStatusId: string) {
@@ -248,6 +282,8 @@ export const portalService = {
         .eq('id', complaintId)
 
       if (!transitionError) {
+        // Log transition - public users might fail here if they don't have permission on logs
+        // So we wrap in try/catch to avoid noise, but ideally logs should be server-side or allowed
         await supabase.from('compliance_workflow_logs').insert({
           complaint_id: complaintId,
           previous_status: initialStatusId,
@@ -256,17 +292,20 @@ export const portalService = {
         })
       }
     } catch (error) {
-      console.error('Auto transition failed', error)
+      // Just log locally, do not throw as this is a background process for the user
+      console.warn('Auto transition background process failed/skipped:', error)
     }
   },
 
   async getComplaintStatus(protocol: string) {
-    const { data, error } = await supabase.rpc('get_complaint_by_protocol', {
-      protocol_query: protocol,
-    })
+    return fetchWithRetry(async () => {
+      const { data, error } = await supabase.rpc('get_complaint_by_protocol', {
+        protocol_query: protocol,
+      })
 
-    if (error) throw error
-    return data && data.length > 0 ? data[0] : null
+      if (error) throw error
+      return data && data.length > 0 ? data[0] : null
+    })
   },
 }
 

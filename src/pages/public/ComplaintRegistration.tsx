@@ -86,7 +86,7 @@ export default function ComplaintRegistration() {
         setSchools(data)
       } catch (error) {
         console.error(error)
-        toast.error('Erro ao carregar lista de escolas.')
+        toast.error('Erro ao carregar lista de escolas. Verifique sua conexão.')
       } finally {
         setLoadingSchools(false)
       }
@@ -175,14 +175,26 @@ export default function ComplaintRegistration() {
       toast.success('Denúncia registrada com sucesso.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error: any) {
-      // Prevents "FormData object could not be cloned" error by strictly using string messages
+      // Improved error handling
       const errorMsg =
         typeof error === 'object' && error !== null && 'message' in error
           ? String(error.message)
           : 'Erro ao registrar denúncia. Tente novamente.'
 
-      console.error('Registration failed:', errorMsg)
-      toast.error(errorMsg)
+      console.error('Registration failed:', error)
+
+      if (
+        errorMsg.includes('Failed to fetch') ||
+        errorMsg.includes('Network request failed')
+      ) {
+        toast.error(
+          'Erro de conexão. Verifique sua internet e tente novamente.',
+        )
+      } else if (errorMsg.includes('Status "Denúncia registrada" not found')) {
+        toast.error('Erro de configuração do sistema. Contate o suporte.')
+      } else {
+        toast.error(errorMsg)
+      }
     } finally {
       setLoading(false)
       setUploadStatus('')
