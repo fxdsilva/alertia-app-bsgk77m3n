@@ -533,6 +533,19 @@ export const complianceService = {
     return data
   },
 
+  async getAnalystAudits(analystId: string) {
+    const { data, error } = await supabase
+      .from('auditorias')
+      .select(
+        '*, escolas_instituicoes(nome_escola), status_auditoria(nome_status)',
+      )
+      .eq('analista_id', analystId)
+      .order('data_auditoria', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
   async getInvestigation(id: string) {
     const { data, error } = await supabase
       .from('investigacoes')
