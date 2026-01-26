@@ -334,14 +334,17 @@ export default function ComplaintRegistration() {
       toast.success('Denúncia registrada com sucesso.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error: any) {
-      // Avoid logging the full error object to prevent "FormData object could not be cloned" error
-      // which happens when the error object contains references to the request FormData
-      // We safely extract only the message string
+      // CRITICAL FIX: "FormData object could not be cloned" error
+      // This happens when the error object contains references to Request/Response objects (like FormData)
+      // and something (like a console logger extension or postMessage in dev tools) tries to clone it.
+      // We must extract a clean string message and NEVER log the raw error object if it's suspicious.
+
       const errorMsg =
         typeof error === 'object' && error !== null && 'message' in error
           ? String(error.message)
           : 'Erro ao registrar denúncia. Tente novamente.'
 
+      // Only log the clean string
       console.error('Registration failed:', errorMsg)
       toast.error(errorMsg)
     } finally {

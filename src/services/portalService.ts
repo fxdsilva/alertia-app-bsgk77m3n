@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 import { School } from '@/lib/mockData'
-import { WORKFLOW_STATUS, workflowService } from './workflowService'
+import { WORKFLOW_STATUS } from './workflowService'
 
 export interface DocumentRecord {
   id: string
@@ -116,6 +116,28 @@ export const portalService = {
     return data as DocumentRecord | null
   },
 
+  async getStatusId(name: string): Promise<string> {
+    const { data, error } = await supabase
+      .from('status_denuncia')
+      .select('id')
+      .eq('nome_status', name)
+      .maybeSingle()
+
+    if (error) {
+      console.error(
+        `Error fetching status ID for ${name}:`,
+        getErrorMessage(error),
+      )
+      throw new Error(`Erro ao buscar status: ${name}`)
+    }
+
+    if (!data) {
+      throw new Error(`Status não encontrado no sistema: ${name}`)
+    }
+
+    return data.id
+  },
+
   async uploadEvidence(files: File[]): Promise<string[]> {
     const urls: string[] = []
 
@@ -146,6 +168,7 @@ export const portalService = {
       } catch (err: any) {
         const errorMessage = getErrorMessage(err)
         console.error(`Evidence upload failed for ${file.name}:`, errorMessage)
+        // Throw a clean error string to avoid cloning issues
         throw new Error(
           errorMessage || `Falha ao fazer upload do arquivo ${file.name}`,
         )
@@ -159,10 +182,10 @@ export const portalService = {
     const protocol = generateProtocol()
     const finalDenuncianteId = data.anonimo ? null : data.denunciante_id || null
 
-    // 1. Initial State: "Denúncia registrada"
-    const initialStatus = WORKFLOW_STATUS.REGISTERED
-
     try {
+      // Fetch Status IDs first to ensure valid FKs
+      const initialStatusId = await this.getStatusId(WORKFLOW_STATUS.REGISTERED)
+
       const { data: result, error } = await supabase
         .from('denuncias')
         .insert({
@@ -172,7 +195,7 @@ export const portalService = {
           anonimo: data.anonimo,
           denunciante_id: finalDenuncianteId,
           categoria: data.categoria,
-          status: initialStatus,
+          status: initialStatusId, // Use ID, not string
           envolvidos_detalhes: data.envolvidos_detalhes as any,
           evidencias_urls: data.evidencias_urls,
         })
@@ -186,30 +209,38 @@ export const portalService = {
       }
 
       // 2. Immediate Transition to "Aguardando designação..."
-      // This satisfies the "Automatic Intake" requirement
-      const nextStatus = WORKFLOW_STATUS.WAITING_ANALYST_1
+      try {
+        const nextStatusId = await this.getStatusId(
+          WORKFLOW_STATUS.WAITING_ANALYST_1,
+        )
 
-      const { error: transitionError } = await supabase
-        .from('denuncias')
-        .update({ status: nextStatus })
-        .eq('id', result.id)
+        const { error: transitionError } = await supabase
+          .from('denuncias')
+          .update({ status: nextStatusId })
+          .eq('id', result.id)
 
-      if (transitionError) {
-        // Log error but don't fail the creation, just leave at registered
-        console.error('Failed to auto-transition status', transitionError)
-      } else {
-        // Log transition
-        // We might not have a session user if public portal, so system log
-        await supabase.from('compliance_workflow_logs').insert({
-          complaint_id: result.id,
-          previous_status: initialStatus,
-          new_status: nextStatus,
-          comments: 'Transição automática de entrada (Portal)',
-        })
+        if (transitionError) {
+          console.error('Failed to auto-transition status', transitionError)
+        } else {
+          // Log transition
+          await supabase.from('compliance_workflow_logs').insert({
+            complaint_id: result.id,
+            previous_status: initialStatusId, // Best effort logging
+            new_status: nextStatusId,
+            comments: 'Transição automática de entrada (Portal)',
+          })
+        }
+
+        return {
+          ...result,
+          status: transitionError ? initialStatusId : nextStatusId,
+          protocolo,
+        }
+      } catch (transitionErr) {
+        console.error('Transition error:', transitionErr)
+        // Return result anyway since complaint was created
+        return { ...result, protocolo }
       }
-
-      // Return the result with updated status ideally, or just result
-      return { ...result, status: transitionError ? initialStatus : nextStatus }
     } catch (err) {
       const msg = getErrorMessage(err)
       console.error('Unexpected error in createComplaint:', msg)
@@ -218,6 +249,8 @@ export const portalService = {
   },
 
   async getComplaintStatus(protocol: string) {
+    // Note: This RPC might return status names or IDs depending on implementation.
+    // If it returns IDs, we might need to fetch the name for display.
     const { data, error } = await supabase.rpc('get_complaint_by_protocol', {
       protocol_query: protocol,
     })
