@@ -13,6 +13,7 @@ export interface WorkflowComplaint {
   analista_1_id?: string
   analista_2_id?: string
   analista_3_id?: string
+  analista_id?: string
   parecer_1?: string
   relatorio_2?: string
   relatorio_3?: string
@@ -26,6 +27,7 @@ export interface WorkflowComplaint {
   analista_1?: { nome_usuario: string }
   analista_2?: { nome_usuario: string }
   analista_3?: { nome_usuario: string }
+  analista?: { nome_usuario: string }
 }
 
 export const WORKFLOW_STATUS = {
@@ -61,6 +63,63 @@ export const workflowService = {
 
     if (error) throw error
     return data as WorkflowComplaint[]
+  },
+
+  async getAnalystActiveComplaints(analystId: string) {
+    const { data, error } = await supabase
+      .from('denuncias')
+      .select(
+        '*, escolas_instituicoes(nome_escola), analista:analista_id(nome_usuario), analista_1:analista_1_id(nome_usuario), analista_2:analista_2_id(nome_usuario), analista_3:analista_3_id(nome_usuario)',
+      )
+      .or(
+        `analista_id.eq.${analystId},analista_1_id.eq.${analystId},analista_2_id.eq.${analystId},analista_3_id.eq.${analystId}`,
+      )
+      .not(
+        'status',
+        'in',
+        `("${WORKFLOW_STATUS.CLOSED}","${WORKFLOW_STATUS.ARCHIVED}")`,
+      )
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    // Filter to ensure we only return complaints where the specific analyst is CURRENTLY responsible
+    return (data || []).filter((w) => {
+      // Phase 1: Analysis
+      if (
+        w.analista_1_id === analystId &&
+        (w.status === WORKFLOW_STATUS.ANALYSIS_1 ||
+          w.status === WORKFLOW_STATUS.RETURNED_1)
+      ) {
+        return true
+      }
+      // Phase 2: Investigation
+      if (
+        w.analista_2_id === analystId &&
+        w.status === WORKFLOW_STATUS.INVESTIGATION_2
+      ) {
+        return true
+      }
+      // Phase 3: Mediation or Disciplinary
+      if (
+        w.analista_3_id === analystId &&
+        (w.status === WORKFLOW_STATUS.MEDIATION_3 ||
+          w.status === WORKFLOW_STATUS.DISCIPLINARY_3)
+      ) {
+        return true
+      }
+      // Generic / Legacy Assignment (e.g. 'em_analise', 'pendente', or non-workflow status)
+      if (
+        w.analista_id === analystId &&
+        !w.analista_1_id &&
+        !w.analista_2_id &&
+        !w.analista_3_id
+      ) {
+        // Broadly accept if assigned generically and not closed
+        return true
+      }
+      return false
+    }) as WorkflowComplaint[]
   },
 
   async getComplaintDetails(id: string) {
@@ -170,11 +229,21 @@ export const workflowService = {
     await this.logTransition(complaintId, newStatus, logMsg)
   },
 
-  async submitReport(complaintId: string, phase: 1 | 2 | 3, content: string) {
+  async submitReport(
+    complaintId: string,
+    phase: 0 | 1 | 2 | 3,
+    content: string,
+  ) {
     const updates: any = {}
     let newStatus = ''
 
-    if (phase === 1) {
+    if (phase === 0) {
+      // Generic phase - save to parecer_1 (Analysis) or keep as is
+      updates.parecer_1 = content
+      newStatus = 'em_analise' // Keep generic or move to review?
+      // For now, we update the content but status handling for generic might differ
+      // We will assume generic workflow stays in active state until manually moved
+    } else if (phase === 1) {
       updates.parecer_1 = content
       newStatus = WORKFLOW_STATUS.REVIEW_1
     } else if (phase === 2) {
@@ -185,7 +254,9 @@ export const workflowService = {
       newStatus = WORKFLOW_STATUS.REVIEW_3
     }
 
-    updates.status = newStatus
+    if (phase !== 0) {
+      updates.status = newStatus
+    }
 
     const { error } = await supabase
       .from('denuncias')
@@ -196,8 +267,8 @@ export const workflowService = {
 
     await this.logTransition(
       complaintId,
-      newStatus,
-      `Relatório Fase ${phase} enviado para aprovação`,
+      newStatus || 'Atualização de Relatório',
+      `Relatório Fase ${phase} enviado/atualizado`,
     )
   },
 
@@ -218,16 +289,12 @@ export const workflowService = {
       }
     } else if (phase === 2) {
       if (!approved) {
-        // If rejected, usually goes back to investigation or returned. Assuming returned to investigation for simplicity or logic can be complex.
-        // For this implementation, let's assume we return to investigation status so analyst can edit.
         newStatus = WORKFLOW_STATUS.INVESTIGATION_2
-        // NOTE: In real world, might need a specific 'RETURNED_2' status, but reusing active status allows editing.
       } else {
         newStatus = WORKFLOW_STATUS.WAITING_ANALYST_3
       }
     } else if (phase === 3) {
       if (!approved) {
-        // Return to active phase 3 based on type
         const { data } = await supabase
           .from('denuncias')
           .select('tipo_resolucao')
@@ -280,7 +347,6 @@ export const workflowService = {
       data: { session },
     } = await supabase.auth.getSession()
 
-    // Get previous status for the record
     const { data: current } = await supabase
       .from('denuncias')
       .select('status')
@@ -291,12 +357,11 @@ export const workflowService = {
     await supabase.from('compliance_workflow_logs').insert({
       complaint_id: complaintId,
       new_status: status,
-      previous_status: previous !== status ? previous : null, // best effort
+      previous_status: previous !== status ? previous : null,
       changed_by: session?.user.id,
       comments: comments,
     })
 
-    // Also log to main audit
     await auditService.logAction(
       'WORKFLOW_UPDATE',
       `Status alterado para: ${status}`,
@@ -309,7 +374,6 @@ export const workflowService = {
     const complaint = await this.getComplaintDetails(complaintId)
     if (!complaint) return
 
-    // 1. Audit - Link via denuncia_id
     await supabase.from('auditorias').insert({
       escola_id: complaint.escola_id,
       denuncia_id: complaintId,
@@ -320,18 +384,16 @@ export const workflowService = {
       pendencias: 1,
     })
 
-    // 2. Risks - Link via denuncia_id
     await supabase.from('matriz_riscos').insert({
       escola_id: complaint.escola_id,
       denuncia_id: complaintId,
       risco: `Risco materializado: Denúncia ${complaint.protocolo}`,
-      probabilidade: 'Alta', // Already happened
+      probabilidade: 'Alta',
       impacto: 'Alto',
       nivel_risco_calculado: 'Crítico',
       plano_mitigacao: 'Revisão de processos conforme relatório de denúncia.',
     })
 
-    // 3. Internal Controls - Link via denuncia_id
     await supabase.from('controles_internos').insert({
       titulo: `Controle Preventivo - ${complaint.protocolo}`,
       descricao: `Revisão de controles falhos identificados na denúncia ${complaint.protocolo}`,

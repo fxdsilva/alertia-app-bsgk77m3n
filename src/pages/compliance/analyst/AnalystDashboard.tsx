@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  AlertTriangle,
   Briefcase,
   Calendar,
   ChevronRight,
@@ -20,10 +19,9 @@ import {
   Loader2,
 } from 'lucide-react'
 import { complianceService } from '@/services/complianceService'
-import { supabase } from '@/lib/supabase/client'
+import { workflowService, WorkflowComplaint } from '@/services/workflowService'
 import useAppStore from '@/stores/useAppStore'
 import { format } from 'date-fns'
-import { WorkflowComplaint, WORKFLOW_STATUS } from '@/services/workflowService'
 
 export default function AnalystDashboard() {
   const { user } = useAppStore()
@@ -39,47 +37,12 @@ export default function AnalystDashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [tasksData] = await Promise.all([
+      const [tasksData, wfData] = await Promise.all([
         complianceService.getAnalystTasks(user!.id),
+        workflowService.getAnalystActiveComplaints(user!.id),
       ])
       setTasks(tasksData)
-
-      // Fetch Workflow Tasks assigned to this analyst
-      const { data: wfData } = await supabase
-        .from('denuncias')
-        .select('*, escolas_instituicoes(nome_escola)')
-        .or(
-          `analista_1_id.eq.${user!.id},analista_2_id.eq.${user!.id},analista_3_id.eq.${user!.id}`,
-        )
-        .not(
-          'status',
-          'in',
-          `("${WORKFLOW_STATUS.CLOSED}","${WORKFLOW_STATUS.ARCHIVED}")`,
-        )
-
-      // Filter strictly by active status for the specific analyst phase
-      const activeWf = (wfData || []).filter((w: any) => {
-        if (
-          w.analista_1_id === user!.id &&
-          (w.status === WORKFLOW_STATUS.ANALYSIS_1 ||
-            w.status === WORKFLOW_STATUS.RETURNED_1)
-        )
-          return true
-        if (
-          w.analista_2_id === user!.id &&
-          w.status === WORKFLOW_STATUS.INVESTIGATION_2
-        )
-          return true
-        if (
-          w.analista_3_id === user!.id &&
-          (w.status === WORKFLOW_STATUS.MEDIATION_3 ||
-            w.status === WORKFLOW_STATUS.DISCIPLINARY_3)
-        )
-          return true
-        return false
-      })
-
-      setWorkflowTasks(activeWf)
+      setWorkflowTasks(wfData)
     } catch (error) {
       console.error(error)
     } finally {
@@ -96,7 +59,7 @@ export default function AnalystDashboard() {
   }
 
   return (
-    <div className="space-y-8 p-6 animate-fade-in">
+    <div className="space-y-8 p-6 animate-fade-in pb-20">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Meu Workspace</h1>
         <p className="text-muted-foreground">
@@ -121,22 +84,34 @@ export default function AnalystDashboard() {
               {workflowTasks.map((w) => (
                 <Card
                   key={w.id}
-                  className="cursor-pointer hover:border-primary transition-colors"
+                  className="cursor-pointer hover:border-primary transition-colors hover:shadow-sm"
                   onClick={() =>
                     navigate(`/compliance/analyst/workflow/${w.id}`)
                   }
                 >
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-base font-medium">
-                      {w.protocolo}
-                    </CardTitle>
-                    <Badge variant="secondary">{w.status}</Badge>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-base font-medium">
+                          {w.protocolo}
+                        </CardTitle>
+                        <Badge variant="outline" className="text-xs">
+                          {w.escolas_instituicoes?.nome_escola || 'Escola N/A'}
+                        </Badge>
+                      </div>
+                      <CardDescription>
+                        {format(new Date(w.created_at), 'dd/MM/yyyy')}
+                      </CardDescription>
+                    </div>
+                    <Badge variant="secondary" className="capitalize">
+                      {w.status.replace(/_/g, ' ')}
+                    </Badge>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {w.descricao}
                     </p>
-                    <div className="mt-3 flex items-center justify-end">
+                    <div className="mt-4 flex items-center justify-end">
                       <Button size="sm" className="gap-2">
                         Abrir Tarefa <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -151,11 +126,15 @@ export default function AnalystDashboard() {
         <TabsContent value="tasks" className="mt-6 space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {tasks.map((task) => (
-              <Card key={task.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={task.id}
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/compliance/analyst/task/${task.id}`)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start mb-2">
                     <Badge variant="outline" className="capitalize">
-                      {task.tipo_modulo.replace('_', ' ')}
+                      {task.tipo_modulo?.replace('_', ' ')}
                     </Badge>
                     <Badge
                       className={
@@ -164,7 +143,7 @@ export default function AnalystDashboard() {
                           : 'bg-blue-500'
                       }
                     >
-                      {task.status.replace('_', ' ')}
+                      {task.status?.replace('_', ' ')}
                     </Badge>
                   </div>
                   <CardTitle className="text-base line-clamp-1">
@@ -182,13 +161,7 @@ export default function AnalystDashboard() {
                   <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
                     {task.descricao}
                   </p>
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2"
-                    onClick={() =>
-                      navigate(`/compliance/analyst/task/${task.id}`)
-                    }
-                  >
+                  <Button variant="outline" className="w-full gap-2">
                     <Briefcase className="h-4 w-4" /> Detalhes
                   </Button>
                 </CardContent>

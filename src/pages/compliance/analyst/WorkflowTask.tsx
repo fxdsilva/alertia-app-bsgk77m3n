@@ -38,7 +38,6 @@ export default function WorkflowTask() {
       const data = await workflowService.getComplaintDetails(id!)
       setComplaint(data)
 
-      // Load existing report content if re-editing (returned state)
       if (user) {
         if (
           data.status === WORKFLOW_STATUS.RETURNED_1 &&
@@ -46,7 +45,14 @@ export default function WorkflowTask() {
         ) {
           setReport(data.parecer_1 || '')
         }
-        // Logic for other returned phases can be added here
+        // Generic analyst might want to see previous generic report
+        else if (
+          data.analista_id === user.id &&
+          !data.analista_1_id &&
+          data.parecer_1
+        ) {
+          setReport(data.parecer_1)
+        }
       }
     } catch (error) {
       toast.error('Erro ao carregar tarefa')
@@ -55,7 +61,7 @@ export default function WorkflowTask() {
     }
   }
 
-  const getMyPhase = (): 1 | 2 | 3 | null => {
+  const getMyPhase = (): 0 | 1 | 2 | 3 | null => {
     if (!complaint || !user) return null
     if (
       complaint.analista_1_id === user.id &&
@@ -75,12 +81,27 @@ export default function WorkflowTask() {
       )
     )
       return 3
+
+    // Generic / Legacy support (Phase 0)
+    // Allows editing if assigned generically and status is active
+    if (
+      complaint.analista_id === user.id &&
+      !complaint.analista_1_id &&
+      !complaint.analista_2_id &&
+      !complaint.analista_3_id &&
+      ![WORKFLOW_STATUS.CLOSED, WORKFLOW_STATUS.ARCHIVED].includes(
+        complaint.status,
+      )
+    ) {
+      return 0
+    }
+
     return null
   }
 
   const handleSubmit = async () => {
     const phase = getMyPhase()
-    if (!phase || !complaint) return
+    if (phase === null || !complaint) return
     setSubmitting(true)
     try {
       await workflowService.submitReport(complaint.id, phase, report)
@@ -102,10 +123,10 @@ export default function WorkflowTask() {
   if (!complaint) return null
 
   const phase = getMyPhase()
-  const isActionable = !!phase
+  const isActionable = phase !== null
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6 pb-20">
+    <div className="p-6 max-w-3xl mx-auto space-y-6 pb-20 animate-fade-in">
       <Button
         variant="ghost"
         onClick={() => navigate('/compliance/analyst/dashboard')}
@@ -124,6 +145,9 @@ export default function WorkflowTask() {
       <Card>
         <CardHeader>
           <CardTitle>Detalhes da Denúncia</CardTitle>
+          <CardDescription>
+            {complaint.escolas_instituicoes?.nome_escola}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="whitespace-pre-wrap text-sm text-muted-foreground">
@@ -136,6 +160,7 @@ export default function WorkflowTask() {
         <Card className="border-primary/20 shadow-lg">
           <CardHeader>
             <CardTitle>
+              {phase === 0 && 'Parecer de Análise'}
               {phase === 1 && 'Parecer de Procedência'}
               {phase === 2 && 'Relatório de Investigação'}
               {phase === 3 &&
@@ -144,8 +169,8 @@ export default function WorkflowTask() {
                   : 'Relatório Disciplinar')}
             </CardTitle>
             <CardDescription>
-              Preencha o relatório técnico abaixo para submeter à aprovação da
-              diretoria.
+              Preencha o relatório técnico abaixo para submeter à aprovação ou
+              atualização.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -158,14 +183,14 @@ export default function WorkflowTask() {
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmit}
-                disabled={submitting || report.length < 10}
+                disabled={submitting || report.length < 5}
               >
                 {submitting ? (
                   <Loader2 className="animate-spin mr-2" />
                 ) : (
                   <Send className="mr-2 h-4 w-4" />
                 )}
-                Enviar para Aprovação
+                {phase === 0 ? 'Salvar Relatório' : 'Enviar para Aprovação'}
               </Button>
             </div>
           </CardContent>
