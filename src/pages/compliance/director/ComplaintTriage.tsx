@@ -133,6 +133,7 @@ export default function ComplaintTriage() {
       setAssignOpen(false)
       fetchComplaints() // Refresh list
     } catch (error) {
+      console.error(error)
       toast.error('Erro ao designar investigador')
     } finally {
       setAssigning(false)

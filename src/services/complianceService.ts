@@ -183,14 +183,14 @@ export const complianceService = {
 
   async getComplaintsForTriage(filters?: TriageFilters) {
     // For Director to see all complaints that need attention
-    // Specifically Status "A designar" AND no analyst assigned
+    // Specifically Status "A designar"
     let query = supabase
       .from('denuncias')
       .select(
         'id, protocolo, categoria, status, gravidade, created_at, descricao, escola_id, escolas_instituicoes(nome_escola), autorizado_gestao, analista_id, anonimo, status_denuncia!inner(nome_status)',
       )
       .eq('status_denuncia.nome_status', 'A designar')
-      .is('analista_id', null)
+    // REMOVED: .is('analista_id', null) to strictly follow status based triage as requested
 
     if (filters) {
       if (filters.schoolId && filters.schoolId !== 'all') {
@@ -203,7 +203,7 @@ export const complianceService = {
         query = query.gte('created_at', filters.startDate.toISOString())
       }
       if (filters.endDate) {
-        // Add 1 day to end date to include the whole day
+        // Clone and add 1 day to end date to include the whole day
         const end = new Date(filters.endDate)
         end.setDate(end.getDate() + 1)
         query = query.lt('created_at', end.toISOString())
@@ -554,7 +554,6 @@ export const complianceService = {
     return count || 0
   },
 
-  // NEW METHOD: Counts unassigned complaints for triage
   async getUnassignedComplaintsCount() {
     const { count, error } = await supabase
       .from('denuncias')
