@@ -8,6 +8,8 @@ export interface WorkflowComplaint {
   descricao: string
   escola_id: string
   created_at: string
+  gravidade?: string | null
+  categoria?: string[] | null
   analista_1_id?: string
   analista_2_id?: string
   analista_3_id?: string
