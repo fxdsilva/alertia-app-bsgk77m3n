@@ -63,6 +63,7 @@ import WorkflowDetail from '@/pages/compliance/director/WorkflowDetail'
 import WorkflowTask from '@/pages/compliance/analyst/WorkflowTask'
 import AuditingDashboard from '@/pages/compliance/analyst/AuditingDashboard'
 import DueDiligenceDashboard from '@/pages/compliance/analyst/DueDiligenceDashboard'
+import RiskManagementDashboard from '@/pages/compliance/analyst/RiskManagementDashboard'
 
 // Secretary Page
 import SecretaryDashboard from '@/pages/secretary/SecretaryDashboard'
@@ -173,6 +174,10 @@ const App = () => (
             <Route
               path="/compliance/analyst/due-diligence"
               element={<DueDiligenceDashboard />}
+            />
+            <Route
+              path="/compliance/analyst/risk-management"
+              element={<RiskManagementDashboard />}
             />
 
             {/* Portal Public Pages */}

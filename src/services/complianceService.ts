@@ -559,6 +559,17 @@ export const complianceService = {
     return data
   },
 
+  async getAnalystRiskMatrix(analystId: string) {
+    const { data, error } = await supabase
+      .from('matriz_riscos')
+      .select('*, escolas_instituicoes(nome_escola)')
+      .eq('analista_id', analystId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
   async getInvestigation(id: string) {
     const { data, error } = await supabase
       .from('investigacoes')
