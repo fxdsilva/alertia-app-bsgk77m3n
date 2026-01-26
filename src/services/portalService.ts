@@ -234,9 +234,8 @@ export const portalService = {
 
     return fetchWithRetry(async () => {
       try {
-        const initialStatusId = await this.getStatusId(
-          WORKFLOW_STATUS.REGISTERED,
-        )
+        // Use "A designar" explicitly as per user story requirement
+        const initialStatusId = await this.getStatusId('A designar')
 
         const insertPayload: any = {
           escola_id: data.escola_id,
@@ -270,9 +269,13 @@ export const portalService = {
           throw new Error(msg)
         }
 
-        this.triggerAutoTransition(result.id, initialStatusId).catch((err) =>
-          console.error('Auto transition warning:', err),
-        )
+        // No auto-transition needed here as "A designar" IS the initial status for triage
+        // We log the creation
+        await supabase.from('compliance_workflow_logs').insert({
+          complaint_id: result.id,
+          new_status: 'A designar',
+          comments: 'Denúncia registrada via Portal (Status Inicial)',
+        })
 
         return {
           ...result,
@@ -284,30 +287,6 @@ export const portalService = {
         throw new Error(msg)
       }
     })
-  },
-
-  async triggerAutoTransition(complaintId: string, initialStatusId: string) {
-    try {
-      const nextStatusId = await this.getStatusId(
-        WORKFLOW_STATUS.WAITING_ANALYST_1,
-      )
-
-      const { error: transitionError } = await supabase
-        .from('denuncias')
-        .update({ status: nextStatusId })
-        .eq('id', complaintId)
-
-      if (!transitionError) {
-        await supabase.from('compliance_workflow_logs').insert({
-          complaint_id: complaintId,
-          previous_status: initialStatusId,
-          new_status: nextStatusId,
-          comments: 'Transição automática de entrada (Portal)',
-        })
-      }
-    } catch (error) {
-      console.warn('Auto transition background process failed/skipped:', error)
-    }
   },
 
   async getComplaintStatus(

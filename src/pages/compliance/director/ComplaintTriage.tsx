@@ -32,19 +32,21 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import {
   AlertCircle,
   UserCheck,
   Loader2,
   ArrowRight,
   Eye,
-  Lock,
-  Unlock,
+  EyeOff,
+  User,
+  Inbox,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { complianceService } from '@/services/complianceService'
 import { SchoolUser } from '@/services/schoolAdminService'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export default function ComplaintTriage() {
   const [complaints, setComplaints] = useState<any[]>([])
@@ -57,7 +59,6 @@ export default function ComplaintTriage() {
 
   // Details Modal
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [accessToggleLoading, setAccessToggleLoading] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -102,7 +103,7 @@ export default function ComplaintTriage() {
       )
       toast.success('Analista designado para apuração com sucesso')
       setAssignOpen(false)
-      fetchData()
+      fetchData() // Refresh list to remove assigned complaint
     } catch (error) {
       toast.error('Erro ao designar investigador')
     } finally {
@@ -110,128 +111,120 @@ export default function ComplaintTriage() {
     }
   }
 
-  const handleToggleAccess = async (allowed: boolean) => {
-    if (!selectedComplaint) return
-    setAccessToggleLoading(true)
-    try {
-      await complianceService.toggleSchoolAccess(selectedComplaint.id, allowed)
-      setSelectedComplaint({ ...selectedComplaint, autorizado_gestao: allowed })
-      // Update list state locally
-      setComplaints((prev) =>
-        prev.map((c) =>
-          c.id === selectedComplaint.id
-            ? { ...c, autorizado_gestao: allowed }
-            : c,
-        ),
-      )
-      toast.success(
-        allowed
-          ? 'Acesso liberado para gestão escolar'
-          : 'Acesso revogado da gestão escolar',
-      )
-    } catch (error) {
-      toast.error('Erro ao alterar permissão')
-    } finally {
-      setAccessToggleLoading(false)
-    }
-  }
-
   return (
     <div className="space-y-6 p-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Triagem de Denúncias
+          Entrada de Denúncias
         </h1>
         <p className="text-muted-foreground">
-          Gestão centralizada de novas denúncias e designação de apuração.
+          Triagem e designação de novas denúncias recebidas.
         </p>
       </div>
 
-      <Card>
+      <Card className="border-t-4 border-t-primary">
         <CardHeader>
-          <CardTitle>Entrada de Denúncias</CardTitle>
+          <div className="flex items-center gap-2">
+            <Inbox className="h-5 w-5 text-primary" />
+            <CardTitle>Aguardando Designação</CardTitle>
+          </div>
           <CardDescription>
-            Todas as novas denúncias aparecem automaticamente aqui para análise
-            preliminar.
+            Lista de denúncias recém-chegadas com status "A designar".
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : complaints.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-              <AlertCircle className="h-10 w-10 mb-2 opacity-50" />
-              <p>Nenhuma denúncia pendente de triagem.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground bg-muted/10 rounded-lg border-2 border-dashed">
+              <AlertCircle className="h-12 w-12 mb-3 opacity-20" />
+              <p className="text-lg font-medium">Tudo limpo por aqui!</p>
+              <p className="text-sm">
+                Não há denúncias pendentes de designação no momento.
+              </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Protocolo</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Escola</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Confidencialidade</TableHead>
-                  <TableHead className="text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {complaints.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-mono">{c.protocolo}</TableCell>
-                    <TableCell>
-                      {new Date(c.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {c.escolas_instituicoes?.nome_escola || 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="bg-yellow-50">
-                        {c.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {c.autorizado_gestao ? (
-                        <div className="flex items-center text-green-600 gap-1 text-xs font-medium">
-                          <Unlock className="h-3 w-3" />
-                          Visível p/ Gestão
-                        </div>
-                      ) : (
-                        <div className="flex items-center text-red-600 gap-1 text-xs font-medium">
-                          <Lock className="h-3 w-3" />
-                          Sigiloso
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenDetails(c)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => handleOpenAssign(c)}
-                        disabled={!!c.analista_id}
-                      >
-                        {c.analista_id ? (
-                          'Designado'
-                        ) : (
-                          <>
-                            Designar <ArrowRight className="h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </TableCell>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Protocolo</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Escola</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Confidencialidade</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {complaints.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-mono font-medium text-primary">
+                        {c.protocolo}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(c.created_at), 'dd/MM/yyyy', {
+                          locale: ptBR,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {c.escolas_instituicoes?.nome_escola || 'N/A'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className="bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200"
+                        >
+                          {c.status_denuncia?.nome_status || 'A designar'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {c.anonimo ? (
+                          <Badge
+                            variant="secondary"
+                            className="gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          >
+                            <EyeOff className="h-3 w-3" />
+                            Sigiloso
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="gap-1.5 text-blue-700 border-blue-200"
+                          >
+                            <User className="h-3 w-3" />
+                            Identificado
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenDetails(c)}
+                          title="Ver detalhes"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="gap-2 bg-primary hover:bg-primary/90"
+                          onClick={() => handleOpenAssign(c)}
+                        >
+                          Designar <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -240,13 +233,14 @@ export default function ComplaintTriage() {
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Designar Analista para Apuração</DialogTitle>
+            <DialogTitle>Designar Analista</DialogTitle>
             <DialogDescription>
-              Selecione o profissional responsável por conduzir a investigação
-              do protocolo {selectedComplaint?.protocolo}.
+              Selecione o profissional responsável por iniciar a análise do
+              protocolo{' '}
+              <span className="font-mono">{selectedComplaint?.protocolo}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4">
+          <div className="py-6 space-y-4">
             <div className="space-y-2">
               <Label>Analista de Compliance</Label>
               <Select
@@ -254,7 +248,7 @@ export default function ComplaintTriage() {
                 onValueChange={setSelectedAnalyst}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder="Selecione um analista..." />
                 </SelectTrigger>
                 <SelectContent>
                   {analysts.map((a) => (
@@ -265,10 +259,11 @@ export default function ComplaintTriage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="bg-blue-50 p-3 rounded-md text-xs text-blue-700">
+            <div className="bg-blue-50 p-4 rounded-md text-sm text-blue-700 flex gap-2 border border-blue-100">
+              <ArrowRight className="h-5 w-5 shrink-0 mt-0.5" />
               <p>
-                Ao designar, o status mudará automaticamente para "Em Análise" e
-                o analista receberá acesso completo aos dados.
+                Ao confirmar, o status da denúncia será alterado para "Em
+                Análise de Procedência" e ela sairá desta lista de triagem.
               </p>
             </div>
           </div>
@@ -291,9 +286,9 @@ export default function ComplaintTriage() {
         </DialogContent>
       </Dialog>
 
-      {/* Details & Permission Dialog */}
+      {/* Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Detalhes da Denúncia</DialogTitle>
             <DialogDescription>
@@ -302,44 +297,51 @@ export default function ComplaintTriage() {
           </DialogHeader>
 
           {selectedComplaint && (
-            <div className="space-y-6 py-2">
-              <div className="p-4 bg-muted/30 rounded-lg space-y-2 border">
-                <h4 className="font-semibold text-sm">Relato Original</h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {selectedComplaint.descricao}
-                </p>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4 text-sm bg-muted/20 p-3 rounded-lg border">
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                    Escola
+                  </span>
+                  <span className="font-medium">
+                    {selectedComplaint.escolas_instituicoes?.nome_escola}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                    Data
+                  </span>
+                  <span className="font-medium">
+                    {format(
+                      new Date(selectedComplaint.created_at),
+                      'dd/MM/yyyy HH:mm',
+                      { locale: ptBR },
+                    )}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                    Categoria
+                  </span>
+                  <span className="font-medium">
+                    {selectedComplaint.categoria?.join(', ') || 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                    Gravidade
+                  </span>
+                  <Badge variant="outline">
+                    {selectedComplaint.gravidade || 'Não classificado'}
+                  </Badge>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-base font-semibold">
-                      Compartilhar com Gestão Escolar
-                    </Label>
-                    {selectedComplaint.autorizado_gestao ? (
-                      <Badge className="bg-green-100 text-green-800 border-green-200">
-                        Autorizado
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="text-muted-foreground"
-                      >
-                        Restrito
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground max-w-[350px]">
-                    Habilitar permite que o diretor da escola visualize o
-                    conteúdo desta denúncia. Mantenha desativado para garantir
-                    sigilo total.
-                  </p>
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Relato</Label>
+                <div className="p-4 bg-muted/30 rounded-lg border text-sm text-muted-foreground whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+                  {selectedComplaint.descricao}
                 </div>
-                <Switch
-                  checked={selectedComplaint.autorizado_gestao || false}
-                  onCheckedChange={handleToggleAccess}
-                  disabled={accessToggleLoading}
-                />
               </div>
             </div>
           )}

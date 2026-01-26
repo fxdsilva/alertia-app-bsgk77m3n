@@ -32,7 +32,7 @@ export interface WorkflowComplaint {
 }
 
 export const WORKFLOW_STATUS = {
-  REGISTERED: 'Denúncia registrada',
+  REGISTERED: 'A designar',
   WAITING_ANALYST_1: 'Aguardando designação de Analista 1',
   ANALYSIS_1: 'Em análise de procedência – Analista 1',
   REVIEW_1:
