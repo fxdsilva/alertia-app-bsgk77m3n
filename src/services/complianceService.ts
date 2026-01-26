@@ -414,6 +414,21 @@ export const complianceService = {
     return data
   },
 
+  async getAnalystComplaints(analystId: string) {
+    const { data, error } = await supabase
+      .from('denuncias')
+      .select(
+        '*, escolas_instituicoes(nome_escola), status_denuncia(nome_status)',
+      )
+      .or(
+        `analista_id.eq.${analystId},analista_1_id.eq.${analystId},analista_2_id.eq.${analystId},analista_3_id.eq.${analystId}`,
+      )
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
   async getComplaintsForSchool(schoolId: string) {
     const { data, error } = await supabase
       .from('denuncias')

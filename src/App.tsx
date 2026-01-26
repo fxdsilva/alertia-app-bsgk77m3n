@@ -53,6 +53,7 @@ import StrategicDashboard from '@/pages/school-manager/StrategicDashboard'
 import TaskDistribution from '@/pages/compliance/TaskDistribution'
 import ComplaintTriage from '@/pages/compliance/director/ComplaintTriage'
 import AnalystDashboard from '@/pages/compliance/analyst/AnalystDashboard'
+import ComplaintsDashboard from '@/pages/compliance/analyst/ComplaintsDashboard'
 import InvestigationWorkspace from '@/pages/compliance/analyst/InvestigationWorkspace'
 import TaskDetails from '@/pages/compliance/analyst/TaskDetails'
 import DirectorDashboard from '@/pages/compliance/DirectorDashboard'
@@ -146,6 +147,10 @@ const App = () => (
             <Route
               path="/compliance/analyst/dashboard"
               element={<AnalystDashboard />}
+            />
+            <Route
+              path="/compliance/analyst/complaints"
+              element={<ComplaintsDashboard />}
             />
             <Route
               path="/compliance/analyst/task/:id"
