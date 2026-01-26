@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 import { School } from '@/lib/mockData'
-import { WORKFLOW_STATUS } from './workflowService'
+import { WORKFLOW_STATUS, workflowService } from './workflowService'
 
 export interface DocumentRecord {
   id: string
@@ -20,7 +20,6 @@ export interface ComplaintData {
   evidencias_urls?: string[]
 }
 
-// Helper to safely extract error message without cloning objects that might contain FormData
 const getErrorMessage = (error: unknown): string => {
   if (!error) return 'Erro desconhecido'
   if (error instanceof Error) return error.message
@@ -121,13 +120,11 @@ export const portalService = {
     const urls: string[] = []
 
     for (const file of files) {
-      // Clean filename to avoid issues
       const nameParts = file.name.split('.')
       const fileExt = nameParts.length > 1 ? nameParts.pop() : 'bin'
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
 
       try {
-        // Upload with explicit content type and robust error handling
         const { data, error: uploadError } = await supabase.storage
           .from('complaint-evidence')
           .upload(fileName, file, {
@@ -137,9 +134,6 @@ export const portalService = {
           })
 
         if (uploadError) {
-          // IMPORTANT: Extract the message string immediately.
-          // We intentionally access .message to prevent leaking the full error object
-          // which might contain non-serializable data like FormData
           const msg = getErrorMessage(uploadError)
           throw new Error(msg)
         }
@@ -150,13 +144,8 @@ export const portalService = {
 
         urls.push(publicUrl)
       } catch (err: any) {
-        // Safe logging that doesn't try to clone complex error objects
         const errorMessage = getErrorMessage(err)
-
-        // Log the string message only, never the error object itself if it's coming from Supabase/Axios
         console.error(`Evidence upload failed for ${file.name}:`, errorMessage)
-
-        // Always throw a clean Error object with a string message
         throw new Error(
           errorMessage || `Falha ao fazer upload do arquivo ${file.name}`,
         )
@@ -168,10 +157,9 @@ export const portalService = {
 
   async createComplaint(data: ComplaintData) {
     const protocol = generateProtocol()
-    // Ensure we explicitly pass null if anonymous OR if denunciante_id is undefined/empty
     const finalDenuncianteId = data.anonimo ? null : data.denunciante_id || null
 
-    // Use the WORKFLOW_STATUS.REGISTERED ('Denúncia registrada')
+    // 1. Initial State: "Denúncia registrada"
     const initialStatus = WORKFLOW_STATUS.REGISTERED
 
     try {
@@ -181,7 +169,7 @@ export const portalService = {
           escola_id: data.escola_id,
           protocolo: protocol,
           descricao: data.descricao,
-          anonimo: data.anonimo, // Pass the original boolean flag
+          anonimo: data.anonimo,
           denunciante_id: finalDenuncianteId,
           categoria: data.categoria,
           status: initialStatus,
@@ -192,13 +180,36 @@ export const portalService = {
         .single()
 
       if (error) {
-        // Sanitize error before throwing to prevent any potential cloning issues
         const msg = getErrorMessage(error)
         console.error('Error creating complaint:', msg)
         throw new Error(msg)
       }
 
-      return result
+      // 2. Immediate Transition to "Aguardando designação..."
+      // This satisfies the "Automatic Intake" requirement
+      const nextStatus = WORKFLOW_STATUS.WAITING_ANALYST_1
+
+      const { error: transitionError } = await supabase
+        .from('denuncias')
+        .update({ status: nextStatus })
+        .eq('id', result.id)
+
+      if (transitionError) {
+        // Log error but don't fail the creation, just leave at registered
+        console.error('Failed to auto-transition status', transitionError)
+      } else {
+        // Log transition
+        // We might not have a session user if public portal, so system log
+        await supabase.from('compliance_workflow_logs').insert({
+          complaint_id: result.id,
+          previous_status: initialStatus,
+          new_status: nextStatus,
+          comments: 'Transição automática de entrada (Portal)',
+        })
+      }
+
+      // Return the result with updated status ideally, or just result
+      return { ...result, status: transitionError ? initialStatus : nextStatus }
     } catch (err) {
       const msg = getErrorMessage(err)
       console.error('Unexpected error in createComplaint:', msg)

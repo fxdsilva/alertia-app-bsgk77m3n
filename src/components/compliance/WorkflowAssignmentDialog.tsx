@@ -16,13 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import {
-  UserCheck,
-  AlertTriangle,
-  ShieldCheck,
-  Scale,
-  Gavel,
-} from 'lucide-react'
+import { UserCheck, AlertTriangle, Scale, Gavel } from 'lucide-react'
 import { toast } from 'sonner'
 import { complianceService } from '@/services/complianceService'
 import { workflowService, WorkflowComplaint } from '@/services/workflowService'
@@ -98,6 +92,7 @@ export function WorkflowAssignmentDialog({
       onSuccess()
       onOpenChange(false)
     } catch (error) {
+      console.error(error)
       toast.error('Erro ao realizar designação')
     } finally {
       setSubmitting(false)
@@ -113,9 +108,9 @@ export function WorkflowAssignmentDialog({
   const getDescription = () => {
     if (phase === 1) return 'Responsável pela análise inicial de procedência.'
     if (phase === 2)
-      return 'Responsável pela investigação aprofundada. (Bloqueado: Analista 1)'
+      return 'Responsável pela investigação aprofundada. (SoD: Analista 1 bloqueado)'
     if (phase === 3)
-      return 'Responsável pela execução da medida. (Bloqueado: Analista 1 e 2)'
+      return 'Responsável pela execução da medida. (SoD: Analista 1 e 2 bloqueados)'
   }
 
   return (
@@ -150,7 +145,7 @@ export function WorkflowAssignmentDialog({
             {analysts.length === 0 && !loading && (
               <p className="text-xs text-red-500">
                 Nenhum analista elegível disponível devido às regras de
-                Segregação de Funções.
+                Segregação de Funções (SoD).
               </p>
             )}
           </div>

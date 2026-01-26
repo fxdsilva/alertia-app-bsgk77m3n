@@ -9,14 +9,24 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Loader2, Check, X, ArrowLeft } from 'lucide-react'
+import { Loader2, Check, X, ArrowLeft, History } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export default function WorkflowDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [complaint, setComplaint] = useState<WorkflowComplaint | null>(null)
+  const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [comment, setComment] = useState('')
   const [processing, setProcessing] = useState(false)
@@ -28,8 +38,12 @@ export default function WorkflowDetail() {
   const fetchDetails = async () => {
     setLoading(true)
     try {
-      const data = await workflowService.getComplaintDetails(id!)
+      const [data, logsData] = await Promise.all([
+        workflowService.getComplaintDetails(id!),
+        workflowService.getWorkflowLogs(id!),
+      ])
       setComplaint(data)
+      setLogs(logsData || [])
     } catch (error) {
       toast.error('Erro ao carregar detalhes')
     } finally {
@@ -41,22 +55,13 @@ export default function WorkflowDetail() {
     if (!complaint) return
     setProcessing(true)
     try {
-      // Determine phase based on status
       let phase: 1 | 2 | 3 = 1
       if (complaint.status === WORKFLOW_STATUS.REVIEW_2) phase = 2
       if (complaint.status === WORKFLOW_STATUS.REVIEW_3) phase = 3
 
-      if (!approved && phase === 1) {
-        // Special case for Archiving (Improcedente) vs Returning
-        // For simplicity: False = Return, True = Next Phase
-        // If archived needed, we'd need another button.
-        // Let's assume the UI provides "Reprovar/Devolver" (False) and "Aprovar" (True)
-        // If approved, it goes to next phase.
-      }
-
       await workflowService.approvePhase(complaint.id, phase, approved, comment)
       toast.success(approved ? 'Fase aprovada' : 'Fase devolvida/reprovada')
-      navigate('/compliance/director/dashboard')
+      navigate('/compliance/director/workflow')
     } catch (error) {
       toast.error('Erro ao processar aprovação')
     } finally {
@@ -79,7 +84,7 @@ export default function WorkflowDetail() {
         comment || 'Arquivado pelo diretor',
       )
       toast.success('Denúncia arquivada')
-      navigate('/compliance/director/dashboard')
+      navigate('/compliance/director/workflow')
     } catch (e) {
       toast.error('Erro ao arquivar')
     } finally {
@@ -102,10 +107,10 @@ export default function WorkflowDetail() {
   ].includes(complaint.status)
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6 pb-20">
+    <div className="p-6 max-w-5xl mx-auto space-y-6 pb-20">
       <Button
         variant="ghost"
-        onClick={() => navigate('/compliance/director/dashboard')}
+        onClick={() => navigate('/compliance/director/workflow')}
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
       </Button>
@@ -131,7 +136,7 @@ export default function WorkflowDetail() {
               <span className="font-semibold">Escola:</span>{' '}
               {complaint.escolas_instituicoes?.nome_escola}
             </div>
-            <div className="bg-muted p-3 rounded text-sm">
+            <div className="bg-muted p-3 rounded text-sm whitespace-pre-wrap">
               {complaint.descricao}
             </div>
           </CardContent>
@@ -175,7 +180,7 @@ export default function WorkflowDetail() {
               <h3 className="font-semibold mb-2">
                 Parecer de Procedência (Analista 1)
               </h3>
-              <div className="bg-slate-50 p-4 rounded border">
+              <div className="bg-slate-50 p-4 rounded border whitespace-pre-wrap">
                 {complaint.parecer_1}
               </div>
             </div>
@@ -185,7 +190,7 @@ export default function WorkflowDetail() {
               <h3 className="font-semibold mb-2">
                 Relatório de Investigação (Analista 2)
               </h3>
-              <div className="bg-blue-50 p-4 rounded border">
+              <div className="bg-blue-50 p-4 rounded border whitespace-pre-wrap">
                 {complaint.relatorio_2}
               </div>
             </div>
@@ -195,7 +200,7 @@ export default function WorkflowDetail() {
               <h3 className="font-semibold mb-2">
                 Relatório de Execução (Analista 3)
               </h3>
-              <div className="bg-orange-50 p-4 rounded border">
+              <div className="bg-orange-50 p-4 rounded border whitespace-pre-wrap">
                 {complaint.relatorio_3}
               </div>
             </div>
@@ -242,6 +247,45 @@ export default function WorkflowDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* Audit Log Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" /> Histórico de Auditoria
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Usuário</TableHead>
+                <TableHead>Comentários</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {logs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell className="text-xs">
+                    {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', {
+                      locale: ptBR,
+                    })}
+                  </TableCell>
+                  <TableCell className="text-xs">{log.new_status}</TableCell>
+                  <TableCell className="text-xs">
+                    {log.changed_by_user?.nome_usuario || 'Sistema'}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {log.comments}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   )
 }

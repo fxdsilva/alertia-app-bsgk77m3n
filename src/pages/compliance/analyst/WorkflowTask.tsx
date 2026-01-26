@@ -38,7 +38,16 @@ export default function WorkflowTask() {
       const data = await workflowService.getComplaintDetails(id!)
       setComplaint(data)
 
-      // Pre-fill existing report if any (for editing before submission if status allows, currently assuming linear flow)
+      // Load existing report content if re-editing (returned state)
+      if (user) {
+        if (
+          data.status === WORKFLOW_STATUS.RETURNED_1 &&
+          data.analista_1_id === user.id
+        ) {
+          setReport(data.parecer_1 || '')
+        }
+        // Logic for other returned phases can be added here
+      }
     } catch (error) {
       toast.error('Erro ao carregar tarefa')
     } finally {
@@ -50,12 +59,8 @@ export default function WorkflowTask() {
     if (!complaint || !user) return null
     if (
       complaint.analista_1_id === user.id &&
-      complaint.status === WORKFLOW_STATUS.ANALYSIS_1
-    )
-      return 1
-    if (
-      complaint.analista_1_id === user.id &&
-      complaint.status === WORKFLOW_STATUS.RETURNED_1
+      (complaint.status === WORKFLOW_STATUS.ANALYSIS_1 ||
+        complaint.status === WORKFLOW_STATUS.RETURNED_1)
     )
       return 1
     if (
@@ -168,7 +173,8 @@ export default function WorkflowTask() {
       ) : (
         <div className="p-8 text-center border rounded bg-muted/20">
           <p className="text-muted-foreground">
-            Você não tem ações pendentes para esta denúncia no momento.
+            Você não tem ações pendentes para esta denúncia no momento ou o
+            status atual não permite edição.
           </p>
         </div>
       )}

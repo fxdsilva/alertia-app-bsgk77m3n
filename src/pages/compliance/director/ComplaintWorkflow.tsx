@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -65,7 +59,6 @@ export default function ComplaintWorkflow() {
   const renderCard = (c: WorkflowComplaint) => {
     let action = null
 
-    // Logic to determine action button
     if (
       c.status === WORKFLOW_STATUS.REGISTERED ||
       c.status === WORKFLOW_STATUS.WAITING_ANALYST_1
