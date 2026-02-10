@@ -91,6 +91,7 @@ export default function ComplaintRegistration() {
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [schools, setSchools] = useState<School[]>([])
   const [loadingSchools, setLoadingSchools] = useState(false)
+  const [errorSchools, setErrorSchools] = useState(false)
   const [files, setFiles] = useState<File[]>([])
 
   const { selectedSchool, user } = useAppStore()
@@ -117,21 +118,23 @@ export default function ComplaintRegistration() {
   })
 
   useEffect(() => {
-    const fetchSchools = async () => {
-      setLoadingSchools(true)
-      try {
-        const data = await portalService.getSchools()
-        setSchools(data)
-      } catch (error) {
-        console.error(error)
-        toast.error('Erro ao carregar lista de escolas. Verifique sua conexão.')
-      } finally {
-        setLoadingSchools(false)
-      }
-    }
-
     fetchSchools()
   }, [])
+
+  const fetchSchools = async () => {
+    setLoadingSchools(true)
+    setErrorSchools(false)
+    try {
+      const data = await portalService.getSchools()
+      setSchools(data)
+    } catch (error) {
+      console.error(error)
+      setErrorSchools(true)
+      toast.error('Erro ao carregar lista de escolas. Verifique sua conexão.')
+    } finally {
+      setLoadingSchools(false)
+    }
+  }
 
   useEffect(() => {
     if (selectedSchool) {
@@ -356,6 +359,8 @@ export default function ComplaintRegistration() {
               schools={schools}
               loadingSchools={loadingSchools}
               selectedSchool={selectedSchool}
+              errorSchools={errorSchools}
+              onRetrySchools={fetchSchools}
             />
 
             <VictimStep />

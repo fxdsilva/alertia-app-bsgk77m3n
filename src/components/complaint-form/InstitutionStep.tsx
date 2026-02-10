@@ -38,6 +38,7 @@ import {
   FileText,
   Shield,
   ExternalLink,
+  RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { portalService, DocumentRecord } from '@/services/portalService'
@@ -48,12 +49,16 @@ interface InstitutionStepProps {
   schools: School[]
   loadingSchools: boolean
   selectedSchool?: School | null
+  errorSchools?: boolean
+  onRetrySchools?: () => void
 }
 
 export function InstitutionStep({
   schools,
   loadingSchools,
   selectedSchool,
+  errorSchools,
+  onRetrySchools,
 }: InstitutionStepProps) {
   const { control, setValue, watch } = useFormContext()
   const [openSchool, setOpenSchool] = useState(false)
@@ -127,8 +132,11 @@ export function InstitutionStep({
                     >
                       {field.value
                         ? schools.find((s) => s.id === field.value)?.name ||
-                          selectedSchool?.name
-                        : 'Selecione a escola relacionada...'}
+                          selectedSchool?.name ||
+                          'Escola selecionada'
+                        : errorSchools
+                          ? 'Erro ao carregar escolas'
+                          : 'Selecione a escola relacionada...'}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
@@ -137,9 +145,31 @@ export function InstitutionStep({
                   <Command>
                     <CommandInput placeholder="Buscar escola..." />
                     <CommandList>
-                      <CommandEmpty>Escola não encontrada.</CommandEmpty>
+                      <CommandEmpty>
+                        {errorSchools ? (
+                          <div className="flex flex-col items-center gap-2 p-2">
+                            <span className="text-red-500">
+                              Erro ao carregar escolas.
+                            </span>
+                            {onRetrySchools && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onRetrySchools}
+                                className="h-8 gap-2"
+                              >
+                                <RefreshCw className="h-3 w-3" /> Tentar
+                                Novamente
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          'Escola não encontrada.'
+                        )}
+                      </CommandEmpty>
                       {loadingSchools && (
                         <div className="p-4 text-sm text-center text-muted-foreground">
+                          <RefreshCw className="h-4 w-4 animate-spin inline mr-2" />
                           Carregando...
                         </div>
                       )}

@@ -50,12 +50,15 @@ async function fetchWithRetry<T>(
     return await operation()
   } catch (error: any) {
     // Retry on network errors or specific fetch failures
+    // Specifically handle TypeError which fetch throws on network issues
+    const isNetworkError =
+      error instanceof TypeError ||
+      error?.message?.includes('Failed to fetch') ||
+      error?.message?.includes('Network request failed')
+
     if (
       retries > 0 &&
-      (error?.message?.includes('Failed to fetch') ||
-        error?.message?.includes('Network request failed') ||
-        error?.status === 503 ||
-        error?.status === 504)
+      (isNetworkError || error?.status === 503 || error?.status === 504)
     ) {
       await new Promise((resolve) => setTimeout(resolve, delay))
       return fetchWithRetry(operation, retries - 1, delay * 1.5)
@@ -80,7 +83,7 @@ export const portalService = {
 
       if (error) throw error
 
-      return data.map((item: any) => ({
+      return (data || []).map((item: any) => ({
         id: item.id,
         name: item.nome_escola,
         network: item.rede_municipal
@@ -110,7 +113,13 @@ export const portalService = {
         .eq('ativo', true)
         .order('nome_escola')
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error fetching schools:', error)
+        throw new Error(error.message)
+      }
+
+      // Safely handle null data
+      if (!data) return []
 
       return data.map((item: any) => ({
         id: item.id,
