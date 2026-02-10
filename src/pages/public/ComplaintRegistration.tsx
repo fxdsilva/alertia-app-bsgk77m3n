@@ -132,7 +132,8 @@ export default function ComplaintRegistration() {
     try {
       const data = await portalService.getSchools()
       if (isMounted.current) {
-        setSchools(data)
+        // Safe check to ensure we always have an array
+        setSchools(Array.isArray(data) ? data : [])
       }
     } catch (error: any) {
       if (isMounted.current) {

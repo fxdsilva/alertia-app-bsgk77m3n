@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
 import { School } from '@/lib/mockData'
-import { WORKFLOW_STATUS } from './workflowService'
 
 export interface DocumentRecord {
   id: string
@@ -33,39 +32,57 @@ export interface ComplaintStatusResult {
 const getErrorMessage = (error: unknown): string => {
   if (!error) return 'Erro desconhecido'
   if (error instanceof Error) return error.message
-  if (typeof error === 'object' && error !== null && 'message' in error) {
-    return String((error as any).message)
+  if (typeof error === 'object' && error !== null) {
+    if ('message' in error) return String((error as any).message)
+    if ('error_description' in error)
+      return String((error as any).error_description)
   }
   if (typeof error === 'string') return error
   return 'Erro desconhecido'
 }
 
 // Helper to retry operations on network failure
+// Uses an iterative approach to prevent stack overflow and provide better control
 async function fetchWithRetry<T>(
   operation: () => Promise<T>,
   retries = 3,
   delay = 1000,
 ): Promise<T> {
-  try {
-    return await operation()
-  } catch (error: any) {
-    // Retry on network errors or specific fetch failures
-    // Specifically handle TypeError which fetch throws on network issues
-    const errorMessage = getErrorMessage(error)
-    const isNetworkError =
-      error instanceof TypeError ||
-      errorMessage.includes('Failed to fetch') ||
-      errorMessage.includes('Network request failed')
+  let lastError: any
 
-    if (
-      retries > 0 &&
-      (isNetworkError || error?.status === 503 || error?.status === 504)
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, delay))
-      return fetchWithRetry(operation, retries - 1, delay * 1.5)
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await operation()
+    } catch (error: any) {
+      lastError = error
+
+      const errorMessage = getErrorMessage(error)
+
+      // Expanded network error detection
+      const isNetworkError =
+        error instanceof TypeError ||
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('Network request failed') ||
+        errorMessage.includes('network') ||
+        errorMessage.includes('connection') ||
+        (typeof error?.status === 'number' && [503, 504].includes(error.status))
+
+      // If it's the last attempt, break and throw the error
+      if (i === retries) break
+
+      if (isNetworkError) {
+        // Exponential backoff with jitter could be added here, but simple exponential is fine
+        const waitTime = delay * Math.pow(2, i)
+        await new Promise((resolve) => setTimeout(resolve, waitTime))
+        continue
+      }
+
+      // If it's not a network error (e.g. 400 Bad Request, 404 Not Found), throw immediately
+      throw error
     }
-    throw error
   }
+
+  throw lastError
 }
 
 export const portalService = {
@@ -82,7 +99,7 @@ export const portalService = {
         .ilike('nome_escola', `%${query}%`)
         .limit(10)
 
-      if (error) throw error
+      if (error) throw new Error(error.message)
 
       return (data || []).map((item: any) => ({
         id: item.id,
@@ -150,7 +167,7 @@ export const portalService = {
         .eq('escola_id', escolaId)
         .maybeSingle()
 
-      if (error) throw error
+      if (error) throw new Error(error.message)
       return data as DocumentRecord | null
     })
   },
@@ -163,7 +180,7 @@ export const portalService = {
         .eq('escola_id', escolaId)
         .maybeSingle()
 
-      if (error) throw error
+      if (error) throw new Error(error.message)
       return data as DocumentRecord | null
     })
   },
@@ -208,7 +225,7 @@ export const portalService = {
       try {
         const fileBuffer = await file.arrayBuffer()
 
-        const { data, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('complaint-evidence')
           .upload(fileName, fileBuffer, {
             cacheControl: '3600',
@@ -279,7 +296,6 @@ export const portalService = {
           throw new Error(msg)
         }
 
-        // No auto-transition needed here as "A designar" IS the initial status for triage
         // We log the creation
         await supabase.from('compliance_workflow_logs').insert({
           complaint_id: result.id,
@@ -307,7 +323,7 @@ export const portalService = {
         protocol_query: protocol,
       })
 
-      if (error) throw error
+      if (error) throw new Error(error.message)
       return data && data.length > 0 ? data[0] : null
     })
   },
