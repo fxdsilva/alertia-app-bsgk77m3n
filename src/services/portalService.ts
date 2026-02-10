@@ -51,10 +51,11 @@ async function fetchWithRetry<T>(
   } catch (error: any) {
     // Retry on network errors or specific fetch failures
     // Specifically handle TypeError which fetch throws on network issues
+    const errorMessage = getErrorMessage(error)
     const isNetworkError =
       error instanceof TypeError ||
-      error?.message?.includes('Failed to fetch') ||
-      error?.message?.includes('Network request failed')
+      errorMessage.includes('Failed to fetch') ||
+      errorMessage.includes('Network request failed')
 
     if (
       retries > 0 &&

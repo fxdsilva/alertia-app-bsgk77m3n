@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -96,6 +96,13 @@ export default function ComplaintRegistration() {
 
   const { selectedSchool, user } = useAppStore()
   const navigate = useNavigate()
+  const isMounted = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
 
   const form = useForm<z.infer<typeof complaintSchema>>({
     resolver: zodResolver(complaintSchema),
@@ -117,24 +124,45 @@ export default function ComplaintRegistration() {
     },
   })
 
-  useEffect(() => {
-    fetchSchools()
-  }, [])
+  const fetchSchools = useCallback(async () => {
+    if (!isMounted.current) return
 
-  const fetchSchools = async () => {
     setLoadingSchools(true)
     setErrorSchools(false)
     try {
       const data = await portalService.getSchools()
-      setSchools(data)
-    } catch (error) {
-      console.error(error)
-      setErrorSchools(true)
-      toast.error('Erro ao carregar lista de escolas. Verifique sua conexão.')
+      if (isMounted.current) {
+        setSchools(data)
+      }
+    } catch (error: any) {
+      if (isMounted.current) {
+        console.error('Error fetching schools:', error)
+        setErrorSchools(true)
+        const errorMsg = error?.message || ''
+        if (
+          errorMsg.includes('Failed to fetch') ||
+          errorMsg.includes('Network request failed') ||
+          error instanceof TypeError
+        ) {
+          toast.error(
+            'Erro de conexão. Verifique sua internet e tente novamente.',
+          )
+        } else {
+          toast.error(
+            'Erro ao carregar lista de escolas. Tente recarregar a página.',
+          )
+        }
+      }
     } finally {
-      setLoadingSchools(false)
+      if (isMounted.current) {
+        setLoadingSchools(false)
+      }
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchSchools()
+  }, [fetchSchools])
 
   useEffect(() => {
     if (selectedSchool) {
@@ -246,8 +274,10 @@ export default function ComplaintRegistration() {
         toast.error(errorMsg)
       }
     } finally {
-      setLoading(false)
-      setUploadStatus('')
+      if (isMounted.current) {
+        setLoading(false)
+        setUploadStatus('')
+      }
     }
   }
 
