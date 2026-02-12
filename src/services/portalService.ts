@@ -284,11 +284,10 @@ export const portalService = {
           insertPayload.denunciante_vinculo = data.denunciante_vinculo
         }
 
-        const { data: result, error } = await supabase
-          .from('denuncias')
-          .insert(insertPayload)
-          .select()
-          .single()
+        // IMPORTANT: We do NOT use .select() here because we cannot allow public users
+        // to SELECT from the 'denuncias' table for privacy reasons (RLS Policy).
+        // The insert will succeed if RLS policy for INSERT is correct.
+        const { error } = await supabase.from('denuncias').insert(insertPayload)
 
         if (error) {
           const msg = getErrorMessage(error)
@@ -296,16 +295,13 @@ export const portalService = {
           throw new Error(msg)
         }
 
-        // We log the creation
-        await supabase.from('compliance_workflow_logs').insert({
-          complaint_id: result.id,
-          new_status: 'A designar',
-          comments: 'Denúncia registrada via Portal (Status Inicial)',
-        })
+        // Note: The creation of the initial log in 'compliance_workflow_logs' is handled
+        // by a Database Trigger (on_complaint_created), so we don't need to insert it manually here.
+        // This avoids issues with needing the new complaint ID or permissions on logs table.
 
         return {
-          ...result,
-          protocolo: result?.protocolo || protocolo,
+          protocolo: protocolo,
+          status: 'A designar',
         }
       } catch (err) {
         const msg = getErrorMessage(err)
