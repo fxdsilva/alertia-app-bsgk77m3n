@@ -1,0 +1,8 @@
+{
+  "_versions": {
+    "create-user": 4,
+    "delete-user": 2,
+    "create-admin-master": 2,
+    "check-audits": 1
+  }
+}

@@ -3,7 +3,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -20,12 +19,11 @@ Deno.serve(async (req: Request) => {
       },
     )
 
-    // 1. Authorization Check
+    // Authorization
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Missing Authorization header')
     }
-
     const token = authHeader.replace('Bearer ', '')
     const {
       data: { user: requestUser },
@@ -39,63 +37,59 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // 2. Parse Body
-    const body = await req.json()
-    const {
-      email,
-      password,
-      nome,
-      perfil,
-      escola_id,
-      cargo,
-      departamento,
-      permissoes,
-    } = body
+    // Check against usuarios_admin_master table
+    const { data: adminRecord } = await supabaseClient
+      .from('usuarios_admin_master')
+      .select('id')
+      .eq('id', requestUser.id)
+      .eq('ativo', true)
+      .single()
 
-    if (!email || !nome || !perfil) {
-      throw new Error('Missing required fields: email, nome, perfil')
+    if (!adminRecord) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Not an active Admin Master' }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
     }
 
-    // 3. Create Auth User
+    const { email, password, nome } = await req.json()
+
+    if (!email || !password || !nome) {
+      throw new Error('Email, password and name are required')
+    }
+
+    // Create User in Auth
     const { data: authData, error: authError } =
       await supabaseClient.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
         user_metadata: {
-          nome_usuario: nome,
-          perfil,
-          escola_id: escola_id || null, // Allow null
-          cargo,
-          departamento,
-          ativo: true,
+          nome,
+          type: 'senior',
+          perfil: 'senior',
         },
       })
 
     if (authError) throw authError
-    if (!authData.user) throw new Error('Failed to create auth user')
 
-    // 4. Insert into public.usuarios_escola
-    // This step is critical for data consistency and was missing/incomplete in previous versions
+    // Create User in usuarios_admin_master
     const { error: dbError } = await supabaseClient
-      .from('usuarios_escola')
+      .from('usuarios_admin_master')
       .insert({
         id: authData.user.id,
-        nome_usuario: nome,
         email,
-        perfil,
-        escola_id: escola_id || null, // Allow null for Analysts
-        cargo: cargo || null,
-        departamento: departamento || null,
+        nome,
+        senha_hash: 'MANAGED_BY_SUPABASE_AUTH',
         ativo: true,
-        permissoes: permissoes || null,
       })
 
     if (dbError) {
-      // Rollback: delete auth user if DB insert fails to maintain consistency
-      console.error('Database insert failed, rolling back auth user:', dbError)
       await supabaseClient.auth.admin.deleteUser(authData.user.id)
-      throw new Error(`Database error: ${dbError.message}`)
+      throw dbError
     }
 
     return new Response(JSON.stringify({ user: authData.user }), {
@@ -103,7 +97,6 @@ Deno.serve(async (req: Request) => {
       status: 200,
     })
   } catch (error) {
-    console.error('Error in create-user:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
