@@ -59,10 +59,9 @@ export default function ComplaintWorkflow() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const data = await workflowService.getComplaintsByStatus(
-        Object.values(WORKFLOW_STATUS),
-      )
-      setComplaints(data)
+      const result = await workflowService.getWorkflowDashboardData()
+      const all = [...result.f1, ...result.f2, ...result.f3, ...result.closed]
+      setComplaints(all)
     } catch (error) {
       console.error(error)
     } finally {
@@ -70,40 +69,14 @@ export default function ComplaintWorkflow() {
     }
   }
 
-  // Define Phases
-  const phases = useMemo(
-    () => ({
-      f1: [
-        WORKFLOW_STATUS.REGISTERED,
-        WORKFLOW_STATUS.WAITING_ANALYST_1,
-        WORKFLOW_STATUS.ANALYSIS_1,
-        WORKFLOW_STATUS.REVIEW_1,
-        WORKFLOW_STATUS.RETURNED_1,
-      ],
-      f2: [
-        WORKFLOW_STATUS.APPROVED_PROCEDURE,
-        WORKFLOW_STATUS.INVESTIGATION_2,
-        WORKFLOW_STATUS.REVIEW_2,
-      ],
-      f3: [
-        WORKFLOW_STATUS.WAITING_ANALYST_3,
-        WORKFLOW_STATUS.MEDIATION_3,
-        WORKFLOW_STATUS.DISCIPLINARY_3,
-        WORKFLOW_STATUS.REVIEW_3,
-      ],
-      closed: [WORKFLOW_STATUS.CLOSED, WORKFLOW_STATUS.ARCHIVED],
-    }),
-    [],
-  )
-
   // Filter Data
   const filteredData = useMemo(() => {
     return complaints.filter((c) => {
       // 1. Search Filter
       const searchMatch =
         !search ||
-        c.protocolo.toLowerCase().includes(search.toLowerCase()) ||
-        c.descricao.toLowerCase().includes(search.toLowerCase()) ||
+        c.protocolo?.toLowerCase().includes(search.toLowerCase()) ||
+        c.descricao?.toLowerCase().includes(search.toLowerCase()) ||
         c.escolas_instituicoes?.nome_escola
           ?.toLowerCase()
           .includes(search.toLowerCase())
@@ -124,19 +97,17 @@ export default function ComplaintWorkflow() {
   // Calculate Counts per Phase based on filtered data
   const counts = useMemo(() => {
     return {
-      f1: filteredData.filter((c) => phases.f1.includes(c.status)).length,
-      f2: filteredData.filter((c) => phases.f2.includes(c.status)).length,
-      f3: filteredData.filter((c) => phases.f3.includes(c.status)).length,
-      closed: filteredData.filter((c) => phases.closed.includes(c.status))
-        .length,
+      f1: filteredData.filter((c) => c._phase === 'f1').length,
+      f2: filteredData.filter((c) => c._phase === 'f2').length,
+      f3: filteredData.filter((c) => c._phase === 'f3').length,
+      closed: filteredData.filter((c) => c._phase === 'closed').length,
     }
-  }, [filteredData, phases])
+  }, [filteredData])
 
   // Get current tab data
   const currentTabData = useMemo(() => {
-    const currentStatuses = phases[activeTab as keyof typeof phases] || []
-    return filteredData.filter((c) => currentStatuses.includes(c.status))
-  }, [filteredData, activeTab, phases])
+    return filteredData.filter((c) => c._phase === activeTab)
+  }, [filteredData, activeTab])
 
   // Dynamic Categories for Filter
   const availableCategories = useMemo(() => {
@@ -173,40 +144,73 @@ export default function ComplaintWorkflow() {
   const renderCard = (c: WorkflowComplaint) => {
     let action = null
 
-    // Determine primary action
-    if (
-      c.status === WORKFLOW_STATUS.REGISTERED ||
-      c.status === WORKFLOW_STATUS.WAITING_ANALYST_1
-    ) {
-      action = (
-        <Button
-          size="sm"
-          onClick={() => handleAssign(c, 1)}
-          className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-        >
-          <UserCheck className="h-4 w-4" /> Designar Analista 1
-        </Button>
-      )
-    } else if (c.status === WORKFLOW_STATUS.APPROVED_PROCEDURE) {
-      action = (
-        <Button
-          size="sm"
-          onClick={() => handleAssign(c, 2)}
-          className="gap-2 bg-blue-600 hover:bg-blue-700"
-        >
-          <UserCheck className="h-4 w-4" /> Designar Analista 2
-        </Button>
-      )
-    } else if (c.status === WORKFLOW_STATUS.WAITING_ANALYST_3) {
-      action = (
-        <Button
-          size="sm"
-          onClick={() => handleAssign(c, 3)}
-          className="gap-2 bg-orange-600 hover:bg-orange-700"
-        >
-          <UserCheck className="h-4 w-4" /> Designar Analista 3
-        </Button>
-      )
+    // Determine primary action based on phase
+    if (c._phase === 'f1') {
+      if (!c.analista_1_id) {
+        action = (
+          <Button
+            size="sm"
+            onClick={() => handleAssign(c, 1)}
+            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+          >
+            <UserCheck className="h-4 w-4" /> Designar Analista 1
+          </Button>
+        )
+      } else {
+        action = (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleReview(c.id)}
+          >
+            Ver Detalhes
+          </Button>
+        )
+      }
+    } else if (c._phase === 'f2') {
+      if (!c.analista_2_id && !c.analista_id) {
+        action = (
+          <Button
+            size="sm"
+            onClick={() => handleAssign(c, 2)}
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <UserCheck className="h-4 w-4" /> Designar Analista 2
+          </Button>
+        )
+      } else {
+        action = (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleReview(c.id)}
+          >
+            Ver Investigação
+          </Button>
+        )
+      }
+    } else if (c._phase === 'f3') {
+      if (!c.analista_3_id && !c.analista_id) {
+        action = (
+          <Button
+            size="sm"
+            onClick={() => handleAssign(c, 3)}
+            className="gap-2 bg-orange-600 hover:bg-orange-700"
+          >
+            <UserCheck className="h-4 w-4" /> Designar Analista 3
+          </Button>
+        )
+      } else {
+        action = (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleReview(c.id)}
+          >
+            Ver Execução
+          </Button>
+        )
+      }
     } else {
       action = (
         <Button size="sm" variant="outline" onClick={() => handleReview(c.id)}>
@@ -217,7 +221,7 @@ export default function ComplaintWorkflow() {
 
     return (
       <Card
-        key={c.id}
+        key={c.record_id || c.id}
         className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/40"
       >
         <CardContent className="p-5 space-y-4">
@@ -229,9 +233,10 @@ export default function ComplaintWorkflow() {
                 </span>
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {format(new Date(c.created_at), 'dd/MM/yyyy', {
-                    locale: ptBR,
-                  })}
+                  {c.created_at &&
+                    format(new Date(c.created_at), 'dd/MM/yyyy', {
+                      locale: ptBR,
+                    })}
                 </span>
               </div>
               <h3 className="font-medium text-base line-clamp-1 text-slate-900">
@@ -279,10 +284,10 @@ export default function ComplaintWorkflow() {
           <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
             <div
               className={cn('h-2 w-2 rounded-full', {
-                'bg-indigo-500': phases.f1.includes(c.status),
-                'bg-blue-500': phases.f2.includes(c.status),
-                'bg-orange-500': phases.f3.includes(c.status),
-                'bg-green-500': phases.closed.includes(c.status),
+                'bg-indigo-500': c._phase === 'f1',
+                'bg-blue-500': c._phase === 'f2',
+                'bg-orange-500': c._phase === 'f3',
+                'bg-green-500': c._phase === 'closed',
               })}
             />
             <span className="truncate max-w-[150px]" title={c.status}>

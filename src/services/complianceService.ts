@@ -182,15 +182,12 @@ export const complianceService = {
   },
 
   async getComplaintsForTriage(filters?: TriageFilters) {
-    // For Director to see all complaints that need attention
-    // Specifically Status "A designar"
     let query = supabase
       .from('denuncias')
       .select(
         'id, protocolo, categoria, status, gravidade, created_at, descricao, escola_id, escolas_instituicoes(nome_escola), autorizado_gestao, analista_id, anonimo, status_denuncia!inner(nome_status)',
       )
       .eq('status_denuncia.nome_status', 'A designar')
-    // REMOVED: .is('analista_id', null) to strictly follow status based triage as requested
 
     if (filters) {
       if (filters.schoolId && filters.schoolId !== 'all') {
@@ -203,7 +200,6 @@ export const complianceService = {
         query = query.gte('created_at', filters.startDate.toISOString())
       }
       if (filters.endDate) {
-        // Clone and add 1 day to end date to include the whole day
         const end = new Date(filters.endDate)
         end.setDate(end.getDate() + 1)
         query = query.lt('created_at', end.toISOString())
@@ -247,22 +243,20 @@ export const complianceService = {
     analystId: string,
     schoolId: string,
   ) {
-    // Determine target status. Usually it goes to "Em análise de procedência"
     const targetStatusName = WORKFLOW_STATUS.ANALYSIS_1
     const targetStatusId = await workflowService.getStatusId(targetStatusName)
 
     const { error } = await supabase
       .from('denuncias')
       .update({
-        analista_id: analystId, // Legacy field support
-        analista_1_id: analystId, // Workflow Analyst 1
+        analista_id: analystId,
+        analista_1_id: analystId,
         status: targetStatusId,
       })
       .eq('id', complaintId)
 
     if (error) throw error
 
-    // Log the transition
     await supabase.from('compliance_workflow_logs').insert({
       complaint_id: complaintId,
       new_status: targetStatusName,
@@ -512,7 +506,6 @@ export const complianceService = {
   },
 
   async uploadConsolidatedReport(schoolId: string, file: File, year: number) {
-    // 1. Upload file
     const fileExt = file.name.split('.').pop()
     const fileName = `${schoolId}/${year}_consolidated_${Date.now()}.${fileExt}`
 
@@ -528,7 +521,6 @@ export const complianceService = {
       .from('documentos-institucionais')
       .getPublicUrl(fileName)
 
-    // 2. Insert DB record
     const { error: dbError } = await supabase
       .from('relatorios_consolidados')
       .upsert({
@@ -555,16 +547,23 @@ export const complianceService = {
   },
 
   async getUnassignedComplaintsCount() {
-    const { count, error } = await supabase
+    const { data, error } = await supabase
       .from('denuncias')
-      .select('*', { count: 'exact', head: true })
+      .select('id, status, status_denuncia(nome_status)')
       .is('analista_id', null)
 
     if (error) {
       console.error('Error fetching unassigned complaints count', error)
       return 0
     }
-    return count || 0
+
+    return (data || []).filter(
+      (d: any) =>
+        d.status === 'pendente' ||
+        d.status_denuncia?.nome_status === 'A designar' ||
+        d.status_denuncia?.nome_status === 'pendente' ||
+        d.status_denuncia?.nome_status === 'Denúncia registrada',
+    ).length
   },
 
   async getRecentAudits() {
@@ -588,7 +587,6 @@ export const complianceService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      // Gracefully handle if table doesn't exist yet (during migration overlap)
       console.warn('Could not fetch audit findings', error)
       return []
     }
