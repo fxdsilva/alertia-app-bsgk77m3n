@@ -64,10 +64,11 @@ Deno.serve(async (req: Request) => {
         email_confirm: true,
         user_metadata: {
           nome_usuario: nome,
+          email,
           perfil,
           escola_id: escola_id || null, // Allow null
-          cargo,
-          departamento,
+          cargo: cargo || null,
+          departamento: departamento || null,
           ativo: true,
         },
       })
@@ -75,21 +76,25 @@ Deno.serve(async (req: Request) => {
     if (authError) throw authError
     if (!authData.user) throw new Error('Failed to create auth user')
 
-    // 4. Insert into public.usuarios_escola
-    // This step is critical for data consistency and was missing/incomplete in previous versions
+    // 4. Upsert into public.usuarios_escola
+    // Using upsert to avoid duplicate key errors if a database trigger
+    // already inserted the row after the user was created in auth.users
     const { error: dbError } = await supabaseClient
       .from('usuarios_escola')
-      .insert({
-        id: authData.user.id,
-        nome_usuario: nome,
-        email,
-        perfil,
-        escola_id: escola_id || null, // Allow null for Analysts
-        cargo: cargo || null,
-        departamento: departamento || null,
-        ativo: true,
-        permissoes: permissoes || null,
-      })
+      .upsert(
+        {
+          id: authData.user.id,
+          nome_usuario: nome,
+          email,
+          perfil,
+          escola_id: escola_id || null, // Allow null for Analysts
+          cargo: cargo || null,
+          departamento: departamento || null,
+          ativo: true,
+          permissoes: permissoes || null,
+        },
+        { onConflict: 'id' },
+      )
 
     if (dbError) {
       // Rollback: delete auth user if DB insert fails to maintain consistency
