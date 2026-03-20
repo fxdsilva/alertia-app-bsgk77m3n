@@ -47,7 +47,11 @@ export default function Login() {
   // Redirect if already logged in or after successful login
   useEffect(() => {
     if (!appLoading && user && profile) {
-      if (profile === 'senior') {
+      if (
+        profile === 'senior' ||
+        profile === 'administrador' ||
+        profile === 'admin_gestor'
+      ) {
         navigate('/admin/dashboard')
       } else if (
         profile === 'DIRETOR_COMPLIANCE' ||
@@ -67,14 +71,20 @@ export default function Login() {
       const { error: signInError } = await signIn(values.email, values.password)
 
       if (signInError) {
-        setError('Erro ao realizar login. Verifique suas credenciais.')
+        console.error('Login error:', signInError)
+        setError(
+          signInError.message ||
+            'Erro ao realizar login. Verifique suas credenciais.',
+        )
         setLoading(false)
       } else {
         toast.success('Login realizado com sucesso!')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Unexpected Error:', err)
-      setError('Erro ao realizar login. Verifique suas credenciais.')
+      setError(
+        err?.message || 'Erro ao realizar login. Verifique suas credenciais.',
+      )
       setLoading(false)
     }
   }
