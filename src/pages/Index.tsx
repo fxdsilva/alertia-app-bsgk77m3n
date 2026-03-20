@@ -21,25 +21,14 @@ const Index = () => {
   useEffect(() => {
     if (!loading && user) {
       if (profile === 'senior') {
-        navigate('/senior/dashboard')
-      } else if (profile === 'administrador' || profile === 'admin_gestor') {
         navigate('/admin/dashboard')
-      } else if (profile === 'alta_gestao') {
-        navigate('/senior/consolidated')
-      } else if (profile === 'gestor') {
-        navigate('/manager/risks')
-      } else if (profile === 'colaborador') {
-        navigate('/collaborator/training')
-      } else if (profile === 'professor') {
-        navigate('/dashboard-professor')
-      } else if (profile === 'DIRETOR_COMPLIANCE') {
-        navigate('/compliance/director/dashboard')
-      } else if (profile === 'ANALISTA_COMPLIANCE') {
-        navigate('/compliance/analyst/dashboard')
-      } else if (profile === 'gestao_escola') {
-        navigate('/school-management/dashboard')
-      } else if (profile === 'SECRETARIA DE EDUCAÇÃO') {
-        navigate('/secretary/dashboard')
+      } else if (
+        profile === 'DIRETOR_COMPLIANCE' ||
+        profile === 'ANALISTA_COMPLIANCE'
+      ) {
+        navigate('/compliance/dashboard')
+      } else {
+        navigate('/dashboard')
       }
     }
   }, [user, profile, loading, navigate])

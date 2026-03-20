@@ -27,9 +27,7 @@ import { toast } from 'sonner'
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Email inválido.' }),
-  password: z
-    .string()
-    .min(6, { message: 'Senha deve ter no mínimo 6 caracteres.' }),
+  password: z.string().min(1, { message: 'A senha não pode estar vazia.' }),
 })
 
 export default function Login() {
@@ -50,21 +48,14 @@ export default function Login() {
   useEffect(() => {
     if (!appLoading && user && profile) {
       if (profile === 'senior') {
-        navigate('/senior/dashboard')
-      } else if (profile === 'administrador' || profile === 'admin_gestor') {
         navigate('/admin/dashboard')
-      } else if (profile === 'colaborador') {
-        navigate('/collaborator/training')
-      } else if (profile === 'professor') {
-        navigate('/dashboard-professor')
-      } else if (profile === 'gestor') {
-        navigate('/manager/risks')
-      } else if (profile === 'gestao_escola') {
-        navigate('/school-management/dashboard')
-      } else if (profile === 'SECRETARIA DE EDUCAÇÃO') {
-        navigate('/secretary/dashboard')
+      } else if (
+        profile === 'DIRETOR_COMPLIANCE' ||
+        profile === 'ANALISTA_COMPLIANCE'
+      ) {
+        navigate('/compliance/dashboard')
       } else {
-        navigate('/')
+        navigate('/dashboard')
       }
     }
   }, [user, profile, appLoading, navigate])
@@ -76,19 +67,14 @@ export default function Login() {
       const { error: signInError } = await signIn(values.email, values.password)
 
       if (signInError) {
-        if (signInError.message === 'Invalid login credentials') {
-          setError('Erro ao realizar login. Verifique suas credenciais.')
-        } else {
-          console.error('Login Error:', signInError)
-          setError('Ocorreu um erro ao realizar o login. Tente novamente.')
-        }
+        setError('Erro ao realizar login. Verifique suas credenciais.')
         setLoading(false)
       } else {
         toast.success('Login realizado com sucesso!')
       }
     } catch (err) {
       console.error('Unexpected Error:', err)
-      setError('Ocorreu um erro inesperado. Tente novamente.')
+      setError('Erro ao realizar login. Verifique suas credenciais.')
       setLoading(false)
     }
   }
@@ -148,8 +134,12 @@ export default function Login() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || appLoading}
+              >
+                {loading || (user && appLoading) ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...

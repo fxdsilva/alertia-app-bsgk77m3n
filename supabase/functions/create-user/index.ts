@@ -77,21 +77,24 @@ Deno.serve(async (req: Request) => {
     if (!authData.user) throw new Error('Failed to create auth user')
 
     // 4. Upsert into public.usuarios_escola
-    // Using upsert to avoid duplicate key errors if a database trigger 
+    // Using upsert to avoid duplicate key errors if a database trigger
     // already inserted the row after the user was created in auth.users
     const { error: dbError } = await supabaseClient
       .from('usuarios_escola')
-      .upsert({
-        id: authData.user.id,
-        nome_usuario: nome,
-        email,
-        perfil,
-        escola_id: escola_id || null, // Allow null for Analysts
-        cargo: cargo || null,
-        departamento: departamento || null,
-        ativo: true,
-        permissoes: permissoes || null,
-      }, { onConflict: 'id' })
+      .upsert(
+        {
+          id: authData.user.id,
+          nome_usuario: nome,
+          email,
+          perfil,
+          escola_id: escola_id || null, // Allow null for Analysts
+          cargo: cargo || null,
+          departamento: departamento || null,
+          ativo: true,
+          permissoes: permissoes || null,
+        },
+        { onConflict: 'id' },
+      )
 
     if (dbError) {
       // Rollback: delete auth user if DB insert fails to maintain consistency
@@ -112,4 +115,3 @@ Deno.serve(async (req: Request) => {
     })
   }
 })
-

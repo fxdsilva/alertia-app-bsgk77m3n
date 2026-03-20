@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppProvider } from '@/contexts/AppContext'
+import useAppStore from '@/stores/useAppStore'
 
 import Layout from '@/components/Layout'
 import Index from '@/pages/Index'
@@ -82,6 +83,35 @@ import {
   ProfessorAbout,
 } from '@/pages/professor/Placeholders'
 
+const DashboardRouter = () => {
+  const { profile } = useAppStore()
+  if (profile === 'gestao_escola')
+    return <Navigate to="/school-management/dashboard" replace />
+  if (profile === 'professor')
+    return <Navigate to="/dashboard-professor" replace />
+  if (profile === 'colaborador')
+    return <Navigate to="/collaborator/training" replace />
+  if (profile === 'gestor') return <Navigate to="/manager/risks" replace />
+  if (profile === 'SECRETARIA DE EDUCAÇÃO')
+    return <Navigate to="/secretary/dashboard" replace />
+  if (
+    profile === 'administrador' ||
+    profile === 'admin_gestor' ||
+    profile === 'senior'
+  )
+    return <Navigate to="/admin/dashboard" replace />
+  return <Navigate to="/" replace />
+}
+
+const ComplianceRouter = () => {
+  const { profile } = useAppStore()
+  if (profile === 'DIRETOR_COMPLIANCE')
+    return <Navigate to="/compliance/director/dashboard" replace />
+  if (profile === 'ANALISTA_COMPLIANCE')
+    return <Navigate to="/compliance/analyst/dashboard" replace />
+  return <Navigate to="/" replace />
+}
+
 const App = () => (
   <AppProvider>
     <BrowserRouter
@@ -95,6 +125,13 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/support" element={<Support />} />
+
+            {/* Routing Proxies based on AC */}
+            <Route path="/dashboard" element={<DashboardRouter />} />
+            <Route
+              path="/compliance/dashboard"
+              element={<ComplianceRouter />}
+            />
 
             {/* Admin Routes */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
