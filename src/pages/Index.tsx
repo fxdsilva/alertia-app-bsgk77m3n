@@ -1,8 +1,18 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAppStore from '@/stores/useAppStore'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import {
   ShieldCheck,
   Megaphone,
@@ -12,11 +22,15 @@ import {
   ArrowRight,
   PanelLeft,
   Globe,
+  AlertCircle,
 } from 'lucide-react'
 
 const Index = () => {
   const { user, profile, loading } = useAppStore()
   const navigate = useNavigate()
+
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
+  const [isTermsAccepted, setIsTermsAccepted] = useState(false)
 
   useEffect(() => {
     if (!loading && user) {
@@ -39,6 +53,16 @@ const Index = () => {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-700"></div>
       </div>
     )
+  }
+
+  const handleOpenTerms = () => {
+    setIsTermsAccepted(false)
+    setIsTermsOpen(true)
+  }
+
+  const handleContinueToComplaint = () => {
+    setIsTermsOpen(false)
+    navigate('/public/complaint/new')
   }
 
   return (
@@ -94,7 +118,7 @@ const Index = () => {
           {/* Primary Action: Report */}
           <Card
             className="group relative overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border-l-[6px] border-l-orange-500 bg-white"
-            onClick={() => navigate('/public/complaint/new')}
+            onClick={handleOpenTerms}
           >
             <CardContent className="p-6 md:p-8 flex items-center justify-between gap-6">
               <div className="flex items-start md:items-center gap-5">
@@ -185,6 +209,62 @@ const Index = () => {
           Suporte
         </button>
       </footer>
+
+      {/* Terms Dialog */}
+      <Dialog open={isTermsOpen} onOpenChange={setIsTermsOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="mx-auto bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="h-6 w-6 text-orange-600" />
+            </div>
+            <DialogTitle className="text-center text-2xl font-bold text-slate-900 mb-2">
+              Canal de Denúncias
+            </DialogTitle>
+            <DialogDescription className="text-base text-slate-700 text-left pt-2 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">
+              Declaro que li e concordo com as regras de uso do canal de
+              denúncias, comprometendo-me a agir com ética e veracidade, ciente
+              de que denúncias falsas podem gerar responsabilização legal,
+              conforme os artigos 339 e 340 do Código Penal Brasileiro e o
+              artigo 41 da Lei de Contravenções Penais.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-start space-x-3 py-6 px-1">
+            <Checkbox
+              id="terms"
+              checked={isTermsAccepted}
+              onCheckedChange={(checked) =>
+                setIsTermsAccepted(checked as boolean)
+              }
+              className="mt-1 border-orange-500 text-orange-600 focus-visible:ring-orange-500 data-[state=checked]:bg-orange-600 data-[state=checked]:text-white"
+            />
+            <Label
+              htmlFor="terms"
+              className="text-sm font-medium leading-normal cursor-pointer select-none text-slate-800"
+            >
+              Sou humano e confirmo ter lido e concordado com as regras
+              estabelecidas acima.
+            </Label>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsTermsOpen(false)}
+              className="w-full sm:w-1/3"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleContinueToComplaint}
+              disabled={!isTermsAccepted}
+              className="w-full sm:w-2/3 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-slate-300 disabled:text-slate-500"
+            >
+              Avançar para Denúncia
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
