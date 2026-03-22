@@ -214,13 +214,19 @@ const Index = () => {
       <Dialog open={isTermsOpen} onOpenChange={setIsTermsOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <div className="mx-auto bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mb-4 shadow-sm border border-orange-200">
               <AlertCircle className="h-6 w-6 text-orange-600" />
             </div>
             <DialogTitle className="text-center text-2xl font-bold text-slate-900 mb-2">
               Canal de Denúncias
             </DialogTitle>
-            <DialogDescription className="text-base text-slate-700 text-left pt-2 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">
+            <DialogDescription
+              className="text-base text-slate-700 text-justify leading-relaxed bg-slate-100 p-5 rounded-xl border border-slate-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.05)] font-medium mt-3"
+              style={{
+                textShadow:
+                  '1px 1px 0px rgba(255,255,255,1), -1px -1px 0px rgba(0,0,0,0.04)',
+              }}
+            >
               Declaro que li e concordo com as regras de uso do canal de
               denúncias, comprometendo-me a agir com ética e veracidade, ciente
               de que denúncias falsas podem gerar responsabilização legal,
@@ -236,7 +242,7 @@ const Index = () => {
               onCheckedChange={(checked) =>
                 setIsTermsAccepted(checked as boolean)
               }
-              className="mt-1 border-orange-500 text-orange-600 focus-visible:ring-orange-500 data-[state=checked]:bg-orange-600 data-[state=checked]:text-white"
+              className="mt-1 border-orange-500 text-orange-600 focus-visible:ring-orange-500 data-[state=checked]:bg-orange-600 data-[state=checked]:text-white shadow-sm"
             />
             <Label
               htmlFor="terms"
@@ -258,7 +264,7 @@ const Index = () => {
             <Button
               onClick={handleContinueToComplaint}
               disabled={!isTermsAccepted}
-              className="w-full sm:w-2/3 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-slate-300 disabled:text-slate-500"
+              className="w-full sm:w-2/3 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-slate-300 disabled:text-slate-500 shadow-sm"
             >
               Avançar para Denúncia
             </Button>
