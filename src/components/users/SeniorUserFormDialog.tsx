@@ -253,8 +253,6 @@ export function SeniorUserFormDialog({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="colaborador">Colaborador</SelectItem>
-                        <SelectItem value="gestor">Gestor de Riscos</SelectItem>
-                        <SelectItem value="alta_gestao">Alta Gestão</SelectItem>
                         <SelectItem value="gestao_escola">
                           Gestão Escolar
                         </SelectItem>

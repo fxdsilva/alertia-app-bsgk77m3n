@@ -190,7 +190,6 @@ export default function UserManagement() {
             <SelectItem value="ANALISTA_COMPLIANCE">
               Analista Compliance
             </SelectItem>
-            <SelectItem value="gestor">Gestor</SelectItem>
             <SelectItem value="gestao_escola">Gestão Escolar</SelectItem>
             <SelectItem value="colaborador">Colaborador</SelectItem>
             <SelectItem value="professor">Professor</SelectItem>
