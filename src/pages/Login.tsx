@@ -71,20 +71,31 @@ export default function Login() {
       const { error: signInError } = await signIn(values.email, values.password)
 
       if (signInError) {
-        console.error('Login error:', signInError)
-        setError(
-          signInError.message ||
-            'Erro ao realizar login. Verifique suas credenciais.',
-        )
+        let errorMessage = 'Erro ao realizar login. Verifique suas credenciais.'
+        if (
+          signInError.message === 'Invalid login credentials' ||
+          (signInError as any).code === 'invalid_credentials'
+        ) {
+          errorMessage = 'E-mail ou senha incorretos.'
+        } else if (signInError.message) {
+          errorMessage = signInError.message
+        }
+        setError(errorMessage)
         setLoading(false)
       } else {
         toast.success('Login realizado com sucesso!')
       }
     } catch (err: any) {
-      console.error('Unexpected Error:', err)
-      setError(
-        err?.message || 'Erro ao realizar login. Verifique suas credenciais.',
-      )
+      let errorMessage = 'Erro ao realizar login. Verifique suas credenciais.'
+      if (
+        err?.message === 'Invalid login credentials' ||
+        err?.code === 'invalid_credentials'
+      ) {
+        errorMessage = 'E-mail ou senha incorretos.'
+      } else if (err?.message) {
+        errorMessage = err.message
+      }
+      setError(errorMessage)
       setLoading(false)
     }
   }
