@@ -72,9 +72,14 @@ export default function Login() {
 
       if (signInError) {
         let errorMessage = 'Erro ao realizar login. Verifique suas credenciais.'
+        const errMsg = (signInError.message || '').toLowerCase()
+
         if (
-          signInError.message === 'Invalid login credentials' ||
-          (signInError as any).code === 'invalid_credentials'
+          errMsg.includes('invalid login credentials') ||
+          errMsg.includes('invalid_credentials') ||
+          (signInError as any).code === 'invalid_credentials' ||
+          (signInError as any).status === 400 ||
+          errMsg.includes('http 400')
         ) {
           errorMessage =
             'E-mail ou senha inválidos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".'
@@ -88,9 +93,14 @@ export default function Login() {
       }
     } catch (err: any) {
       let errorMessage = 'Erro ao realizar login. Verifique suas credenciais.'
+      const errMsg = (err?.message || '').toLowerCase()
+
       if (
-        err?.message === 'Invalid login credentials' ||
-        err?.code === 'invalid_credentials'
+        errMsg.includes('invalid login credentials') ||
+        errMsg.includes('invalid_credentials') ||
+        err?.code === 'invalid_credentials' ||
+        err?.status === 400 ||
+        errMsg.includes('http 400')
       ) {
         errorMessage =
           'E-mail ou senha inválidos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".'
