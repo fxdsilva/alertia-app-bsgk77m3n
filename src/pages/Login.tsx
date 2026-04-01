@@ -76,7 +76,8 @@ export default function Login() {
           signInError.message === 'Invalid login credentials' ||
           (signInError as any).code === 'invalid_credentials'
         ) {
-          errorMessage = 'E-mail ou senha incorretos.'
+          errorMessage =
+            'E-mail ou senha inválidos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".'
         } else if (signInError.message) {
           errorMessage = signInError.message
         }
@@ -91,7 +92,8 @@ export default function Login() {
         err?.message === 'Invalid login credentials' ||
         err?.code === 'invalid_credentials'
       ) {
-        errorMessage = 'E-mail ou senha incorretos.'
+        errorMessage =
+          'E-mail ou senha inválidos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".'
       } else if (err?.message) {
         errorMessage = err.message
       }
@@ -147,7 +149,21 @@ export default function Login() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Senha</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Senha</FormLabel>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="p-0 h-auto font-normal text-xs text-muted-foreground hover:text-primary"
+                        onClick={() =>
+                          toast.info(
+                            'Para recuperar sua senha, entre em contato com o suporte ou a administração.',
+                          )
+                        }
+                      >
+                        Esqueci minha senha
+                      </Button>
+                    </div>
                     <FormControl>
                       <Input type="password" placeholder="******" {...field} />
                     </FormControl>
