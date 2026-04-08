@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
 import useAppStore from '@/stores/useAppStore'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase/client'
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Email inválido.' }),
@@ -63,6 +64,37 @@ export default function Login() {
       }
     }
   }, [user, profile, appLoading, navigate])
+
+  const handleResetPassword = async () => {
+    const email = form.getValues('email')
+    if (!email) {
+      toast.error(
+        'Por favor, informe seu email no campo acima para recuperar a senha.',
+      )
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/`,
+      })
+
+      if (error) throw error
+
+      toast.success(
+        'Email de recuperação enviado com sucesso! Verifique sua caixa de entrada.',
+      )
+    } catch (err: any) {
+      toast.error(
+        'Erro ao enviar email de recuperação. Verifique se o e-mail está correto.',
+      )
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
@@ -165,11 +197,8 @@ export default function Login() {
                         type="button"
                         variant="link"
                         className="p-0 h-auto font-normal text-xs text-muted-foreground hover:text-primary"
-                        onClick={() =>
-                          toast.info(
-                            'Para recuperar sua senha, entre em contato com o suporte ou a administração.',
-                          )
-                        }
+                        onClick={handleResetPassword}
+                        disabled={loading || appLoading}
                       >
                         Esqueci minha senha
                       </Button>
