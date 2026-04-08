@@ -192,41 +192,18 @@ export const workflowService = {
     const mappedData = mapStatus(data || [])
 
     return mappedData.filter((w) => {
+      const status = (w.status || '').toLowerCase()
       if (
+        status.includes('encerrad') ||
+        status.includes('arquivad') ||
+        status.includes('resolvid') ||
+        status.includes('concluid') ||
         [WORKFLOW_STATUS.CLOSED, WORKFLOW_STATUS.ARCHIVED].includes(w.status)
       ) {
         return false
       }
 
-      if (
-        w.analista_1_id === analystId &&
-        (w.status === WORKFLOW_STATUS.ANALYSIS_1 ||
-          w.status === WORKFLOW_STATUS.RETURNED_1)
-      ) {
-        return true
-      }
-      if (
-        w.analista_2_id === analystId &&
-        w.status === WORKFLOW_STATUS.INVESTIGATION_2
-      ) {
-        return true
-      }
-      if (
-        w.analista_3_id === analystId &&
-        (w.status === WORKFLOW_STATUS.MEDIATION_3 ||
-          w.status === WORKFLOW_STATUS.DISCIPLINARY_3)
-      ) {
-        return true
-      }
-      if (
-        w.analista_id === analystId &&
-        !w.analista_1_id &&
-        !w.analista_2_id &&
-        !w.analista_3_id
-      ) {
-        return true
-      }
-      return false
+      return true
     })
   },
 
@@ -277,10 +254,12 @@ export const workflowService = {
 
     if (phase === 1) {
       updates.analista_1_id = analystId
+      updates.analista_id = analystId
       newStatusName = WORKFLOW_STATUS.ANALYSIS_1
       logMsg = 'Analista 1 (Procedência) designado'
     } else if (phase === 2) {
       updates.analista_2_id = analystId
+      updates.analista_id = analystId
       newStatusName = WORKFLOW_STATUS.INVESTIGATION_2
       logMsg = 'Analista 2 (Investigação) designado'
 
@@ -288,7 +267,7 @@ export const workflowService = {
         .from('investigacoes')
         .select('id')
         .eq('denuncia_id', complaintId)
-        .single()
+        .maybeSingle()
 
       if (existingInv) {
         await supabase
@@ -310,6 +289,7 @@ export const workflowService = {
       }
     } else if (phase === 3) {
       updates.analista_3_id = analystId
+      updates.analista_id = analystId
       updates.tipo_resolucao = resolutionType
 
       if (resolutionType === 'mediacao') {

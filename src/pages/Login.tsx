@@ -1,232 +1,268 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import { Button } from '@/components/ui/button'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
-import useAppStore from '@/stores/useAppStore'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
-
-const formSchema = z.object({
-  email: z.string().email({ message: 'Email inválido.' }),
-  password: z.string().min(1, { message: 'A senha não pode estar vazia.' }),
-})
+import { Loader2, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function Login() {
-  const { signIn, user, profile, loading: appLoading } = useAppStore()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [isRecovery, setIsRecovery] = useState(false)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  })
+  const navigate = useNavigate()
+  const { signIn } = useAuth()
 
-  // Redirect if already logged in or after successful login
   useEffect(() => {
-    if (!appLoading && user && profile) {
-      if (
-        profile === 'senior' ||
-        profile === 'administrador' ||
-        profile === 'admin_gestor'
-      ) {
-        navigate('/admin/dashboard')
-      } else if (
-        profile === 'DIRETOR_COMPLIANCE' ||
-        profile === 'ANALISTA_COMPLIANCE'
-      ) {
-        navigate('/compliance/dashboard')
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsResettingPassword(true)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setErrorMsg('')
+
+    try {
+      const { error } = await signIn(email, password)
+
+      if (error) {
+        if (
+          error.status === 400 ||
+          error.message.includes('Invalid login credentials')
+        ) {
+          setErrorMsg(
+            'E-mail ou senha inválidos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".',
+          )
+        } else {
+          setErrorMsg('Ocorreu um erro ao tentar entrar. Tente novamente.')
+        }
       } else {
+        toast.success('Login realizado com sucesso!')
         navigate('/dashboard')
       }
-    }
-  }, [user, profile, appLoading, navigate])
-
-  const handleResetPassword = async () => {
-    const email = form.getValues('email')
-    if (!email) {
-      toast.error(
-        'Por favor, informe seu email no campo acima para recuperar a senha.',
-      )
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/`,
-      })
-
-      if (error) throw error
-
-      toast.success(
-        'Email de recuperação enviado com sucesso! Verifique sua caixa de entrada.',
-      )
-    } catch (err: any) {
-      toast.error(
-        'Erro ao enviar email de recuperação. Verifique se o e-mail está correto.',
-      )
-      console.error(err)
+    } catch (err) {
+      setErrorMsg('Erro inesperado. Tente novamente.')
     } finally {
       setLoading(false)
     }
   }
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const handleRecovery = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email) {
+      setErrorMsg('Por favor, informe seu e-mail para recuperação.')
+      return
+    }
+
     setLoading(true)
-    setError(null)
+    setErrorMsg('')
+
     try {
-      const { error: signInError } = await signIn(values.email, values.password)
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login`,
+      })
 
-      if (signInError) {
-        let errorMessage = 'Erro ao realizar login. Verifique suas credenciais.'
-        const errMsg = (signInError.message || '').toLowerCase()
-
-        if (
-          errMsg.includes('invalid login credentials') ||
-          errMsg.includes('invalid_credentials') ||
-          (signInError as any).code === 'invalid_credentials' ||
-          (signInError as any).status === 400 ||
-          errMsg.includes('http 400')
-        ) {
-          errorMessage =
-            'E-mail ou senha inválidos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".'
-        } else if (signInError.message) {
-          errorMessage = signInError.message
-        }
-        setError(errorMessage)
-        setLoading(false)
+      if (error) {
+        setErrorMsg(
+          'Erro ao enviar e-mail de recuperação. Verifique o endereço e tente novamente.',
+        )
       } else {
-        toast.success('Login realizado com sucesso!')
+        toast.success(
+          'E-mail de recuperação enviado com sucesso! Verifique sua caixa de entrada.',
+        )
+        setIsRecovery(false)
       }
-    } catch (err: any) {
-      let errorMessage = 'Erro ao realizar login. Verifique suas credenciais.'
-      const errMsg = (err?.message || '').toLowerCase()
-
-      if (
-        errMsg.includes('invalid login credentials') ||
-        errMsg.includes('invalid_credentials') ||
-        err?.code === 'invalid_credentials' ||
-        err?.status === 400 ||
-        errMsg.includes('http 400')
-      ) {
-        errorMessage =
-          'E-mail ou senha inválidos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".'
-      } else if (err?.message) {
-        errorMessage = err.message
-      }
-      setError(errorMessage)
+    } catch (err) {
+      setErrorMsg('Erro inesperado. Tente novamente.')
+    } finally {
       setLoading(false)
     }
   }
 
-  return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-muted/40 relative">
-      <Button
-        variant="ghost"
-        className="absolute top-4 left-4 md:top-8 md:left-8 gap-2"
-        onClick={() => navigate('/')}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar para o Início
-      </Button>
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!password) return
 
-      <Card className="w-full max-w-md shadow-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Login ALERTIA</CardTitle>
-          <CardDescription>
-            Acesse sua conta para gerenciar programas de integridade.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erro</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+    setLoading(true)
+    setErrorMsg('')
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="seu@email.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between">
-                      <FormLabel>Senha</FormLabel>
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="p-0 h-auto font-normal text-xs text-muted-foreground hover:text-primary"
-                        onClick={handleResetPassword}
-                        disabled={loading || appLoading}
-                      >
-                        Esqueci minha senha
-                      </Button>
-                    </div>
-                    <FormControl>
-                      <Input type="password" placeholder="******" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading || appLoading}
-              >
-                {loading || (user && appLoading) ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Entrando...
-                  </>
-                ) : (
-                  'Entrar'
-                )}
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password,
+      })
+
+      if (error) {
+        setErrorMsg('Erro ao atualizar senha. O link pode ter expirado.')
+      } else {
+        toast.success('Senha atualizada com sucesso! Você já pode acessar.')
+        setIsResettingPassword(false)
+        navigate('/dashboard')
+      }
+    } catch (err) {
+      setErrorMsg('Erro inesperado. Tente novamente.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (isResettingPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="w-full max-w-md shadow-lg border-primary/20">
+          <CardHeader className="space-y-1 text-center pb-6">
+            <CardTitle className="text-2xl font-bold tracking-tight text-primary">
+              Nova Senha
+            </CardTitle>
+            <CardDescription>Digite sua nova senha abaixo.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
+              {errorMsg && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <p>{errorMsg}</p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nova Senha</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <Button type="submit" className="w-full mt-4" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Salvar Nova Senha
               </Button>
             </form>
-          </Form>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <Card className="w-full max-w-md shadow-lg border-primary/10">
+        <CardHeader className="space-y-1 text-center pb-6">
+          <CardTitle className="text-2xl font-bold tracking-tight text-primary">
+            {isRecovery ? 'Recuperar Senha' : 'Acesso ao Sistema'}
+          </CardTitle>
+          <CardDescription>
+            {isRecovery
+              ? 'Informe seu e-mail para receber um link de redefinição.'
+              : 'Insira suas credenciais para acessar a plataforma.'}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <form
+            onSubmit={isRecovery ? handleRecovery : handleLogin}
+            className="space-y-4"
+          >
+            {errorMsg && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <p>{errorMsg}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {!isRecovery && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Senha</Label>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="p-0 h-auto text-xs font-normal text-muted-foreground hover:text-primary"
+                    onClick={() => {
+                      setIsRecovery(true)
+                      setErrorMsg('')
+                    }}
+                  >
+                    Esqueci minha senha
+                  </Button>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+            )}
+
+            <Button type="submit" className="w-full mt-4" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aguarde...
+                </>
+              ) : isRecovery ? (
+                'Enviar link de recuperação'
+              ) : (
+                'Entrar'
+              )}
+            </Button>
+          </form>
         </CardContent>
+
+        {isRecovery && (
+          <CardFooter className="flex justify-center border-t pt-4 pb-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-sm text-muted-foreground hover:text-primary"
+              onClick={() => {
+                setIsRecovery(false)
+                setErrorMsg('')
+              }}
+            >
+              Voltar para o login
+            </Button>
+          </CardFooter>
+        )}
       </Card>
     </div>
   )

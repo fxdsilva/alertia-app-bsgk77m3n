@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppProvider } from '@/contexts/AppContext'
+import { AuthProvider } from '@/hooks/use-auth'
 import useAppStore from '@/stores/useAppStore'
 
 import Layout from '@/components/Layout'
@@ -114,199 +115,213 @@ const ComplianceRouter = () => {
 
 const App = () => (
   <AppProvider>
-    <BrowserRouter
-      future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
-    >
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/support" element={<Support />} />
+    <AuthProvider>
+      <BrowserRouter
+        future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
+      >
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/support" element={<Support />} />
 
-            {/* Routing Proxies based on AC */}
-            <Route path="/dashboard" element={<DashboardRouter />} />
-            <Route
-              path="/compliance/dashboard"
-              element={<ComplianceRouter />}
-            />
+              {/* Routing Proxies based on AC */}
+              <Route path="/dashboard" element={<DashboardRouter />} />
+              <Route
+                path="/compliance/dashboard"
+                element={<ComplianceRouter />}
+              />
 
-            {/* Admin Routes */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route
-              path="/admin/code-of-conduct"
-              element={<CodeOfConductManager />}
-            />
-            <Route path="/admin/commitment" element={<CommitmentManager />} />
-            <Route path="/admin/complaints" element={<ComplaintManager />} />
-            <Route path="/admin/reports" element={<Reports />} />
+              {/* Admin Routes */}
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route
+                path="/admin/code-of-conduct"
+                element={<CodeOfConductManager />}
+              />
+              <Route path="/admin/commitment" element={<CommitmentManager />} />
+              <Route path="/admin/complaints" element={<ComplaintManager />} />
+              <Route path="/admin/reports" element={<Reports />} />
 
-            {/* School Admin Routes */}
-            <Route path="/school-admin/users" element={<UserManagement />} />
-            <Route
-              path="/school-admin/complaints"
-              element={<SchoolComplaints />}
-            />
-            <Route
-              path="/school-management/dashboard"
-              element={<StrategicDashboard />}
-            />
+              {/* School Admin Routes */}
+              <Route path="/school-admin/users" element={<UserManagement />} />
+              <Route
+                path="/school-admin/complaints"
+                element={<SchoolComplaints />}
+              />
+              <Route
+                path="/school-management/dashboard"
+                element={<StrategicDashboard />}
+              />
 
-            {/* Secretary Route */}
-            <Route
-              path="/secretary/dashboard"
-              element={<SecretaryDashboard />}
-            />
+              {/* Secretary Route */}
+              <Route
+                path="/secretary/dashboard"
+                element={<SecretaryDashboard />}
+              />
 
-            {/* Compliance Director Routes */}
-            <Route
-              path="/compliance/director/dashboard"
-              element={<DirectorDashboard />}
-            />
-            <Route
-              path="/compliance/director/tasks"
-              element={<TaskDistribution />}
-            />
-            <Route
-              path="/compliance/director/complaints"
-              element={<ComplaintTriage />}
-            />
-            <Route
-              path="/compliance/director/analysts"
-              element={<AnalystManagement />}
-            />
-            {/* New Workflow Routes */}
-            <Route
-              path="/compliance/director/workflow"
-              element={<ComplaintWorkflow />}
-            />
-            <Route
-              path="/compliance/director/workflow/:id"
-              element={<WorkflowDetail />}
-            />
+              {/* Compliance Director Routes */}
+              <Route
+                path="/compliance/director/dashboard"
+                element={<DirectorDashboard />}
+              />
+              <Route
+                path="/compliance/director/tasks"
+                element={<TaskDistribution />}
+              />
+              <Route
+                path="/compliance/director/complaints"
+                element={<ComplaintTriage />}
+              />
+              <Route
+                path="/compliance/director/analysts"
+                element={<AnalystManagement />}
+              />
+              {/* New Workflow Routes */}
+              <Route
+                path="/compliance/director/workflow"
+                element={<ComplaintWorkflow />}
+              />
+              <Route
+                path="/compliance/director/workflow/:id"
+                element={<WorkflowDetail />}
+              />
 
-            {/* Compliance Analyst Routes */}
-            <Route
-              path="/compliance/analyst/dashboard"
-              element={<AnalystDashboard />}
-            />
-            <Route
-              path="/compliance/analyst/complaints"
-              element={<ComplaintsDashboard />}
-            />
-            <Route
-              path="/compliance/analyst/task/:id"
-              element={<TaskDetails />}
-            />
-            <Route
-              path="/compliance/analyst/investigation/:id"
-              element={<InvestigationWorkspace />}
-            />
-            <Route
-              path="/compliance/analyst/workflow/:id"
-              element={<WorkflowTask />}
-            />
-            <Route
-              path="/compliance/analyst/auditing"
-              element={<AuditingDashboard />}
-            />
-            <Route
-              path="/compliance/analyst/due-diligence"
-              element={<DueDiligenceDashboard />}
-            />
-            <Route
-              path="/compliance/analyst/risk-management"
-              element={<RiskManagementDashboard />}
-            />
+              {/* Compliance Analyst Routes */}
+              <Route
+                path="/compliance/analyst/dashboard"
+                element={<AnalystDashboard />}
+              />
+              <Route
+                path="/compliance/analyst/complaints"
+                element={<ComplaintsDashboard />}
+              />
+              <Route
+                path="/compliance/analyst/task/:id"
+                element={<TaskDetails />}
+              />
+              <Route
+                path="/compliance/analyst/investigation/:id"
+                element={<InvestigationWorkspace />}
+              />
+              <Route
+                path="/compliance/analyst/workflow/:id"
+                element={<WorkflowTask />}
+              />
+              <Route
+                path="/compliance/analyst/auditing"
+                element={<AuditingDashboard />}
+              />
+              <Route
+                path="/compliance/analyst/due-diligence"
+                element={<DueDiligenceDashboard />}
+              />
+              <Route
+                path="/compliance/analyst/risk-management"
+                element={<RiskManagementDashboard />}
+              />
 
-            {/* Portal Public Pages */}
-            <Route path="/public/portal" element={<PortalHome />} />
-            <Route path="/public/code-of-conduct" element={<CodeOfConduct />} />
-            <Route
-              path="/public/commitment"
-              element={<ManagementCommitment />}
-            />
-            <Route
-              path="/public/complaint/new"
-              element={<ComplaintRegistration />}
-            />
-            <Route
-              path="/public/complaint/status"
-              element={<ComplaintStatus />}
-            />
-            <Route
-              path="/public/official-channels"
-              element={<OfficialChannels />}
-            />
+              {/* Portal Public Pages */}
+              <Route path="/public/portal" element={<PortalHome />} />
+              <Route
+                path="/public/code-of-conduct"
+                element={<CodeOfConduct />}
+              />
+              <Route
+                path="/public/commitment"
+                element={<ManagementCommitment />}
+              />
+              <Route
+                path="/public/complaint/new"
+                element={<ComplaintRegistration />}
+              />
+              <Route
+                path="/public/complaint/status"
+                element={<ComplaintStatus />}
+              />
+              <Route
+                path="/public/official-channels"
+                element={<OfficialChannels />}
+              />
 
-            {/* Collaborator Pages */}
-            <Route path="/collaborator/training" element={<Training />} />
-            <Route
-              path="/collaborator/training/public-list"
-              element={<TrainingList />}
-            />
-            <Route path="/collaborator/content" element={<InternalContent />} />
-            <Route
-              path="/collaborator/complaints"
-              element={<Navigate to="/collaborator/training" replace />}
-            />
+              {/* Collaborator Pages */}
+              <Route path="/collaborator/training" element={<Training />} />
+              <Route
+                path="/collaborator/training/public-list"
+                element={<TrainingList />}
+              />
+              <Route
+                path="/collaborator/content"
+                element={<InternalContent />}
+              />
+              <Route
+                path="/collaborator/complaints"
+                element={<Navigate to="/collaborator/training" replace />}
+              />
 
-            {/* Professor Pages */}
-            <Route
-              path="/dashboard-professor"
-              element={<DashboardProfessor />}
-            />
-            <Route path="/professor/agenda" element={<Agenda />} />
-            <Route path="/professor/library" element={<Library />} />
-            <Route path="/professor/trainings" element={<Training />} />
-            <Route path="/share" element={<ProfessorShare />} />
-            <Route path="/messages" element={<ProfessorMessages />} />
-            <Route path="/about" element={<ProfessorAbout />} />
+              {/* Professor Pages */}
+              <Route
+                path="/dashboard-professor"
+                element={<DashboardProfessor />}
+              />
+              <Route path="/professor/agenda" element={<Agenda />} />
+              <Route path="/professor/library" element={<Library />} />
+              <Route path="/professor/trainings" element={<Training />} />
+              <Route path="/share" element={<ProfessorShare />} />
+              <Route path="/messages" element={<ProfessorMessages />} />
+              <Route path="/about" element={<ProfessorAbout />} />
 
-            {/* Manager Pages */}
-            <Route path="/manager/risks" element={<RiskDashboard />} />
-            <Route path="/manager/audits" element={<Audits />} />
-            <Route path="/manager/mediations" element={<Mediations />} />
+              {/* Manager Pages */}
+              <Route path="/manager/risks" element={<RiskDashboard />} />
+              <Route path="/manager/audits" element={<Audits />} />
+              <Route path="/manager/mediations" element={<Mediations />} />
 
-            {/* Senior Management Pages */}
-            <Route path="/senior/dashboard" element={<SeniorDashboard />} />
-            <Route path="/senior/users" element={<SeniorUserManagement />} />
-            <Route path="/senior/consolidated" element={<ConsolidatedData />} />
-            <Route path="/senior/due-diligence" element={<DueDiligence />} />
-            <Route
-              path="/senior/decisions"
-              element={<DisciplinaryDecisions />}
-            />
-            <Route path="/senior/ai-reports" element={<AIReports />} />
-            <Route path="/senior/schools" element={<SchoolManagement />} />
-            <Route path="/senior/audit-logs" element={<AuditLogs />} />
-            <Route
-              path="/senior/pending-reports"
-              element={<PendingReports />}
-            />
-            <Route path="/senior/workflow" element={<NetworkWorkflow />} />
-            <Route
-              path="/senior/workflow/:id"
-              element={<WorkflowDetailMaster />}
-            />
-            <Route path="/senior/support-config" element={<SupportManager />} />
+              {/* Senior Management Pages */}
+              <Route path="/senior/dashboard" element={<SeniorDashboard />} />
+              <Route path="/senior/users" element={<SeniorUserManagement />} />
+              <Route
+                path="/senior/consolidated"
+                element={<ConsolidatedData />}
+              />
+              <Route path="/senior/due-diligence" element={<DueDiligence />} />
+              <Route
+                path="/senior/decisions"
+                element={<DisciplinaryDecisions />}
+              />
+              <Route path="/senior/ai-reports" element={<AIReports />} />
+              <Route path="/senior/schools" element={<SchoolManagement />} />
+              <Route path="/senior/audit-logs" element={<AuditLogs />} />
+              <Route
+                path="/senior/pending-reports"
+                element={<PendingReports />}
+              />
+              <Route path="/senior/workflow" element={<NetworkWorkflow />} />
+              <Route
+                path="/senior/workflow/:id"
+                element={<WorkflowDetailMaster />}
+              />
+              <Route
+                path="/senior/support-config"
+                element={<SupportManager />}
+              />
 
-            {/* Shared Pages */}
-            <Route
-              path="/investigations"
-              element={<InternalInvestigations />}
-            />
-            <Route path="/reports" element={<ReportGeneration />} />
+              {/* Shared Pages */}
+              <Route
+                path="/investigations"
+                element={<InternalInvestigations />}
+              />
+              <Route path="/reports" element={<ReportGeneration />} />
 
-            {/* Redirects for direct sidebar access */}
-            <Route path="/home" element={<Navigate to="/" replace />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
-    </BrowserRouter>
+              {/* Redirects for direct sidebar access */}
+              <Route path="/home" element={<Navigate to="/" replace />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </BrowserRouter>
+    </AuthProvider>
   </AppProvider>
 )
 
