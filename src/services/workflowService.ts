@@ -72,9 +72,13 @@ export const workflowService = {
 
     if (error || !data) {
       console.warn(`Status "${statusName}" not found, creating...`)
+      const newId = statusName
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '')
       const { data: newData, error: newError } = await supabase
         .from('status_denuncia')
-        .insert({ nome_status: statusName })
+        .insert({ id: newId, nome_status: statusName })
         .select('id')
         .single()
       if (newError) throw newError
@@ -341,12 +345,17 @@ export const workflowService = {
       updates.status = await this.getStatusId(newStatusName)
     }
 
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('denuncias')
       .update(updates)
       .eq('id', complaintId)
+      .select()
 
     if (error) throw error
+    if (!data || data.length === 0)
+      throw new Error(
+        'Falha ao atualizar denúncia no workflow. Verifique permissões (RLS).',
+      )
 
     await this.logTransition(complaintId, newStatusName, logMsg)
   },
@@ -399,12 +408,15 @@ export const workflowService = {
       updates.status = await this.getStatusId(newStatusName)
     }
 
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('denuncias')
       .update(updates)
       .eq('id', complaintId)
+      .select()
 
     if (error) throw error
+    if (!data || data.length === 0)
+      throw new Error('Falha ao enviar relatório. Verifique permissões (RLS).')
 
     const baseMsg = `Relatório Fase ${phase} enviado/atualizado`
     const logMsg = recommendation
@@ -486,12 +498,15 @@ export const workflowService = {
       updates.status = await this.getStatusId(newStatusName)
     }
 
-    const { error } = await supabase
+    const { error, data: updateData } = await supabase
       .from('denuncias')
       .update(updates)
       .eq('id', complaintId)
+      .select()
 
     if (error) throw error
+    if (!updateData || updateData.length === 0)
+      throw new Error('Falha ao atualizar decisão. Verifique permissões (RLS).')
 
     await this.logTransition(
       complaintId,
@@ -504,12 +519,15 @@ export const workflowService = {
     const newStatusName = WORKFLOW_STATUS.ARCHIVED
     const statusId = await this.getStatusId(newStatusName)
 
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('denuncias')
       .update({ status: statusId })
       .eq('id', complaintId)
+      .select()
 
     if (error) throw error
+    if (!data || data.length === 0)
+      throw new Error('Falha ao arquivar denúncia. Verifique permissões (RLS).')
     await this.logTransition(
       complaintId,
       newStatusName,

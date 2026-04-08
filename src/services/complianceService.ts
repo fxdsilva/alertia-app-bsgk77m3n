@@ -223,12 +223,17 @@ export const complianceService = {
     recordId: string,
     analystId: string,
   ) {
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from(table)
       .update({ analista_id: analystId })
       .eq('id', recordId)
+      .select()
 
     if (error) throw error
+    if (!data || data.length === 0)
+      throw new Error(
+        `Falha ao atribuir analista na tabela ${table}. Verifique permissões.`,
+      )
 
     await auditService.logAction(
       'ASSIGN_ANALYST',
@@ -246,7 +251,7 @@ export const complianceService = {
     const targetStatusName = WORKFLOW_STATUS.ANALYSIS_1
     const targetStatusId = await workflowService.getStatusId(targetStatusName)
 
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('denuncias')
       .update({
         analista_id: analystId,
@@ -254,8 +259,13 @@ export const complianceService = {
         status: targetStatusId,
       })
       .eq('id', complaintId)
+      .select()
 
     if (error) throw error
+    if (!data || data.length === 0)
+      throw new Error(
+        'Falha ao atualizar denúncia. Verifique suas permissões (RLS).',
+      )
 
     await supabase.from('compliance_workflow_logs').insert({
       complaint_id: complaintId,
@@ -268,17 +278,20 @@ export const complianceService = {
       'ASSIGN_INVESTIGATION',
       `Analista ${analystId} designado para denúncia ${complaintId} (Triagem)`,
       'denuncias',
-      { complaintId, analystId, schoolId, new_status: targetStatusName },
+      { complaintId, analystId, schoolId, new_new_status: targetStatusName },
     )
   },
 
   async toggleSchoolAccess(complaintId: string, allowed: boolean) {
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('denuncias')
       .update({ autorizado_gestao: allowed })
       .eq('id', complaintId)
+      .select()
 
     if (error) throw error
+    if (!data || data.length === 0)
+      throw new Error('Falha ao alterar acesso. Verifique permissões.')
 
     await auditService.logAction(
       'TOGGLE_SCHOOL_ACCESS',
