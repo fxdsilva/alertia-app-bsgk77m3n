@@ -8,20 +8,16 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { UserCheck, AlertTriangle, Scale, Gavel } from 'lucide-react'
+import { UserCheck, AlertTriangle, Scale, Gavel, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { complianceService } from '@/services/complianceService'
 import { workflowService, WorkflowComplaint } from '@/services/workflowService'
 import { SchoolUser } from '@/services/schoolAdminService'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Checkbox } from '@/components/ui/checkbox'
+import { supabase } from '@/lib/supabase/client'
 
 interface WorkflowAssignmentDialogProps {
   open: boolean
@@ -39,7 +35,8 @@ export function WorkflowAssignmentDialog({
   onSuccess,
 }: WorkflowAssignmentDialogProps) {
   const [analysts, setAnalysts] = useState<SchoolUser[]>([])
-  const [selectedAnalyst, setSelectedAnalyst] = useState<string>('')
+  const [selectedAnalysts, setSelectedAnalysts] = useState<string[]>([])
+  const [initialAnalysts, setInitialAnalysts] = useState<string[]>([])
   const [resolutionType, setResolutionType] = useState<
     'mediacao' | 'disciplinar'
   >('mediacao')
@@ -49,8 +46,45 @@ export function WorkflowAssignmentDialog({
   useEffect(() => {
     if (open && complaint) {
       loadAnalysts()
+      loadExistingAssignments()
+    } else {
+      setSelectedAnalysts([])
+      setInitialAnalysts([])
+      setResolutionType('mediacao')
     }
   }, [open, complaint])
+
+  const loadExistingAssignments = async () => {
+    if (!complaint) return
+    const existing: string[] = []
+
+    // 1. Load primary analyst from the denúncia row
+    if (phase === 1 && complaint.analista_1_id)
+      existing.push(complaint.analista_1_id)
+    if (phase === 2 && complaint.analista_2_id)
+      existing.push(complaint.analista_2_id)
+    if (phase === 3 && complaint.analista_3_id)
+      existing.push(complaint.analista_3_id)
+
+    // 2. Load extra analysts from workflow_analistas table
+    try {
+      const { data } = await supabase
+        .from('workflow_analistas')
+        .select('analista_id')
+        .eq('denuncia_id', complaint.id)
+        .eq('fase', phase)
+
+      if (data) {
+        data.forEach((d) => existing.push(d.analista_id))
+      }
+    } catch (e) {
+      console.error('Failed to load extra analysts', e)
+    }
+
+    const unique = Array.from(new Set(existing))
+    setSelectedAnalysts(unique)
+    setInitialAnalysts(unique)
+  }
 
   const loadAnalysts = async () => {
     setLoading(true)
@@ -79,21 +113,70 @@ export function WorkflowAssignmentDialog({
   }
 
   const handleAssign = async () => {
-    if (!selectedAnalyst) {
-      toast.error('Selecione um analista antes de continuar')
+    if (selectedAnalysts.length === 0) {
+      toast.error('Selecione pelo menos um analista antes de continuar')
       return
     }
     if (!complaint) return
 
     setSubmitting(true)
     try {
-      await workflowService.assignAnalyst(
-        complaint.id,
-        phase,
-        selectedAnalyst,
-        phase === 3 ? resolutionType : undefined,
-      )
-      toast.success(`Analista ${phase} designado com sucesso`)
+      const primaryAnalyst = selectedAnalysts[0]
+      const currentPrimary =
+        phase === 1
+          ? complaint.analista_1_id
+          : phase === 2
+            ? complaint.analista_2_id
+            : complaint.analista_3_id
+
+      // Assign the first selected analyst as the primary one via the service to maintain existing logic
+      if (primaryAnalyst !== currentPrimary || !currentPrimary) {
+        await workflowService.assignAnalyst(
+          complaint.id,
+          phase,
+          primaryAnalyst,
+          phase === 3 ? resolutionType : undefined,
+        )
+      }
+
+      // Re-create the secondary analysts mapping
+      await supabase
+        .from('workflow_analistas')
+        .delete()
+        .eq('denuncia_id', complaint.id)
+        .eq('fase', phase)
+
+      if (selectedAnalysts.length > 1) {
+        const toInsert = selectedAnalysts.slice(1).map((id) => ({
+          denuncia_id: complaint.id,
+          analista_id: id,
+          fase: phase,
+        }))
+        await supabase.from('workflow_analistas').insert(toInsert)
+
+        // Notify new extra analysts
+        const newAnalysts = selectedAnalysts.filter(
+          (id) => !initialAnalysts.includes(id),
+        )
+        const newSecondary = selectedAnalysts
+          .slice(1)
+          .filter((id) => newAnalysts.includes(id))
+
+        if (newSecondary.length > 0) {
+          const notifs = newSecondary.map((id) => ({
+            user_id: id,
+            title: 'Nova Designação',
+            message: `Você foi designado como co-analista na denúncia ${
+              complaint.protocolo || ''
+            } (Fase ${phase}).`,
+            link: `/compliance/analyst/workflow/${complaint.id}`,
+            type: 'info',
+          }))
+          await supabase.from('notifications').insert(notifs)
+        }
+      }
+
+      toast.success(`Equipe de analistas designada com sucesso`)
       onSuccess()
       onOpenChange(false)
     } catch (error) {
@@ -105,17 +188,17 @@ export function WorkflowAssignmentDialog({
   }
 
   const getTitle = () => {
-    if (phase === 1) return 'Designação de Analista 1 (Procedência)'
-    if (phase === 2) return 'Designação de Analista 2 (Investigação)'
-    if (phase === 3) return 'Designação de Analista 3 (Execução)'
+    if (phase === 1) return 'Equipe de Análise 1 (Procedência)'
+    if (phase === 2) return 'Equipe de Análise 2 (Investigação)'
+    if (phase === 3) return 'Equipe de Análise 3 (Execução)'
   }
 
   const getDescription = () => {
-    if (phase === 1) return 'Responsável pela análise inicial de procedência.'
+    if (phase === 1) return 'Responsáveis pela análise inicial de procedência.'
     if (phase === 2)
-      return 'Responsável pela investigação aprofundada. (SoD: Analista 1 bloqueado)'
+      return 'Responsáveis pela investigação aprofundada. (SoD: Analistas da Fase 1 bloqueados)'
     if (phase === 3)
-      return 'Responsável pela execução da medida. (SoD: Analista 1 e 2 bloqueados)'
+      return 'Responsáveis pela execução da medida. (SoD: Analistas das Fases 1 e 2 bloqueados)'
   }
 
   return (
@@ -128,31 +211,54 @@ export function WorkflowAssignmentDialog({
 
         <div className="py-4 space-y-4">
           <div className="space-y-2">
-            <Label>Analista Elegível (SoD Validado)</Label>
-            <Select
-              value={selectedAnalyst}
-              onValueChange={setSelectedAnalyst}
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={loading ? 'Carregando...' : 'Selecione...'}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {analysts.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.nome_usuario}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {analysts.length === 0 && !loading && (
-              <p className="text-xs text-red-500">
-                Nenhum analista elegível disponível devido às regras de
-                Segregação de Funções (SoD).
-              </p>
-            )}
+            <Label>Analistas Elegíveis (SoD Validado)</Label>
+            <ScrollArea className="h-[200px] w-full border rounded-md p-4 bg-white">
+              {loading ? (
+                <div className="text-sm text-muted-foreground">
+                  Carregando...
+                </div>
+              ) : analysts.length === 0 ? (
+                <div className="text-sm text-red-500">
+                  Nenhum analista elegível disponível devido às regras de
+                  Segregação de Funções (SoD).
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {analysts.map((a) => (
+                    <div key={a.id} className="flex items-center space-x-3">
+                      <Checkbox
+                        id={`analyst-${a.id}`}
+                        checked={selectedAnalysts.includes(a.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedAnalysts([...selectedAnalysts, a.id])
+                          } else {
+                            setSelectedAnalysts(
+                              selectedAnalysts.filter((id) => id !== a.id),
+                            )
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={`analyst-${a.id}`}
+                        className="cursor-pointer font-normal flex-1 text-sm"
+                      >
+                        {a.nome_usuario}
+                      </Label>
+                      {selectedAnalysts[0] === a.id && (
+                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                          Líder
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+            <p className="text-xs text-muted-foreground mt-1">
+              O primeiro analista selecionado será o líder da fase e o
+              responsável principal.
+            </p>
           </div>
 
           {phase === 3 && (
@@ -192,8 +298,8 @@ export function WorkflowAssignmentDialog({
           <div className="bg-yellow-50 p-3 rounded-md text-xs text-yellow-800 flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <p>
-              O sistema aplicou filtros automáticos para garantir a
-              independência entre as fases do processo (Segregação de Funções).
+              O sistema aplica filtros automáticos para garantir a independência
+              entre as fases do processo (Segregação de Funções).
             </p>
           </div>
         </div>
@@ -204,7 +310,11 @@ export function WorkflowAssignmentDialog({
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={!selectedAnalyst || submitting || analysts.length === 0}
+            disabled={
+              selectedAnalysts.length === 0 ||
+              submitting ||
+              analysts.length === 0
+            }
             className="gap-2"
           >
             {submitting ? (
@@ -212,7 +322,7 @@ export function WorkflowAssignmentDialog({
             ) : (
               <UserCheck className="h-4 w-4" />
             )}
-            Confirmar
+            Confirmar Equipe
           </Button>
         </DialogFooter>
       </DialogContent>

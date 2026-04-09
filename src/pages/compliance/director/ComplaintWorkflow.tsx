@@ -30,11 +30,13 @@ import {
   FolderOpen,
   UserCheck,
   Inbox,
+  Users,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { WorkflowAssignmentDialog } from '@/components/compliance/WorkflowAssignmentDialog'
+import { supabase } from '@/lib/supabase/client'
 
 export default function ComplaintWorkflow() {
   const navigate = useNavigate()
@@ -42,6 +44,7 @@ export default function ComplaintWorkflow() {
   const isDirector = profile === 'DIRETOR_COMPLIANCE'
   const [loading, setLoading] = useState(true)
   const [complaints, setComplaints] = useState<WorkflowComplaint[]>([])
+  const [workflowAnalysts, setWorkflowAnalysts] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState('f1')
 
   // Filters
@@ -65,6 +68,11 @@ export default function ComplaintWorkflow() {
       const result = await workflowService.getWorkflowDashboardData()
       const all = [...result.f1, ...result.f2, ...result.f3, ...result.closed]
       setComplaints(all)
+
+      const { data } = await supabase
+        .from('workflow_analistas')
+        .select('*, analista:usuarios_escola(nome_usuario)')
+      setWorkflowAnalysts(data || [])
     } catch (error) {
       console.error(error)
     } finally {
@@ -147,6 +155,16 @@ export default function ComplaintWorkflow() {
   const renderCard = (c: WorkflowComplaint) => {
     let action = null
 
+    const getPhaseAnalysts = (p: number) => {
+      return workflowAnalysts
+        .filter((wa) => wa.denuncia_id === c.id && wa.fase === p)
+        .map((wa) => wa.analista?.nome_usuario)
+    }
+
+    const p1 = getPhaseAnalysts(1)
+    const p2 = getPhaseAnalysts(2)
+    const p3 = getPhaseAnalysts(3)
+
     // Determine primary action based on phase
     if (c._phase === 'f1') {
       if (!c.analista_1_id) {
@@ -155,7 +173,7 @@ export default function ComplaintWorkflow() {
             onClick={() => handleAssign(c, 1)}
             className="w-full sm:w-auto gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-md"
           >
-            <UserCheck className="h-4 w-4" /> Designar Analista
+            <UserCheck className="h-4 w-4" /> Designar Equipe
           </Button>
         ) : (
           <span className="text-sm text-muted-foreground italic flex-1 sm:flex-none py-2">
@@ -164,13 +182,25 @@ export default function ComplaintWorkflow() {
         )
       } else {
         action = (
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => handleReview(c.id)}
-          >
-            Ver Detalhes
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {isDirector && (
+              <Button
+                variant="outline"
+                className="px-3 bg-white hover:bg-slate-100 transition-colors"
+                title="Gerenciar Equipe"
+                onClick={() => handleAssign(c, 1)}
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto flex-1 bg-white hover:bg-slate-100 transition-colors"
+              onClick={() => handleReview(c.id)}
+            >
+              Ver Detalhes
+            </Button>
+          </div>
         )
       }
     } else if (c._phase === 'f2') {
@@ -180,7 +210,7 @@ export default function ComplaintWorkflow() {
             onClick={() => handleAssign(c, 2)}
             className="w-full sm:w-auto gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-md"
           >
-            <UserCheck className="h-4 w-4" /> Designar Analista
+            <UserCheck className="h-4 w-4" /> Designar Equipe
           </Button>
         ) : (
           <span className="text-sm text-muted-foreground italic flex-1 sm:flex-none py-2">
@@ -189,13 +219,25 @@ export default function ComplaintWorkflow() {
         )
       } else {
         action = (
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => handleReview(c.id)}
-          >
-            Ver Detalhes
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {isDirector && (
+              <Button
+                variant="outline"
+                className="px-3 bg-white hover:bg-slate-100 transition-colors"
+                title="Gerenciar Equipe"
+                onClick={() => handleAssign(c, 2)}
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto flex-1 bg-white hover:bg-slate-100 transition-colors"
+              onClick={() => handleReview(c.id)}
+            >
+              Ver Detalhes
+            </Button>
+          </div>
         )
       }
     } else if (c._phase === 'f3') {
@@ -205,7 +247,7 @@ export default function ComplaintWorkflow() {
             onClick={() => handleAssign(c, 3)}
             className="w-full sm:w-auto gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-md"
           >
-            <UserCheck className="h-4 w-4" /> Designar Analista
+            <UserCheck className="h-4 w-4" /> Designar Equipe
           </Button>
         ) : (
           <span className="text-sm text-muted-foreground italic flex-1 sm:flex-none py-2">
@@ -214,20 +256,32 @@ export default function ComplaintWorkflow() {
         )
       } else {
         action = (
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => handleReview(c.id)}
-          >
-            Ver Detalhes
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {isDirector && (
+              <Button
+                variant="outline"
+                className="px-3 bg-white hover:bg-slate-100 transition-colors"
+                title="Gerenciar Equipe"
+                onClick={() => handleAssign(c, 3)}
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto flex-1 bg-white hover:bg-slate-100 transition-colors"
+              onClick={() => handleReview(c.id)}
+            >
+              Ver Detalhes
+            </Button>
+          </div>
         )
       }
     } else {
       action = (
         <Button
           variant="outline"
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto bg-white"
           onClick={() => handleReview(c.id)}
         >
           Ver Detalhes
@@ -237,7 +291,7 @@ export default function ComplaintWorkflow() {
 
     return (
       <Card
-        key={c.record_id || c.id}
+        key={c.id}
         className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/40 flex flex-col overflow-hidden"
       >
         <CardContent className="p-5 space-y-4 flex-1">
@@ -290,10 +344,51 @@ export default function ComplaintWorkflow() {
               </span>
             )}
           </div>
-          <div className="text-xs text-muted-foreground mt-2">
-            {c.analista_1 && <span>A1: {c.analista_1.nome_usuario}</span>}
-            {c.analista_2 && <span> | A2: {c.analista_2.nome_usuario}</span>}
-            {c.analista_3 && <span> | A3: {c.analista_3.nome_usuario}</span>}
+          <div className="text-xs mt-4 space-y-1.5 bg-slate-50/70 p-3 rounded-md border border-slate-100">
+            {c.analista_1 && (
+              <div>
+                <span className="font-semibold text-indigo-600 mr-1">F1:</span>
+                <span className="text-slate-700">
+                  {c.analista_1.nome_usuario}
+                </span>
+                {p1.length > 0 && (
+                  <span className="text-slate-500 ml-1">
+                    (+ {p1.join(', ')})
+                  </span>
+                )}
+              </div>
+            )}
+            {c.analista_2 && (
+              <div>
+                <span className="font-semibold text-blue-600 mr-1">F2:</span>
+                <span className="text-slate-700">
+                  {c.analista_2.nome_usuario}
+                </span>
+                {p2.length > 0 && (
+                  <span className="text-slate-500 ml-1">
+                    (+ {p2.join(', ')})
+                  </span>
+                )}
+              </div>
+            )}
+            {c.analista_3 && (
+              <div>
+                <span className="font-semibold text-orange-600 mr-1">F3:</span>
+                <span className="text-slate-700">
+                  {c.analista_3.nome_usuario}
+                </span>
+                {p3.length > 0 && (
+                  <span className="text-slate-500 ml-1">
+                    (+ {p3.join(', ')})
+                  </span>
+                )}
+              </div>
+            )}
+            {!c.analista_1 && !c.analista_2 && !c.analista_3 && (
+              <div className="italic text-slate-400">
+                Nenhuma equipe designada
+              </div>
+            )}
           </div>
         </CardContent>
         <CardFooter className="bg-slate-50/50 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-t mt-auto overflow-hidden">
