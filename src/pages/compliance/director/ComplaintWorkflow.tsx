@@ -158,7 +158,7 @@ export default function ComplaintWorkflow() {
             <UserCheck className="h-4 w-4" /> Designar Analista
           </Button>
         ) : (
-          <span className="text-sm text-muted-foreground italic">
+          <span className="text-sm text-muted-foreground italic flex-1 sm:flex-none py-2">
             Aguardando designação
           </span>
         )
@@ -183,7 +183,7 @@ export default function ComplaintWorkflow() {
             <UserCheck className="h-4 w-4" /> Designar Analista
           </Button>
         ) : (
-          <span className="text-sm text-muted-foreground italic">
+          <span className="text-sm text-muted-foreground italic flex-1 sm:flex-none py-2">
             Aguardando designação
           </span>
         )
@@ -208,7 +208,7 @@ export default function ComplaintWorkflow() {
             <UserCheck className="h-4 w-4" /> Designar Analista
           </Button>
         ) : (
-          <span className="text-sm text-muted-foreground italic">
+          <span className="text-sm text-muted-foreground italic flex-1 sm:flex-none py-2">
             Aguardando designação
           </span>
         )
@@ -296,8 +296,8 @@ export default function ComplaintWorkflow() {
             {c.analista_3 && <span> | A3: {c.analista_3.nome_usuario}</span>}
           </div>
         </CardContent>
-        <CardFooter className="bg-slate-50/50 p-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-t mt-auto">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+        <CardFooter className="bg-slate-50/50 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-t mt-auto overflow-hidden">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500 w-full sm:w-auto overflow-hidden min-w-0">
             <div
               className={cn('h-2 w-2 rounded-full shrink-0', {
                 'bg-indigo-500': c._phase === 'f1',
@@ -306,11 +306,11 @@ export default function ComplaintWorkflow() {
                 'bg-green-500': c._phase === 'closed',
               })}
             />
-            <span className="truncate max-w-[200px]" title={c.status}>
+            <span className="truncate flex-1" title={c.status}>
               {c.status}
             </span>
           </div>
-          {action}
+          <div className="w-full sm:w-auto shrink-0 flex">{action}</div>
         </CardFooter>
       </Card>
     )
