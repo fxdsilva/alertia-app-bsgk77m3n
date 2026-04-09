@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Clock,
   CheckCircle2,
+  Circle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
@@ -55,6 +56,7 @@ export default function ComplaintStatus() {
           leaderAgreed: data.leaderAgreed,
           directorDecision: data.directorDecision,
           totalAnalysts: data.totalAnalysts,
+          isAssigned: data.isAssigned || false,
           message:
             'Acompanhe as atualizações periodicamente. Para mais detalhes, entre em contato com a instituição.',
         })
@@ -123,6 +125,98 @@ export default function ComplaintStatus() {
               <p className="text-sm text-muted-foreground mb-4">
                 Última atualização: {result.lastUpdate}
               </p>
+
+              <div className="py-4 mt-2">
+                <div className="relative">
+                  <div className="absolute left-[15px] top-4 h-[calc(100%-2rem)] w-[2px] bg-slate-200" />
+                  <div className="space-y-6">
+                    <div className="relative flex items-start gap-4">
+                      <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+                      <div className="flex flex-col pt-1">
+                        <span className="font-medium text-slate-900">
+                          Recebida
+                        </span>
+                        <span className="text-sm text-slate-500">
+                          Denúncia registrada com sucesso.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="relative flex items-start gap-4">
+                      <div
+                        className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${result.isAssigned || result.teamDecision || result.directorDecision ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-400 border-2 border-slate-200'}`}
+                      >
+                        {result.isAssigned ||
+                        result.teamDecision ||
+                        result.directorDecision ? (
+                          <CheckCircle2 className="h-5 w-5" />
+                        ) : (
+                          <Clock className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div className="flex flex-col pt-1">
+                        <span
+                          className={`font-medium ${result.isAssigned || result.teamDecision || result.directorDecision ? 'text-slate-900' : 'text-slate-500'}`}
+                        >
+                          Designada
+                        </span>
+                        <span className="text-sm text-slate-500">
+                          A Diretoria de Compliance designou a equipe para
+                          análise inicial.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="relative flex items-start gap-4">
+                      <div
+                        className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${result.teamDecision || result.directorDecision ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-400 border-2 border-slate-200'}`}
+                      >
+                        {result.teamDecision || result.directorDecision ? (
+                          <CheckCircle2 className="h-5 w-5" />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div className="flex flex-col pt-1">
+                        <span
+                          className={`font-medium ${result.teamDecision || result.directorDecision ? 'text-slate-900' : 'text-slate-500'}`}
+                        >
+                          Investigação Formal
+                        </span>
+                        <span className="text-sm text-slate-500">
+                          Caso em investigação ou análise aprofundada pela
+                          equipe técnica.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="relative flex items-start gap-4">
+                      <div
+                        className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${result.status.toLowerCase().includes('concluíd') || result.status.toLowerCase().includes('encerrad') ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-400 border-2 border-slate-200'}`}
+                      >
+                        {result.status.toLowerCase().includes('concluíd') ||
+                        result.status.toLowerCase().includes('encerrad') ? (
+                          <CheckCircle2 className="h-5 w-5" />
+                        ) : (
+                          <Circle className="h-3 w-3" />
+                        )}
+                      </div>
+                      <div className="flex flex-col pt-1">
+                        <span
+                          className={`font-medium ${result.status.toLowerCase().includes('concluíd') || result.status.toLowerCase().includes('encerrad') ? 'text-slate-900' : 'text-slate-500'}`}
+                        >
+                          Concluída
+                        </span>
+                        <span className="text-sm text-slate-500">
+                          Parecer final emitido e protocolo encerrado.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
