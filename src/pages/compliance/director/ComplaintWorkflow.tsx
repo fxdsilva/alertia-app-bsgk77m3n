@@ -149,9 +149,8 @@ export default function ComplaintWorkflow() {
       if (!c.analista_1_id) {
         action = (
           <Button
-            size="sm"
             onClick={() => handleAssign(c, 1)}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+            className="w-full sm:w-auto gap-2 bg-indigo-600 hover:bg-indigo-700"
           >
             <UserCheck className="h-4 w-4" /> Designar Analista 1
           </Button>
@@ -159,8 +158,8 @@ export default function ComplaintWorkflow() {
       } else {
         action = (
           <Button
-            size="sm"
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => handleReview(c.id)}
           >
             Ver Detalhes
@@ -171,9 +170,8 @@ export default function ComplaintWorkflow() {
       if (!c.analista_2_id && !c.analista_id) {
         action = (
           <Button
-            size="sm"
             onClick={() => handleAssign(c, 2)}
-            className="gap-2 bg-blue-600 hover:bg-blue-700"
+            className="w-full sm:w-auto gap-2 bg-blue-600 hover:bg-blue-700"
           >
             <UserCheck className="h-4 w-4" /> Designar Analista 2
           </Button>
@@ -181,8 +179,8 @@ export default function ComplaintWorkflow() {
       } else {
         action = (
           <Button
-            size="sm"
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => handleReview(c.id)}
           >
             Ver Investigação
@@ -193,9 +191,8 @@ export default function ComplaintWorkflow() {
       if (!c.analista_3_id && !c.analista_id) {
         action = (
           <Button
-            size="sm"
             onClick={() => handleAssign(c, 3)}
-            className="gap-2 bg-orange-600 hover:bg-orange-700"
+            className="w-full sm:w-auto gap-2 bg-orange-600 hover:bg-orange-700"
           >
             <UserCheck className="h-4 w-4" /> Designar Analista 3
           </Button>
@@ -203,8 +200,8 @@ export default function ComplaintWorkflow() {
       } else {
         action = (
           <Button
-            size="sm"
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => handleReview(c.id)}
           >
             Ver Execução
@@ -213,7 +210,11 @@ export default function ComplaintWorkflow() {
       }
     } else {
       action = (
-        <Button size="sm" variant="outline" onClick={() => handleReview(c.id)}>
+        <Button
+          variant="outline"
+          className="w-full sm:w-auto"
+          onClick={() => handleReview(c.id)}
+        >
           Ver Detalhes
         </Button>
       )
@@ -222,9 +223,9 @@ export default function ComplaintWorkflow() {
     return (
       <Card
         key={c.record_id || c.id}
-        className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/40"
+        className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/40 flex flex-col"
       >
-        <CardContent className="p-5 space-y-4">
+        <CardContent className="p-5 space-y-4 flex-1">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -280,17 +281,17 @@ export default function ComplaintWorkflow() {
             {c.analista_3 && <span> | A3: {c.analista_3.nome_usuario}</span>}
           </div>
         </CardContent>
-        <CardFooter className="bg-slate-50/50 p-3 px-5 flex justify-between items-center border-t">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+        <CardFooter className="bg-slate-50/50 p-3 px-5 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-2 border-t mt-auto">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1 sm:mb-0">
             <div
-              className={cn('h-2 w-2 rounded-full', {
+              className={cn('h-2 w-2 rounded-full shrink-0', {
                 'bg-indigo-500': c._phase === 'f1',
                 'bg-blue-500': c._phase === 'f2',
                 'bg-orange-500': c._phase === 'f3',
                 'bg-green-500': c._phase === 'closed',
               })}
             />
-            <span className="truncate max-w-[150px]" title={c.status}>
+            <span className="truncate max-w-[200px]" title={c.status}>
               {c.status}
             </span>
           </div>
