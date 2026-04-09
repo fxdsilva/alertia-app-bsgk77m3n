@@ -566,6 +566,50 @@ export const complianceService = {
     ).length
   },
 
+  async getComplaintsSummary() {
+    const { data, error } = await supabase
+      .from('denuncias')
+      .select('id, status, analista_id, status_denuncia(nome_status)')
+
+    if (error) {
+      console.error('Error fetching complaints summary', error)
+      return { active: 0, unassigned: 0, inAnalysis: 0, archived: 0 }
+    }
+
+    let unassigned = 0
+    let inAnalysis = 0
+    let archived = 0
+    let active = 0
+
+    ;(data || []).forEach((d: any) => {
+      const statusName = (
+        d.status_denuncia?.nome_status ||
+        d.status ||
+        ''
+      ).toLowerCase()
+      const isArchived = [
+        'arquivado',
+        'arquivamento aprovado',
+        'denúncia encerrada',
+        'resolvido',
+        'concluido',
+      ].some((s) => statusName.includes(s))
+
+      if (isArchived) {
+        archived++
+      } else {
+        active++
+        if (!d.analista_id) {
+          unassigned++
+        } else {
+          inAnalysis++
+        }
+      }
+    })
+
+    return { active, unassigned, inAnalysis, archived }
+  },
+
   async getRecentAudits() {
     const { data, error } = await supabase
       .from('auditorias')
