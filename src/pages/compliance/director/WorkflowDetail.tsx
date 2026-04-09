@@ -33,6 +33,7 @@ export default function WorkflowDetail() {
   const [processing, setProcessing] = useState(false)
   const [analysts, setAnalysts] = useState<any[]>([])
   const [selectedAnalyst, setSelectedAnalyst] = useState<string>('')
+  const [votes, setVotes] = useState<any[]>([])
 
   useEffect(() => {
     if (id) {
@@ -59,6 +60,27 @@ export default function WorkflowDetail() {
       ])
       setComplaint(data)
       setLogs(logsData || [])
+
+      // Fetch votes for the active review phase
+      let phase = 1
+      if (
+        data.status.includes('Investigação') ||
+        data.status === WORKFLOW_STATUS.REVIEW_2
+      )
+        phase = 2
+      if (
+        data.status.includes('Mediação') ||
+        data.status.includes('Disciplinar') ||
+        data.status === WORKFLOW_STATUS.REVIEW_3
+      )
+        phase = 3
+
+      try {
+        const phaseVotes = await workflowService.getAnalystVotes(id!, phase)
+        setVotes(phaseVotes || [])
+      } catch (e) {
+        console.error('Failed to load votes', e)
+      }
     } catch (error) {
       toast.error('Erro ao carregar detalhes')
     } finally {
@@ -281,31 +303,73 @@ export default function WorkflowDetail() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Responsáveis</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between border-b pb-2">
-              <span>Analista 1 (Procedência):</span>
-              <span className="font-medium">
-                {complaint.analista_1?.nome_usuario || '-'}
-              </span>
-            </div>
-            <div className="flex justify-between border-b pb-2">
-              <span>Analista 2 (Investigação):</span>
-              <span className="font-medium">
-                {complaint.analista_2?.nome_usuario || '-'}
-              </span>
-            </div>
-            <div className="flex justify-between border-b pb-2">
-              <span>Analista 3 (Execução):</span>
-              <span className="font-medium">
-                {complaint.analista_3?.nome_usuario || '-'}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        {votes.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Votação da Equipe</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {votes.map((v: any) => (
+                <div
+                  key={v.id}
+                  className="border-b pb-3 last:border-0 last:pb-0"
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-semibold text-sm flex items-center">
+                      {v.analista?.nome_usuario}
+                      {v.analista_id === complaint.analista_1_id && (
+                        <Badge variant="secondary" className="ml-2 text-[10px]">
+                          Líder
+                        </Badge>
+                      )}
+                    </span>
+                    <Badge
+                      className={
+                        v.conclusao === 'Procedente'
+                          ? 'bg-green-100 text-green-800'
+                          : v.conclusao === 'Improcedente'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }
+                      variant="outline"
+                    >
+                      {v.conclusao}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {v.parecer_texto}
+                  </p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Responsáveis</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex justify-between border-b pb-2">
+                <span>Analista 1 (Procedência):</span>
+                <span className="font-medium">
+                  {complaint.analista_1?.nome_usuario || '-'}
+                </span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span>Analista 2 (Investigação):</span>
+                <span className="font-medium">
+                  {complaint.analista_2?.nome_usuario || '-'}
+                </span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span>Analista 3 (Execução):</span>
+                <span className="font-medium">
+                  {complaint.analista_3?.nome_usuario || '-'}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Reports View */}

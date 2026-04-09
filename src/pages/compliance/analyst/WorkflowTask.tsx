@@ -5,6 +5,7 @@ import {
   WorkflowComplaint,
   WORKFLOW_STATUS,
 } from '@/services/workflowService'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -15,171 +16,92 @@ import {
 } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import {
-  Loader2,
-  Send,
-  ArrowLeft,
-  Save,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Clock,
-  FileText,
-} from 'lucide-react'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
+import { Loader2, ArrowLeft, Send, History, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import useAppStore from '@/stores/useAppStore'
-import { cn } from '@/lib/utils'
 
 export default function WorkflowTask() {
   const { id } = useParams()
-  const { user } = useAppStore()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [complaint, setComplaint] = useState<WorkflowComplaint | null>(null)
-  const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [report, setReport] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [conclusao, setConclusao] = useState<string>('Procedente')
+  const [parecer, setParecer] = useState('')
+  const [votes, setVotes] = useState<any[]>([])
 
   useEffect(() => {
-    if (id) fetchDetails()
-  }, [id])
+    if (id && user) fetchDetails()
+  }, [id, user])
 
   const fetchDetails = async () => {
     setLoading(true)
     try {
-      const [data, logsData] = await Promise.all([
-        workflowService.getComplaintDetails(id!),
-        workflowService.getWorkflowLogs(id!),
-      ])
+      const data = await workflowService.getComplaintDetails(id!)
       setComplaint(data)
-      setLogs(logsData || [])
 
-      if (user) {
-        if (
-          (data.status === WORKFLOW_STATUS.ANALYSIS_1 ||
-            data.status === WORKFLOW_STATUS.RETURNED_1 ||
-            data.status === WORKFLOW_STATUS.REVIEW_1) &&
-          data.analista_1_id === user.id
-        ) {
-          setReport(data.parecer_1 || '')
-        } else if (
-          data.analista_2_id === user.id &&
-          (data.status === WORKFLOW_STATUS.INVESTIGATION_2 ||
-            data.status === WORKFLOW_STATUS.REVIEW_2)
-        ) {
-          setReport(data.relatorio_2 || '')
-        } else if (
-          data.analista_3_id === user.id &&
-          (data.status === WORKFLOW_STATUS.MEDIATION_3 ||
-            data.status === WORKFLOW_STATUS.DISCIPLINARY_3 ||
-            data.status === WORKFLOW_STATUS.REVIEW_3)
-        ) {
-          setReport(data.relatorio_3 || '')
-        }
-        // Generic analyst might want to see previous generic report
-        else if (
-          data.analista_id === user.id &&
-          !data.analista_1_id &&
-          data.parecer_1
-        ) {
-          setReport(data.parecer_1)
-        }
+      let currentPhase = 1
+      if (data.status === WORKFLOW_STATUS.INVESTIGATION_2) currentPhase = 2
+      if (
+        [WORKFLOW_STATUS.MEDIATION_3, WORKFLOW_STATUS.DISCIPLINARY_3].includes(
+          data.status,
+        )
+      )
+        currentPhase = 3
+
+      const allVotes = await workflowService.getAnalystVotes(id!, currentPhase)
+      setVotes(allVotes || [])
+
+      const me = allVotes?.find((v: any) => v.analista_id === user?.id)
+      if (me) {
+        setConclusao(me.conclusao)
+        setParecer(me.parecer_texto)
       }
     } catch (error) {
-      toast.error('Erro ao carregar tarefa')
+      toast.error('Erro ao carregar detalhes da tarefa')
     } finally {
       setLoading(false)
     }
   }
 
-  const getPhaseContext = () => {
-    if (!complaint || !user) return null
-
-    // Phase 1 Context
-    if (complaint.analista_1_id === user.id) {
-      const isEditable = [
-        WORKFLOW_STATUS.ANALYSIS_1,
-        WORKFLOW_STATUS.RETURNED_1,
-      ].includes(complaint.status)
-      return { phase: 1, isEditable }
+  const handleSubmit = async () => {
+    if (!parecer.trim()) {
+      toast.error('Escreva a justificativa do seu parecer')
+      return
     }
-
-    // Phase 2 Context
-    if (complaint.analista_2_id === user.id) {
-      const isEditable = [WORKFLOW_STATUS.INVESTIGATION_2].includes(
-        complaint.status,
-      )
-      return { phase: 2, isEditable }
-    }
-
-    // Phase 3 Context
-    if (complaint.analista_3_id === user.id) {
-      const isEditable = [
-        WORKFLOW_STATUS.MEDIATION_3,
-        WORKFLOW_STATUS.DISCIPLINARY_3,
-      ].includes(complaint.status)
-      return { phase: 3, isEditable }
-    }
-
-    // Generic / Legacy support (Phase 0)
-    if (
-      complaint.analista_id === user.id &&
-      !complaint.analista_1_id &&
-      !complaint.analista_2_id &&
-      !complaint.analista_3_id &&
-      ![WORKFLOW_STATUS.CLOSED, WORKFLOW_STATUS.ARCHIVED].includes(
-        complaint.status,
-      )
-    ) {
-      return { phase: 0, isEditable: true }
-    }
-
-    return null
-  }
-
-  const handleSaveDraft = async () => {
-    const context = getPhaseContext()
-    if (!context || !complaint) return
     setSubmitting(true)
     try {
-      await workflowService.saveReportDraft(
-        complaint.id,
-        context.phase as any,
-        report,
+      let phase: 1 | 2 | 3 = 1
+      if (complaint?.status === WORKFLOW_STATUS.INVESTIGATION_2) phase = 2
+      if (
+        complaint?.status === WORKFLOW_STATUS.MEDIATION_3 ||
+        complaint?.status === WORKFLOW_STATUS.DISCIPLINARY_3
       )
-      toast.success('Rascunho salvo com sucesso')
-    } catch (error) {
-      toast.error('Erro ao salvar rascunho')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+        phase = 3
 
-  const handleSubmit = async (
-    recommendationType?: 'investigate' | 'archive',
-  ) => {
-    const context = getPhaseContext()
-    if (!context || !complaint) return
-    setSubmitting(true)
-    try {
-      let recommendationMsg = ''
-      if (recommendationType === 'investigate')
-        recommendationMsg = 'Recomendação: Prosseguir com Investigação'
-      if (recommendationType === 'archive')
-        recommendationMsg = 'Recomendação: Arquivamento/Não Investigar'
-
-      await workflowService.submitReport(
-        complaint.id,
-        context.phase as any,
-        report,
-        recommendationMsg,
+      await workflowService.submitAnalystVote(
+        complaint!.id,
+        phase,
+        user!.id,
+        conclusao,
+        parecer,
       )
-      toast.success('Relatório enviado com sucesso')
+
+      toast.success('Seu parecer foi registrado com sucesso!')
       navigate('/compliance/analyst/dashboard')
-    } catch (error) {
-      toast.error('Erro ao enviar relatório')
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao enviar parecer')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const copyPreviousDraft = () => {
+    if (complaint?.parecer_1) {
+      setParecer(complaint.parecer_1)
+      toast.success('Draft anterior copiado para edição')
     }
   }
 
@@ -191,208 +113,157 @@ export default function WorkflowTask() {
     )
   if (!complaint) return null
 
-  const context = getPhaseContext()
-  const isActionable = context !== null
-  const phase = context?.phase ?? null
-  const isEditable = context?.isEditable ?? false
-
-  const lastRejectionLog = logs.find(
-    (log) =>
-      log.new_status === WORKFLOW_STATUS.RETURNED_1 ||
-      (log.comments && log.comments.includes('Devolvido para Ajustes')),
-  )
+  const isReturned = complaint.status === WORKFLOW_STATUS.RETURNED_1
+  const isLeader = complaint.analista_1_id === user?.id
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6 pb-20 animate-fade-in">
-      <Button
-        variant="ghost"
-        onClick={() => navigate('/compliance/analyst/dashboard')}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Dashboard
+    <div className="p-6 max-w-4xl mx-auto space-y-6 pb-20">
+      <Button variant="ghost" onClick={() => navigate(-1)}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
       </Button>
 
-      <div>
-        <h1 className="text-2xl font-bold mb-2">Execução de Tarefa</h1>
-        <div className="flex items-center gap-3">
-          <Badge variant="outline">{complaint.protocolo}</Badge>
-          <Badge
-            className={cn(
-              isEditable
-                ? 'bg-primary'
-                : 'bg-secondary text-secondary-foreground',
-            )}
-          >
-            {complaint.status}
-          </Badge>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Análise de Denúncia</h1>
+          <p className="text-muted-foreground">
+            Protocolo: {complaint.protocolo}
+          </p>
         </div>
+        <Badge variant="outline" className="text-lg">
+          {complaint.status}
+        </Badge>
       </div>
-
-      {lastRejectionLog && isEditable && (
-        <div className="space-y-6">
-          <Card className="border-destructive/50 bg-destructive/5 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-destructive flex items-center gap-2 text-lg">
-                <AlertCircle className="h-5 w-5" /> Decisão da Diretoria
-                (Ajustes Necessários)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-background p-4 rounded-md border border-destructive/20 text-sm whitespace-pre-wrap text-foreground font-medium">
-                {lastRejectionLog.comments?.replace(
-                  /^Decisão Fase \d+: Devolvido para Ajustes\.?\s*/,
-                  '',
-                ) ||
-                  'Por favor, revise o relatório conforme instruções da diretoria.'}
-              </div>
-            </CardContent>
-          </Card>
-
-          {((phase === 1 && complaint.parecer_1) ||
-            (phase === 2 && complaint.relatorio_2) ||
-            (phase === 3 && complaint.relatorio_3) ||
-            (phase === 0 && complaint.parecer_1)) && (
-            <Card className="border-muted shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-muted-foreground flex items-center gap-2 text-lg">
-                  <FileText className="h-5 w-5" /> Versão Anterior do Parecer
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-muted/30 p-4 rounded-md border text-sm whitespace-pre-wrap text-muted-foreground">
-                  {phase === 1 && complaint.parecer_1}
-                  {phase === 2 && complaint.relatorio_2}
-                  {phase === 3 && complaint.relatorio_3}
-                  {phase === 0 && complaint.parecer_1}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Detalhes da Denúncia</CardTitle>
-          <CardDescription>
-            {complaint.escolas_instituicoes?.nome_escola}
-          </CardDescription>
+          <CardTitle>Descrição do Caso</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+          <div className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
             {complaint.descricao}
-          </p>
+          </div>
         </CardContent>
       </Card>
 
-      {isActionable ? (
-        <Card className="border-primary/20 shadow-lg">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>
-                {phase === 0 && 'Parecer de Análise'}
-                {phase === 1 && 'Parecer de Procedência'}
-                {phase === 2 && 'Relatório de Investigação'}
-                {phase === 3 &&
-                  (complaint.tipo_resolucao === 'mediacao'
-                    ? 'Relatório de Mediação'
-                    : 'Relatório Disciplinar')}
-              </CardTitle>
-              {!isEditable && (
-                <div className="flex items-center text-amber-600 text-sm font-medium gap-1">
-                  <Clock className="w-4 h-4" />
-                  Aguardando Aprovação
+      {isReturned && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-red-800 flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" /> Devolvido para Ajustes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-red-700">
+                A diretoria solicitou revisão deste parecer. Veja o histórico e
+                faça os ajustes necessários abaixo.
+              </p>
+              {complaint.parecer_1 && (
+                <div className="bg-white p-3 rounded border border-red-100 text-sm">
+                  <h4 className="font-semibold mb-1 text-slate-700 flex justify-between items-center">
+                    Parecer Anterior
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={copyPreviousDraft}
+                    >
+                      Copiar Texto
+                    </Button>
+                  </h4>
+                  <div className="whitespace-pre-wrap text-slate-600">
+                    {complaint.parecer_1}
+                  </div>
                 </div>
               )}
             </div>
-            <CardDescription>
-              {isEditable
-                ? 'Preencha o relatório técnico abaixo para submeter à aprovação ou atualização.'
-                : 'O relatório foi enviado para revisão e não pode ser editado no momento.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              className="min-h-[200px]"
-              placeholder="Digite seu relatório técnico detalhado aqui..."
-              value={report}
-              onChange={(e) => setReport(e.target.value)}
-              disabled={!isEditable}
-            />
-
-            {isEditable ? (
-              <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t">
-                {/* Save Draft Button */}
-                <Button
-                  variant="outline"
-                  onClick={handleSaveDraft}
-                  disabled={submitting}
-                  className="w-full sm:w-auto min-w-[160px]"
-                >
-                  {submitting ? (
-                    <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                  ) : (
-                    <Save className="mr-2 h-4 w-4" />
-                  )}
-                  Salvar Rascunho
-                </Button>
-
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                  {phase === 1 ? (
-                    <>
-                      {/* Do Not Recommend / Archive */}
-                      <Button
-                        variant="secondary"
-                        onClick={() => handleSubmit('archive')}
-                        disabled={submitting || report.length < 5}
-                        className="w-full sm:w-auto text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 border min-w-[160px]"
-                      >
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Não Recomendar
-                      </Button>
-
-                      {/* Recommend Investigation */}
-                      <Button
-                        onClick={() => handleSubmit('investigate')}
-                        disabled={submitting || report.length < 5}
-                        className="w-full sm:w-auto min-w-[160px]"
-                      >
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Recomendar Investigação
-                      </Button>
-                    </>
-                  ) : (
-                    // Generic Submit for other phases
-                    <Button
-                      onClick={() => handleSubmit()}
-                      disabled={submitting || report.length < 5}
-                      className="w-full sm:w-auto min-w-[160px]"
-                    >
-                      {submitting ? (
-                        <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                      ) : (
-                        <Send className="mr-2 h-4 w-4" />
-                      )}
-                      Enviar para Aprovação
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 bg-muted/20 rounded-md flex items-center gap-3 text-muted-foreground text-sm border">
-                <AlertCircle className="h-5 w-5" />
-                <span>
-                  Modo de leitura. Aguarde o parecer do Diretor de Compliance.
-                  Caso sejam solicitados ajustes, a edição será reabilitada.
-                </span>
-              </div>
-            )}
           </CardContent>
         </Card>
-      ) : (
-        <div className="p-8 text-center border rounded bg-muted/20">
-          <p className="text-muted-foreground">
-            Você não tem ações pendentes para esta denúncia no momento.
-          </p>
+      )}
+
+      <Card className="border-primary shadow-sm">
+        <CardHeader>
+          <CardTitle>Meu Parecer</CardTitle>
+          <CardDescription>
+            {isLeader
+              ? 'Você é o Líder desta fase. Em caso de divergência com os outros analistas, seu voto será a decisão final.'
+              : 'Registre sua conclusão independente. O sistema calculará o consenso da equipe.'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label className="text-base">Conclusão</Label>
+            <RadioGroup
+              value={conclusao}
+              onValueChange={setConclusao}
+              className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Procedente" id="proc" />
+                <Label
+                  htmlFor="proc"
+                  className="cursor-pointer font-medium text-green-700"
+                >
+                  Procedente
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Improcedente" id="imp" />
+                <Label
+                  htmlFor="imp"
+                  className="cursor-pointer font-medium text-red-700"
+                >
+                  Improcedente
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Necessita mais análise" id="mais" />
+                <Label
+                  htmlFor="mais"
+                  className="cursor-pointer font-medium text-yellow-700"
+                >
+                  Necessita mais análise
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-base">Justificativa e Análise</Label>
+            <Textarea
+              placeholder="Descreva detalhadamente os motivos da sua conclusão..."
+              className="min-h-[200px]"
+              value={parecer}
+              onChange={(e) => setParecer(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              disabled={submitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting || !parecer.trim()}
+            >
+              {submitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="mr-2 h-4 w-4" />
+              )}
+              Registrar Meu Voto
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {votes.length > 0 && (
+        <div className="text-sm text-muted-foreground flex items-center gap-2">
+          <History className="h-4 w-4" />
+          Status da equipe: {votes.length} analista(s) já votaram.
         </div>
       )}
     </div>

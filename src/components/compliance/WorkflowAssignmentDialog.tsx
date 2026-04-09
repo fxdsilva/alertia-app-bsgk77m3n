@@ -256,8 +256,9 @@ export function WorkflowAssignmentDialog({
               )}
             </ScrollArea>
             <p className="text-xs text-muted-foreground mt-1">
-              O primeiro analista selecionado será o líder da fase e o
-              responsável principal.
+              O primeiro analista selecionado será o líder da fase. Em caso de
+              divergência de pareceres, o voto do líder terá poder de decisão
+              final.
             </p>
           </div>
 
