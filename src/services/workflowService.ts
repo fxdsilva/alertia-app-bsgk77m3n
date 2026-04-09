@@ -67,24 +67,37 @@ export const workflowService = {
     const { data, error } = await supabase
       .from('status_denuncia')
       .select('id')
-      .eq('nome_status', statusName)
+      .ilike('nome_status', statusName)
+      .limit(1)
+
+    if (data && data.length > 0) {
+      return data[0].id
+    }
+
+    console.warn(`Status "${statusName}" not found, creating...`)
+    const newId = statusName
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+
+    const { data: existingId } = await supabase
+      .from('status_denuncia')
+      .select('id')
+      .eq('id', newId)
+      .limit(1)
+    if (existingId && existingId.length > 0) return existingId[0].id
+
+    const { data: newData, error: newError } = await supabase
+      .from('status_denuncia')
+      .insert({ id: newId, nome_status: statusName })
+      .select('id')
       .single()
 
-    if (error || !data) {
-      console.warn(`Status "${statusName}" not found, creating...`)
-      const newId = statusName
-        .toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^a-z0-9_]/g, '')
-      const { data: newData, error: newError } = await supabase
-        .from('status_denuncia')
-        .insert({ id: newId, nome_status: statusName })
-        .select('id')
-        .single()
-      if (newError) throw newError
-      return newData.id
+    if (newError) {
+      console.error('Error creating status:', newError)
+      return newId // Fallback to raw ID
     }
-    return data.id
+    return newData.id
   },
 
   async getComplaintsByStatus(statuses: string[]) {
@@ -118,7 +131,7 @@ export const workflowService = {
         analista_1: den.analista_1,
         analista_2: den.analista_2 || (phase === 'f2' ? c.responsavel : null),
         analista_3: den.analista_3 || (phase === 'f3' ? c.responsavel : null),
-        analista_id: c.analista_id, // Responsavel ID for phase 2 and 3
+        analista_id: c.analista_id || den.analista_id,
         protocolo: den.protocolo || 'S/ Protocolo',
         descricao:
           den.descricao || c.descricao || c.titulo || c.caso || 'Sem descrição',
@@ -127,14 +140,12 @@ export const workflowService = {
       }
     }
 
-    const { data: f1 } = await supabase
+    const { data: allDenuncias } = await supabase
       .from('denuncias')
       .select(
-        '*, escolas_instituicoes(nome_escola), status_denuncia(nome_status), analista_1:analista_1_id(nome_usuario)',
+        '*, escolas_instituicoes(nome_escola), status_denuncia(nome_status), analista_1:analista_1_id(nome_usuario), analista_2:analista_2_id(nome_usuario), analista_3:analista_3_id(nome_usuario)',
       )
-      .or(
-        'status.eq.pendente,status.eq.em_analise,status_denuncia.nome_status.in.(A designar,Aguardando designação de Analista 1,Em análise de procedência – Analista 1,Parecer preliminar enviado para aprovação do Diretor de Compliance,Parecer devolvido para reavaliação – Analista 1,Denúncia registrada)',
-      )
+      .order('created_at', { ascending: false })
 
     const { data: f2 } = await supabase
       .from('investigacoes')
@@ -157,22 +168,56 @@ export const workflowService = {
       )
       .not('status', 'in', '("concluida","Concluída","Encerrada")')
 
-    const { data: closed } = await supabase
-      .from('denuncias')
-      .select(
-        '*, escolas_instituicoes(nome_escola), status_denuncia(nome_status)',
-      )
-      .or(
-        'status.eq.resolvido,status.eq.arquivado,status_denuncia.nome_status.in.(Arquivamento aprovado,Denúncia encerrada)',
-      )
-
     const f3Combined = [...(f3Proc || []), ...(f3Med || [])]
 
+    const f1Statuses = [
+      'A designar',
+      'Aguardando designação de Analista 1',
+      'Em análise de procedência – Analista 1',
+      'Parecer preliminar enviado para aprovação do Diretor de Compliance',
+      'Parecer devolvido para reavaliação – Analista 1',
+      'Denúncia registrada',
+      'pendente',
+      'em_analise',
+    ]
+
+    const closedStatuses = [
+      'resolvido',
+      'arquivado',
+      'Arquivamento aprovado',
+      'Denúncia encerrada',
+    ]
+
+    const f1: any[] = []
+    const closed: any[] = []
+    const f2DenunciaIds = new Set((f2 || []).map((i) => i.denuncia_id))
+    const f3DenunciaIds = new Set(f3Combined.map((i) => i.denuncia_id))
+
+    if (allDenuncias) {
+      allDenuncias.forEach((d) => {
+        const sName = d.status_denuncia?.nome_status || d.status
+
+        if (
+          closedStatuses.includes(sName) ||
+          closedStatuses.includes(d.status)
+        ) {
+          closed.push(d)
+        } else if (
+          f1Statuses.includes(sName) ||
+          f1Statuses.includes(d.status)
+        ) {
+          f1.push(d)
+        } else if (!f2DenunciaIds.has(d.id) && !f3DenunciaIds.has(d.id)) {
+          f1.push(d)
+        }
+      })
+    }
+
     return {
-      f1: (f1 || []).map((x) => normalize(x, 'Pendente', 'f1')),
+      f1: f1.map((x) => normalize(x, 'Pendente', 'f1')),
       f2: (f2 || []).map((x) => normalize(x, 'Em Investigação', 'f2')),
       f3: f3Combined.map((x) => normalize(x, 'Em Execução', 'f3')),
-      closed: (closed || []).map((x) => normalize(x, 'Encerrada', 'closed')),
+      closed: closed.map((x) => normalize(x, 'Encerrada', 'closed')),
     }
   },
 
@@ -192,18 +237,41 @@ export const workflowService = {
     const mappedData = mapStatus(data || [])
 
     return mappedData.filter((w) => {
-      const status = (w.status || '').toLowerCase()
       if (
-        status.includes('encerrad') ||
-        status.includes('arquivad') ||
-        status.includes('resolvid') ||
-        status.includes('concluid') ||
         [WORKFLOW_STATUS.CLOSED, WORKFLOW_STATUS.ARCHIVED].includes(w.status)
       ) {
         return false
       }
 
-      return true
+      if (
+        w.analista_1_id === analystId &&
+        (w.status === WORKFLOW_STATUS.ANALYSIS_1 ||
+          w.status === WORKFLOW_STATUS.RETURNED_1)
+      ) {
+        return true
+      }
+      if (
+        w.analista_2_id === analystId &&
+        w.status === WORKFLOW_STATUS.INVESTIGATION_2
+      ) {
+        return true
+      }
+      if (
+        w.analista_3_id === analystId &&
+        (w.status === WORKFLOW_STATUS.MEDIATION_3 ||
+          w.status === WORKFLOW_STATUS.DISCIPLINARY_3)
+      ) {
+        return true
+      }
+      if (
+        w.analista_id === analystId &&
+        !w.analista_1_id &&
+        !w.analista_2_id &&
+        !w.analista_3_id
+      ) {
+        return true
+      }
+      return false
     })
   },
 
@@ -240,7 +308,9 @@ export const workflowService = {
     analystId: string,
     resolutionType?: 'mediacao' | 'disciplinar',
   ) {
-    const updates: any = {}
+    const updates: any = {
+      analista_id: analystId,
+    }
     let newStatusName = ''
     let logMsg = ''
 
@@ -254,12 +324,10 @@ export const workflowService = {
 
     if (phase === 1) {
       updates.analista_1_id = analystId
-      updates.analista_id = analystId
       newStatusName = WORKFLOW_STATUS.ANALYSIS_1
       logMsg = 'Analista 1 (Procedência) designado'
     } else if (phase === 2) {
       updates.analista_2_id = analystId
-      updates.analista_id = analystId
       newStatusName = WORKFLOW_STATUS.INVESTIGATION_2
       logMsg = 'Analista 2 (Investigação) designado'
 
@@ -267,7 +335,7 @@ export const workflowService = {
         .from('investigacoes')
         .select('id')
         .eq('denuncia_id', complaintId)
-        .maybeSingle()
+        .single()
 
       if (existingInv) {
         await supabase
@@ -289,7 +357,6 @@ export const workflowService = {
       }
     } else if (phase === 3) {
       updates.analista_3_id = analystId
-      updates.analista_id = analystId
       updates.tipo_resolucao = resolutionType
 
       if (resolutionType === 'mediacao') {

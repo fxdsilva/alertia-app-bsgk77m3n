@@ -185,9 +185,9 @@ export const complianceService = {
     let query = supabase
       .from('denuncias')
       .select(
-        'id, protocolo, categoria, status, gravidade, created_at, descricao, escola_id, escolas_instituicoes(nome_escola), autorizado_gestao, analista_id, anonimo, status_denuncia!inner(nome_status)',
+        'id, protocolo, categoria, status, gravidade, created_at, descricao, escola_id, escolas_instituicoes(nome_escola), autorizado_gestao, analista_id, anonimo, status_denuncia(nome_status)',
       )
-      .eq('status_denuncia.nome_status', 'A designar')
+      .is('analista_id', null)
 
     if (filters) {
       if (filters.schoolId && filters.schoolId !== 'all') {
@@ -210,7 +210,18 @@ export const complianceService = {
 
     const { data, error } = await query
     if (error) throw error
-    return data
+
+    const active = (data || []).filter((d: any) => {
+      const s = d.status_denuncia?.nome_status || d.status
+      return ![
+        'resolvido',
+        'arquivado',
+        'Arquivamento aprovado',
+        'Denúncia encerrada',
+      ].includes(s)
+    })
+
+    return active
   },
 
   async assignAnalystToEntity(
@@ -248,37 +259,13 @@ export const complianceService = {
     analystId: string,
     schoolId: string,
   ) {
-    const targetStatusName = WORKFLOW_STATUS.ANALYSIS_1
-    const targetStatusId = await workflowService.getStatusId(targetStatusName)
-
-    const { error, data } = await supabase
-      .from('denuncias')
-      .update({
-        analista_id: analystId,
-        analista_1_id: analystId,
-        status: targetStatusId,
-      })
-      .eq('id', complaintId)
-      .select()
-
-    if (error) throw error
-    if (!data || data.length === 0)
-      throw new Error(
-        'Falha ao atualizar denúncia. Verifique suas permissões (RLS).',
-      )
-
-    await supabase.from('compliance_workflow_logs').insert({
-      complaint_id: complaintId,
-      new_status: targetStatusName,
-      previous_status: 'A designar',
-      comments: `Analista designado via Triagem: ${analystId}`,
-    })
+    await workflowService.assignAnalyst(complaintId, 1, analystId)
 
     await auditService.logAction(
       'ASSIGN_INVESTIGATION',
       `Analista ${analystId} designado para denúncia ${complaintId} (Triagem)`,
       'denuncias',
-      { complaintId, analystId, schoolId, new_new_status: targetStatusName },
+      { complaintId, analystId, schoolId, phase: 1 },
     )
   },
 
