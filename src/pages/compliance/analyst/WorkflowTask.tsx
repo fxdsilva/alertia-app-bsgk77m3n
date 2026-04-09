@@ -265,13 +265,13 @@ export default function WorkflowTask() {
             />
 
             {isEditable ? (
-              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
+              <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t">
                 {/* Save Draft Button */}
                 <Button
                   variant="outline"
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto min-w-[160px]"
                 >
                   {submitting ? (
                     <Loader2 className="animate-spin mr-2 h-4 w-4" />
@@ -281,44 +281,46 @@ export default function WorkflowTask() {
                   Salvar Rascunho
                 </Button>
 
-                {phase === 1 ? (
-                  <>
-                    {/* Do Not Recommend / Archive */}
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleSubmit('archive')}
-                      disabled={submitting || report.length < 5}
-                      className="w-full sm:w-auto text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 border"
-                    >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Não Recomendar Investigação
-                    </Button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  {phase === 1 ? (
+                    <>
+                      {/* Do Not Recommend / Archive */}
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleSubmit('archive')}
+                        disabled={submitting || report.length < 5}
+                        className="w-full sm:w-auto text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 border min-w-[160px]"
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Não Recomendar
+                      </Button>
 
-                    {/* Recommend Investigation */}
+                      {/* Recommend Investigation */}
+                      <Button
+                        onClick={() => handleSubmit('investigate')}
+                        disabled={submitting || report.length < 5}
+                        className="w-full sm:w-auto min-w-[160px]"
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Recomendar Investigação
+                      </Button>
+                    </>
+                  ) : (
+                    // Generic Submit for other phases
                     <Button
-                      onClick={() => handleSubmit('investigate')}
+                      onClick={() => handleSubmit()}
                       disabled={submitting || report.length < 5}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto min-w-[160px]"
                     >
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Recomendar Investigação
+                      {submitting ? (
+                        <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                      ) : (
+                        <Send className="mr-2 h-4 w-4" />
+                      )}
+                      Enviar para Aprovação
                     </Button>
-                  </>
-                ) : (
-                  // Generic Submit for other phases
-                  <Button
-                    onClick={() => handleSubmit()}
-                    disabled={submitting || report.length < 5}
-                    className="w-full sm:w-auto"
-                  >
-                    {submitting ? (
-                      <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                    ) : (
-                      <Send className="mr-2 h-4 w-4" />
-                    )}
-                    Enviar para Aprovação
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
             ) : (
               <div className="p-4 bg-muted/20 rounded-md flex items-center gap-3 text-muted-foreground text-sm border">
