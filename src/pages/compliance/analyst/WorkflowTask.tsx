@@ -24,6 +24,7 @@ import {
   XCircle,
   AlertCircle,
   Clock,
+  FileText,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import useAppStore from '@/stores/useAppStore'
@@ -227,23 +228,46 @@ export default function WorkflowTask() {
       </div>
 
       {lastRejectionLog && isEditable && (
-        <Card className="border-destructive/50 bg-destructive/5 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-destructive flex items-center gap-2 text-lg">
-              <AlertCircle className="h-5 w-5" /> Decisão da Diretoria (Ajustes
-              Necessários)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-background/80 p-4 rounded-md border border-destructive/20 text-sm whitespace-pre-wrap text-foreground font-medium">
-              {lastRejectionLog.comments?.replace(
-                /^Decisão Fase \d+: Devolvido para Ajustes\.?\s*/,
-                '',
-              ) ||
-                'Por favor, revise o relatório conforme instruções da diretoria.'}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card className="border-destructive/50 bg-destructive/5 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-destructive flex items-center gap-2 text-lg">
+                <AlertCircle className="h-5 w-5" /> Decisão da Diretoria
+                (Ajustes Necessários)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-background p-4 rounded-md border border-destructive/20 text-sm whitespace-pre-wrap text-foreground font-medium">
+                {lastRejectionLog.comments?.replace(
+                  /^Decisão Fase \d+: Devolvido para Ajustes\.?\s*/,
+                  '',
+                ) ||
+                  'Por favor, revise o relatório conforme instruções da diretoria.'}
+              </div>
+            </CardContent>
+          </Card>
+
+          {((phase === 1 && complaint.parecer_1) ||
+            (phase === 2 && complaint.relatorio_2) ||
+            (phase === 3 && complaint.relatorio_3) ||
+            (phase === 0 && complaint.parecer_1)) && (
+            <Card className="border-muted shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-muted-foreground flex items-center gap-2 text-lg">
+                  <FileText className="h-5 w-5" /> Versão Anterior do Parecer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted/30 p-4 rounded-md border text-sm whitespace-pre-wrap text-muted-foreground">
+                  {phase === 1 && complaint.parecer_1}
+                  {phase === 2 && complaint.relatorio_2}
+                  {phase === 3 && complaint.relatorio_3}
+                  {phase === 0 && complaint.parecer_1}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       <Card>
