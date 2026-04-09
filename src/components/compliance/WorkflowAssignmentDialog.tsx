@@ -79,7 +79,12 @@ export function WorkflowAssignmentDialog({
   }
 
   const handleAssign = async () => {
-    if (!complaint || !selectedAnalyst) return
+    if (!selectedAnalyst) {
+      toast.error('Selecione um analista antes de continuar')
+      return
+    }
+    if (!complaint) return
+
     setSubmitting(true)
     try {
       await workflowService.assignAnalyst(

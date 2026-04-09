@@ -7,6 +7,7 @@ import {
 } from '@/services/workflowService'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import useAppStore from '@/stores/useAppStore'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
@@ -37,6 +38,8 @@ import { WorkflowAssignmentDialog } from '@/components/compliance/WorkflowAssign
 
 export default function ComplaintWorkflow() {
   const navigate = useNavigate()
+  const { profile } = useAppStore()
+  const isDirector = profile === 'DIRETOR_COMPLIANCE'
   const [loading, setLoading] = useState(true)
   const [complaints, setComplaints] = useState<WorkflowComplaint[]>([])
   const [activeTab, setActiveTab] = useState('f1')
@@ -147,13 +150,17 @@ export default function ComplaintWorkflow() {
     // Determine primary action based on phase
     if (c._phase === 'f1') {
       if (!c.analista_1_id) {
-        action = (
+        action = isDirector ? (
           <Button
             onClick={() => handleAssign(c, 1)}
-            className="w-full sm:w-auto gap-2 bg-indigo-600 hover:bg-indigo-700"
+            className="w-full sm:w-auto gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-md"
           >
-            <UserCheck className="h-4 w-4" /> Designar Analista 1
+            <UserCheck className="h-4 w-4" /> Designar Analista
           </Button>
+        ) : (
+          <span className="text-sm text-muted-foreground italic">
+            Aguardando designação
+          </span>
         )
       } else {
         action = (
@@ -168,13 +175,17 @@ export default function ComplaintWorkflow() {
       }
     } else if (c._phase === 'f2') {
       if (!c.analista_2_id && !c.analista_id) {
-        action = (
+        action = isDirector ? (
           <Button
             onClick={() => handleAssign(c, 2)}
-            className="w-full sm:w-auto gap-2 bg-blue-600 hover:bg-blue-700"
+            className="w-full sm:w-auto gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-md"
           >
-            <UserCheck className="h-4 w-4" /> Designar Analista 2
+            <UserCheck className="h-4 w-4" /> Designar Analista
           </Button>
+        ) : (
+          <span className="text-sm text-muted-foreground italic">
+            Aguardando designação
+          </span>
         )
       } else {
         action = (
@@ -183,19 +194,23 @@ export default function ComplaintWorkflow() {
             className="w-full sm:w-auto"
             onClick={() => handleReview(c.id)}
           >
-            Ver Investigação
+            Ver Detalhes
           </Button>
         )
       }
     } else if (c._phase === 'f3') {
       if (!c.analista_3_id && !c.analista_id) {
-        action = (
+        action = isDirector ? (
           <Button
             onClick={() => handleAssign(c, 3)}
-            className="w-full sm:w-auto gap-2 bg-orange-600 hover:bg-orange-700"
+            className="w-full sm:w-auto gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-md"
           >
-            <UserCheck className="h-4 w-4" /> Designar Analista 3
+            <UserCheck className="h-4 w-4" /> Designar Analista
           </Button>
+        ) : (
+          <span className="text-sm text-muted-foreground italic">
+            Aguardando designação
+          </span>
         )
       } else {
         action = (
@@ -204,7 +219,7 @@ export default function ComplaintWorkflow() {
             className="w-full sm:w-auto"
             onClick={() => handleReview(c.id)}
           >
-            Ver Execução
+            Ver Detalhes
           </Button>
         )
       }
@@ -223,7 +238,7 @@ export default function ComplaintWorkflow() {
     return (
       <Card
         key={c.record_id || c.id}
-        className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/40 flex flex-col"
+        className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/40 flex flex-col overflow-hidden"
       >
         <CardContent className="p-5 space-y-4 flex-1">
           <div className="flex justify-between items-start">
@@ -281,8 +296,8 @@ export default function ComplaintWorkflow() {
             {c.analista_3 && <span> | A3: {c.analista_3.nome_usuario}</span>}
           </div>
         </CardContent>
-        <CardFooter className="bg-slate-50/50 p-3 px-5 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-2 border-t mt-auto">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1 sm:mb-0">
+        <CardFooter className="bg-slate-50/50 p-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-t mt-auto">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
             <div
               className={cn('h-2 w-2 rounded-full shrink-0', {
                 'bg-indigo-500': c._phase === 'f1',
