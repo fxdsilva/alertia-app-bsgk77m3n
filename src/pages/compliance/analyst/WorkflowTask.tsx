@@ -34,6 +34,7 @@ export default function WorkflowTask() {
   const { user } = useAppStore()
   const navigate = useNavigate()
   const [complaint, setComplaint] = useState<WorkflowComplaint | null>(null)
+  const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [report, setReport] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -45,8 +46,12 @@ export default function WorkflowTask() {
   const fetchDetails = async () => {
     setLoading(true)
     try {
-      const data = await workflowService.getComplaintDetails(id!)
+      const [data, logsData] = await Promise.all([
+        workflowService.getComplaintDetails(id!),
+        workflowService.getWorkflowLogs(id!),
+      ])
       setComplaint(data)
+      setLogs(logsData || [])
 
       if (user) {
         if (
@@ -190,6 +195,12 @@ export default function WorkflowTask() {
   const phase = context?.phase ?? null
   const isEditable = context?.isEditable ?? false
 
+  const lastRejectionLog = logs.find(
+    (log) =>
+      log.new_status === WORKFLOW_STATUS.RETURNED_1 ||
+      (log.comments && log.comments.includes('Devolvido para Ajustes')),
+  )
+
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6 pb-20 animate-fade-in">
       <Button
@@ -214,6 +225,26 @@ export default function WorkflowTask() {
           </Badge>
         </div>
       </div>
+
+      {lastRejectionLog && isEditable && (
+        <Card className="border-destructive/50 bg-destructive/5 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-destructive flex items-center gap-2 text-lg">
+              <AlertCircle className="h-5 w-5" /> Decisão da Diretoria (Ajustes
+              Necessários)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-background/80 p-4 rounded-md border border-destructive/20 text-sm whitespace-pre-wrap text-destructive-foreground font-medium">
+              {lastRejectionLog.comments?.replace(
+                /^Decisão Fase \d+: Devolvido para Ajustes\.?\s*/,
+                '',
+              ) ||
+                'Por favor, revise o relatório conforme instruções da diretoria.'}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

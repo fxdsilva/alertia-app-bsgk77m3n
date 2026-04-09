@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { supabase } from '@/lib/supabase/client'
 import {
   workflowService,
   WorkflowComplaint,
@@ -30,10 +31,24 @@ export default function WorkflowDetail() {
   const [loading, setLoading] = useState(true)
   const [comment, setComment] = useState('')
   const [processing, setProcessing] = useState(false)
+  const [analysts, setAnalysts] = useState<any[]>([])
+  const [selectedAnalyst, setSelectedAnalyst] = useState<string>('')
 
   useEffect(() => {
-    if (id) fetchDetails()
+    if (id) {
+      fetchDetails()
+      fetchAnalysts()
+    }
   }, [id])
+
+  const fetchAnalysts = async () => {
+    const { data } = await supabase
+      .from('usuarios_escola')
+      .select('id, nome_usuario')
+      .eq('perfil', 'ANALISTA_COMPLIANCE')
+      .eq('ativo', true)
+    if (data) setAnalysts(data)
+  }
 
   const fetchDetails = async () => {
     setLoading(true)
@@ -106,6 +121,46 @@ export default function WorkflowDetail() {
     )
   if (!complaint) return null
 
+  const needsAnalyst1 =
+    complaint.status === WORKFLOW_STATUS.REGISTERED ||
+    complaint.status === WORKFLOW_STATUS.WAITING_ANALYST_1
+  const needsAnalyst2 = complaint.status === WORKFLOW_STATUS.APPROVED_PROCEDURE
+  const needsAnalyst3 = complaint.status === WORKFLOW_STATUS.WAITING_ANALYST_3
+
+  const needsAssignment = needsAnalyst1 || needsAnalyst2 || needsAnalyst3
+
+  const handleAssignAnalyst = async () => {
+    if (!selectedAnalyst) {
+      toast.error('Selecione um analista antes de continuar')
+      return
+    }
+    setProcessing(true)
+    try {
+      let phase: 1 | 2 | 3 = 1
+      let resolutionType: 'mediacao' | 'disciplinar' | undefined
+
+      if (needsAnalyst2) phase = 2
+      if (needsAnalyst3) {
+        phase = 3
+        resolutionType = (complaint.tipo_resolucao as any) || 'disciplinar'
+      }
+
+      await workflowService.assignAnalyst(
+        complaint.id,
+        phase,
+        selectedAnalyst,
+        resolutionType,
+      )
+      toast.success('Analista designado com sucesso')
+      await fetchDetails()
+    } catch (error) {
+      toast.error('Erro ao designar analista')
+    } finally {
+      setProcessing(false)
+      setSelectedAnalyst('')
+    }
+  }
+
   const isReviewPhase = [
     WORKFLOW_STATUS.REVIEW_1,
     WORKFLOW_STATUS.REVIEW_2,
@@ -123,12 +178,56 @@ export default function WorkflowDetail() {
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
       </Button>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Revisão de Workflow</h1>
-        <Badge variant="outline" className="text-lg px-3">
+        <Badge variant="outline" className="text-lg px-3 w-fit">
           {complaint.status}
         </Badge>
       </div>
+
+      {needsAssignment && (
+        <Card className="border-primary shadow-md bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-primary text-lg">
+              Designar Analista
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 w-full space-y-2">
+                <label className="text-sm font-medium">
+                  Selecione um analista para esta fase
+                </label>
+                <select
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={selectedAnalyst}
+                  onChange={(e) => setSelectedAnalyst(e.target.value)}
+                  disabled={processing}
+                >
+                  <option value="">Selecione um analista...</option>
+                  {analysts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nome_usuario}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button
+                className="w-full md:w-auto min-w-[200px]"
+                onClick={handleAssignAnalyst}
+                disabled={processing || !selectedAnalyst}
+              >
+                {processing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <User className="mr-2 h-4 w-4" />
+                )}
+                Designar Analista
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Identification Alert */}
       {!complaint.anonimo && (
