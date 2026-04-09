@@ -422,90 +422,122 @@ export const workflowService = {
     phase: 1 | 2 | 3,
     analystId: string,
     conclusao: string,
-    parecer_texto: string
+    parecer_texto: string,
   ) {
-    const { error } = await supabase.from('workflow_pareceres').upsert({
-      denuncia_id: complaintId,
-      analista_id: analystId,
-      fase: phase,
-      conclusao,
-      parecer_texto,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'denuncia_id,analista_id,fase' });
+    const { error } = await supabase.from('workflow_pareceres').upsert(
+      {
+        denuncia_id: complaintId,
+        analista_id: analystId,
+        fase: phase,
+        conclusao,
+        parecer_texto,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'denuncia_id,analista_id,fase' },
+    )
 
-    if (error) throw error;
+    if (error) throw error
 
-    await this.checkAndApplyConsensus(complaintId, phase);
+    await this.checkAndApplyConsensus(complaintId, phase)
   },
 
   async checkAndApplyConsensus(complaintId: string, phase: 1 | 2 | 3) {
-    const complaint = await this.getComplaintDetails(complaintId);
-    if (!complaint) return;
+    const complaint = await this.getComplaintDetails(complaintId)
+    if (!complaint) return
 
-    const leaderId = phase === 1 ? complaint.analista_1_id : (phase === 2 ? complaint.analista_2_id : complaint.analista_3_id);
-    
-    const { data: extraAnalysts } = await supabase.from('workflow_analistas')
+    const leaderId =
+      phase === 1
+        ? complaint.analista_1_id
+        : phase === 2
+          ? complaint.analista_2_id
+          : complaint.analista_3_id
+
+    const { data: extraAnalysts } = await supabase
+      .from('workflow_analistas')
       .select('analista_id')
       .eq('denuncia_id', complaintId)
-      .eq('fase', phase);
-      
-    const allAssignedIds = [leaderId, ...(extraAnalysts?.map((a: any) => a.analista_id) || [])].filter(Boolean);
-    const uniqueAssignedIds = Array.from(new Set(allAssignedIds));
+      .eq('fase', phase)
 
-    const votes = await this.getAnalystVotes(complaintId, phase);
-    
+    const allAssignedIds = [
+      leaderId,
+      ...(extraAnalysts?.map((a: any) => a.analista_id) || []),
+    ].filter(Boolean)
+    const uniqueAssignedIds = Array.from(new Set(allAssignedIds))
+
+    const votes = await this.getAnalystVotes(complaintId, phase)
+
     if (!votes || votes.length < uniqueAssignedIds.length) {
-      return; // Waiting for others
+      return // Waiting for others
     }
 
-    let finalConclusion = '';
-    let decisionType = '';
-    
-    const allConclusions = votes.map((v: any) => v.conclusao);
-    const isConsensus = allConclusions.every((c: string) => c === allConclusions[0]);
+    let finalConclusion = ''
+    let decisionType = ''
+
+    const allConclusions = votes.map((v: any) => v.conclusao)
+    const isConsensus = allConclusions.every(
+      (c: string) => c === allConclusions[0],
+    )
 
     if (isConsensus) {
-      finalConclusion = allConclusions[0];
-      decisionType = 'Consenso';
+      finalConclusion = allConclusions[0]
+      decisionType = 'Consenso'
     } else {
-      const leaderVote = votes.find((v: any) => v.analista_id === leaderId);
+      const leaderVote = votes.find((v: any) => v.analista_id === leaderId)
       if (leaderVote) {
-        finalConclusion = leaderVote.conclusao;
-        decisionType = 'Decisão do Líder (Divergência)';
+        finalConclusion = leaderVote.conclusao
+        decisionType = 'Decisão do Líder (Divergência)'
       } else {
-        const counts: Record<string, number> = {};
-        allConclusions.forEach((c: string) => counts[c] = (counts[c] || 0) + 1);
-        let max = 0;
+        const counts: Record<string, number> = {}
+        allConclusions.forEach(
+          (c: string) => (counts[c] = (counts[c] || 0) + 1),
+        )
+        let max = 0
         for (const [c, count] of Object.entries(counts)) {
-          if (count > max) { max = count; finalConclusion = c; }
+          if (count > max) {
+            max = count
+            finalConclusion = c
+          }
         }
-        decisionType = 'Maioria Simples (Sem Líder)';
+        decisionType = 'Maioria Simples (Sem Líder)'
       }
     }
 
-    let compiledText = `[DECISÃO DA EQUIPE: ${finalConclusion} | Regra: ${decisionType}]\n\n`;
+    let compiledText = `[DECISÃO DA EQUIPE: ${finalConclusion} | Regra: ${decisionType}]\n\n`
     votes.forEach((v: any) => {
-      const isLider = v.analista_id === leaderId ? ' (Líder)' : '';
-      compiledText += `--- Parecer de ${v.analista?.nome_usuario || 'Analista'}${isLider} ---\n`;
-      compiledText += `Voto: ${v.conclusao}\n`;
-      compiledText += `Justificativa:\n${v.parecer_texto}\n\n`;
-    });
+      const isLider = v.analista_id === leaderId ? ' (Líder)' : ''
+      compiledText += `--- Parecer de ${v.analista?.nome_usuario || 'Analista'}${isLider} ---\n`
+      compiledText += `Voto: ${v.conclusao}\n`
+      compiledText += `Justificativa:\n${v.parecer_texto}\n\n`
+    })
 
     if (isConsensus && phase === 1) {
       // Auto apply if consensus
-      await this.saveReportDraft(complaintId, phase, compiledText);
+      await this.saveReportDraft(complaintId, phase, compiledText)
       if (finalConclusion === 'Procedente') {
-        await this.approvePhase(complaintId, 1, true, `Aprovado automaticamente: ${decisionType}`);
+        await this.approvePhase(
+          complaintId,
+          1,
+          true,
+          `Aprovado automaticamente: ${decisionType}`,
+        )
       } else if (finalConclusion === 'Improcedente') {
-        await this.archiveComplaint(complaintId, `Arquivado automaticamente: ${decisionType}`);
+        await this.archiveComplaint(
+          complaintId,
+          `Arquivado automaticamente: ${decisionType}`,
+        )
       } else {
-        await this.submitReport(complaintId, phase, compiledText, finalConclusion);
+        await this.submitReport(
+          complaintId,
+          phase,
+          compiledText,
+          finalConclusion,
+        )
       }
     } else {
       // Send to director for manual review on divergence or other phases
-      await this.submitReport(complaintId, phase, compiledText, finalConclusion);
+      await this.submitReport(complaintId, phase, compiledText, finalConclusion)
     }
-  }
+  },
 
   async saveReportDraft(
     complaintId: string,
