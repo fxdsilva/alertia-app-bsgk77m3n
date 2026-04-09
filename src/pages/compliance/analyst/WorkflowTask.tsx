@@ -235,7 +235,7 @@ export default function WorkflowTask() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-background/80 p-4 rounded-md border border-destructive/20 text-sm whitespace-pre-wrap text-destructive-foreground font-medium">
+            <div className="bg-background/80 p-4 rounded-md border border-destructive/20 text-sm whitespace-pre-wrap text-foreground font-medium">
               {lastRejectionLog.comments?.replace(
                 /^Decisão Fase \d+: Devolvido para Ajustes\.?\s*/,
                 '',
