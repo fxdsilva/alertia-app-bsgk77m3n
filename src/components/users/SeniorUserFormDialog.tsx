@@ -36,16 +36,27 @@ import {
 } from '@/services/seniorUserService'
 import { Loader2 } from 'lucide-react'
 
-const formSchema = z.object({
-  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  email: z.string().email('Email inválido'),
-  perfil: z.string().min(1, 'Selecione um perfil'),
-  escola_id: z.string().min(1, 'Selecione uma escola'),
-  password: z.string().optional(),
-  cargo: z.string().optional(),
-  departamento: z.string().optional(),
-  ativo: z.boolean().default(true),
-})
+const formSchema = z
+  .object({
+    nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+    email: z.string().email('Email inválido'),
+    perfil: z.string().min(1, 'Selecione um perfil'),
+    escola_id: z.string().optional(),
+    password: z.string().optional(),
+    cargo: z.string().optional(),
+    departamento: z.string().optional(),
+    ativo: z.boolean().default(true),
+  })
+  .refine(
+    (data) => {
+      if (data.perfil === 'SECRETARIA DE EDUCAÇÃO') return true
+      return !!data.escola_id && data.escola_id.length > 0
+    },
+    {
+      message: 'Selecione uma escola',
+      path: ['escola_id'],
+    },
+  )
 
 interface SeniorUserFormDialogProps {
   open: boolean
@@ -209,40 +220,17 @@ export function SeniorUserFormDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="escola_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Escola</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger disabled={schoolsLoading}>
-                          <SelectValue placeholder="Selecione a escola" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {schools.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.nome_escola}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="perfil"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Perfil de Acesso</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(val) => {
+                        field.onChange(val)
+                        if (val === 'SECRETARIA DE EDUCAÇÃO') {
+                          form.setValue('escola_id', '')
+                        }
+                      }}
                       defaultValue={field.value}
                       value={field.value}
                     >
@@ -273,6 +261,37 @@ export function SeniorUserFormDialog({
                   </FormItem>
                 )}
               />
+
+              {form.watch('perfil') !== 'SECRETARIA DE EDUCAÇÃO' && (
+                <FormField
+                  control={form.control}
+                  name="escola_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Escola</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger disabled={schoolsLoading}>
+                            <SelectValue placeholder="Selecione a escola" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {schools.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.nome_escola}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <FormField

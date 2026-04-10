@@ -106,12 +106,14 @@ export default function UserManagement() {
   const handleSubmit = async (values: any) => {
     setActionLoading(true)
     try {
+      const isGlobalProfile = values.perfil === 'SECRETARIA DE EDUCAÇÃO'
+
       if (editingUser) {
         await seniorUserService.updateUser(editingUser.id, {
           nome_usuario: values.nome,
           email: values.email,
           perfil: values.perfil,
-          escola_id: values.escola_id,
+          escola_id: isGlobalProfile ? null : values.escola_id,
           ativo: values.ativo,
           cargo: values.cargo,
           departamento: values.departamento,
@@ -120,6 +122,7 @@ export default function UserManagement() {
       } else {
         await seniorUserService.createUser({
           ...values,
+          escola_id: isGlobalProfile ? null : values.escola_id,
           nome: values.nome,
         })
         toast.success('Usuário criado com sucesso')

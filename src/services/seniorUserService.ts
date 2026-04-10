@@ -46,7 +46,7 @@ export const seniorUserService = {
     password?: string
     nome: string
     perfil: string
-    escola_id: string
+    escola_id?: string | null
     cargo?: string
     departamento?: string
     ativo?: boolean
