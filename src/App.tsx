@@ -48,6 +48,7 @@ import AdminDashboard from '@/pages/admin/AdminDashboard'
 import CodeOfConductManager from '@/pages/admin/CodeOfConductManager'
 import CommitmentManager from '@/pages/admin/CommitmentManager'
 import ComplaintManager from '@/pages/admin/ComplaintManager'
+import TrainingManager from '@/pages/admin/TrainingManager'
 import Reports from '@/pages/admin/Reports'
 
 // School Admin Routes
@@ -143,6 +144,7 @@ const App = () => (
               />
               <Route path="/admin/commitment" element={<CommitmentManager />} />
               <Route path="/admin/complaints" element={<ComplaintManager />} />
+              <Route path="/admin/trainings" element={<TrainingManager />} />
               <Route path="/admin/reports" element={<Reports />} />
 
               {/* School Admin Routes */}

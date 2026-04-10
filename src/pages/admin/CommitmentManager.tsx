@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 import { Shield, Trash2, Loader2, AlertTriangle } from 'lucide-react'
 
 export default function CommitmentManager() {
-  const { selectedSchool, user } = useAppStore()
+  const { selectedSchool, user, profile } = useAppStore()
   const [document, setDocument] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -44,11 +44,19 @@ export default function CommitmentManager() {
     }
 
     try {
-      const hasPermission = await complianceService.hasSchoolDocPermission(
-        user.id,
-        selectedSchool.id,
-      )
-      setCanEdit(hasPermission)
+      if (
+        ['gestao_escola', 'administrador', 'admin_gestor', 'senior'].includes(
+          profile || '',
+        )
+      ) {
+        setCanEdit(true)
+      } else {
+        const hasPermission = await complianceService.hasSchoolDocPermission(
+          user.id,
+          selectedSchool.id,
+        )
+        setCanEdit(hasPermission)
+      }
     } catch (error) {
       console.error('Error checking permissions:', error)
       setCanEdit(false)

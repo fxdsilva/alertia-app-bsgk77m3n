@@ -10,6 +10,43 @@ export interface TrainingWithProgress extends Training {
 }
 
 export const trainingService = {
+  async getTrainingsBySchool(schoolId: string) {
+    const { data, error } = await supabase
+      .from('treinamentos')
+      .select('*')
+      .eq('escola_id', schoolId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  async upsertTraining(training: Partial<Training>) {
+    if (training.id) {
+      const { data, error } = await supabase
+        .from('treinamentos')
+        .update(training)
+        .eq('id', training.id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    } else {
+      const { data, error } = await supabase
+        .from('treinamentos')
+        .insert(training)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    }
+  },
+
+  async deleteTraining(id: string) {
+    const { error } = await supabase.from('treinamentos').delete().eq('id', id)
+    if (error) throw error
+  },
+
   async getPublicTrainings(schoolId: string) {
     const { data, error } = await supabase
       .from('treinamentos')
