@@ -59,9 +59,10 @@ export default function Support() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const form = e.currentTarget
     setLoading(true)
 
-    const formData = new FormData(e.currentTarget)
+    const formData = new FormData(form)
     const ticketData = {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
@@ -79,7 +80,7 @@ export default function Support() {
       toast.success(
         'Recebemos sua mensagem! Nossa equipe analisará sua dúvida e entraremos em contato em breve.',
       )
-      e.currentTarget.reset()
+      form.reset()
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       toast.error(
