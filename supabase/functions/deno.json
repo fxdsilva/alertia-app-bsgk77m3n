@@ -4,6 +4,6 @@
     "delete-user": 3,
     "create-admin-master": 2,
     "check-audits": 1,
-    "send-support-email": 1
+    "send-support-email": 2
   }
 }
