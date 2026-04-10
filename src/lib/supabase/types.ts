@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: '14.1'
   }
   public: {
     Tables: {
@@ -84,18 +84,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "analyst_assignments_analyst_id_fkey"
-            columns: ["analyst_id"]
+            foreignKeyName: 'analyst_assignments_analyst_id_fkey'
+            columns: ['analyst_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "analyst_assignments_school_id_fkey"
-            columns: ["school_id"]
+            foreignKeyName: 'analyst_assignments_school_id_fkey'
+            columns: ['school_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -132,11 +132,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "audit_findings_audit_id_fkey"
-            columns: ["audit_id"]
+            foreignKeyName: 'audit_findings_audit_id_fkey'
+            columns: ['audit_id']
             isOneToOne: false
-            referencedRelation: "auditorias"
-            referencedColumns: ["id"]
+            referencedRelation: 'auditorias'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -182,32 +182,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "auditorias_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'auditorias_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "auditorias_denuncia_id_fkey"
-            columns: ["denuncia_id"]
+            foreignKeyName: 'auditorias_denuncia_id_fkey'
+            columns: ['denuncia_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "auditorias_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'auditorias_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "auditorias_status_fkey"
-            columns: ["status"]
+            foreignKeyName: 'auditorias_status_fkey'
+            columns: ['status']
             isOneToOne: false
-            referencedRelation: "status_auditoria"
-            referencedColumns: ["id"]
+            referencedRelation: 'status_auditoria'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -238,11 +238,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "codigo_conduta_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'codigo_conduta_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: true
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -273,18 +273,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "compliance_task_evidences_task_id_fkey"
-            columns: ["task_id"]
+            foreignKeyName: 'compliance_task_evidences_task_id_fkey'
+            columns: ['task_id']
             isOneToOne: false
-            referencedRelation: "compliance_tasks"
-            referencedColumns: ["id"]
+            referencedRelation: 'compliance_tasks'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "compliance_task_evidences_uploaded_by_fkey"
-            columns: ["uploaded_by"]
+            foreignKeyName: 'compliance_task_evidences_uploaded_by_fkey'
+            columns: ['uploaded_by']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -363,39 +363,39 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "compliance_tasks_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'compliance_tasks_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "compliance_tasks_diretor_id_fkey"
-            columns: ["diretor_id"]
+            foreignKeyName: 'compliance_tasks_diretor_id_fkey'
+            columns: ['diretor_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "compliance_tasks_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'compliance_tasks_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "compliance_tasks_gestor_escolar_id_fkey"
-            columns: ["gestor_escolar_id"]
+            foreignKeyName: 'compliance_tasks_gestor_escolar_id_fkey'
+            columns: ['gestor_escolar_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "compliance_tasks_secondary_analyst_id_fkey"
-            columns: ["secondary_analyst_id"]
+            foreignKeyName: 'compliance_tasks_secondary_analyst_id_fkey'
+            columns: ['secondary_analyst_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -429,18 +429,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "compliance_workflow_logs_changed_by_fkey"
-            columns: ["changed_by"]
+            foreignKeyName: 'compliance_workflow_logs_changed_by_fkey'
+            columns: ['changed_by']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "compliance_workflow_logs_complaint_id_fkey"
-            columns: ["complaint_id"]
+            foreignKeyName: 'compliance_workflow_logs_complaint_id_fkey'
+            columns: ['complaint_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -471,11 +471,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "compromisso_alta_gestao_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'compromisso_alta_gestao_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: true
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -518,18 +518,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "controles_internos_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'controles_internos_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "controles_internos_denuncia_id_fkey"
-            columns: ["denuncia_id"]
+            foreignKeyName: 'controles_internos_denuncia_id_fkey'
+            columns: ['denuncia_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -626,53 +626,53 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "denuncias_analista_1_id_fkey"
-            columns: ["analista_1_id"]
+            foreignKeyName: 'denuncias_analista_1_id_fkey'
+            columns: ['analista_1_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "denuncias_analista_2_id_fkey"
-            columns: ["analista_2_id"]
+            foreignKeyName: 'denuncias_analista_2_id_fkey'
+            columns: ['analista_2_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "denuncias_analista_3_id_fkey"
-            columns: ["analista_3_id"]
+            foreignKeyName: 'denuncias_analista_3_id_fkey'
+            columns: ['analista_3_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "denuncias_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'denuncias_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "denuncias_diretor_id_fkey"
-            columns: ["diretor_id"]
+            foreignKeyName: 'denuncias_diretor_id_fkey'
+            columns: ['diretor_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "denuncias_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'denuncias_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "denuncias_status_fkey"
-            columns: ["status"]
+            foreignKeyName: 'denuncias_status_fkey'
+            columns: ['status']
             isOneToOne: false
-            referencedRelation: "status_denuncia"
-            referencedColumns: ["id"]
+            referencedRelation: 'status_denuncia'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -721,25 +721,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "due_diligence_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'due_diligence_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "due_diligence_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'due_diligence_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "due_diligence_status_fkey"
-            columns: ["status"]
+            foreignKeyName: 'due_diligence_status_fkey'
+            columns: ['status']
             isOneToOne: false
-            referencedRelation: "status_due_diligence"
-            referencedColumns: ["id"]
+            referencedRelation: 'status_due_diligence'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -818,11 +818,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "historico_permissoes_target_user_id_fkey"
-            columns: ["target_user_id"]
+            foreignKeyName: 'historico_permissoes_target_user_id_fkey'
+            columns: ['target_user_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -871,39 +871,39 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "investigacoes_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'investigacoes_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "investigacoes_denuncia_id_fkey"
-            columns: ["denuncia_id"]
+            foreignKeyName: 'investigacoes_denuncia_id_fkey'
+            columns: ['denuncia_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "investigacoes_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'investigacoes_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "investigacoes_responsavel_id_fkey"
-            columns: ["responsavel_id"]
+            foreignKeyName: 'investigacoes_responsavel_id_fkey'
+            columns: ['responsavel_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "investigacoes_status_fkey"
-            columns: ["status"]
+            foreignKeyName: 'investigacoes_status_fkey'
+            columns: ['status']
             isOneToOne: false
-            referencedRelation: "status_investigacao"
-            referencedColumns: ["id"]
+            referencedRelation: 'status_investigacao'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -976,25 +976,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "matriz_riscos_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'matriz_riscos_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "matriz_riscos_denuncia_id_fkey"
-            columns: ["denuncia_id"]
+            foreignKeyName: 'matriz_riscos_denuncia_id_fkey'
+            columns: ['denuncia_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "matriz_riscos_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'matriz_riscos_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1037,32 +1037,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "mediacoes_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'mediacoes_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "mediacoes_denuncia_id_fkey"
-            columns: ["denuncia_id"]
+            foreignKeyName: 'mediacoes_denuncia_id_fkey'
+            columns: ['denuncia_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "mediacoes_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'mediacoes_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "mediacoes_status_fkey"
-            columns: ["status"]
+            foreignKeyName: 'mediacoes_status_fkey'
+            columns: ['status']
             isOneToOne: false
-            referencedRelation: "status_mediacao"
-            referencedColumns: ["id"]
+            referencedRelation: 'status_mediacao'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1141,32 +1141,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "processos_disciplinares_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'processos_disciplinares_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "processos_disciplinares_denuncia_id_fkey"
-            columns: ["denuncia_id"]
+            foreignKeyName: 'processos_disciplinares_denuncia_id_fkey'
+            columns: ['denuncia_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "processos_disciplinares_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'processos_disciplinares_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "processos_disciplinares_status_fkey"
-            columns: ["status"]
+            foreignKeyName: 'processos_disciplinares_status_fkey'
+            columns: ['status']
             isOneToOne: false
-            referencedRelation: "status_processo_disciplinar"
-            referencedColumns: ["id"]
+            referencedRelation: 'status_processo_disciplinar'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1197,11 +1197,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "relatorios_consolidados_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'relatorios_consolidados_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1235,11 +1235,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "relatorios_ia_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'relatorios_ia_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1435,11 +1435,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "treinamentos_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'treinamentos_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1482,25 +1482,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "treinamentos_conclusoes_status_fkey"
-            columns: ["status"]
+            foreignKeyName: 'treinamentos_conclusoes_status_fkey'
+            columns: ['status']
             isOneToOne: false
-            referencedRelation: "status_treinamento_conclusao"
-            referencedColumns: ["id"]
+            referencedRelation: 'status_treinamento_conclusao'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "treinamentos_conclusoes_treinamento_id_fkey"
-            columns: ["treinamento_id"]
+            foreignKeyName: 'treinamentos_conclusoes_treinamento_id_fkey'
+            columns: ['treinamento_id']
             isOneToOne: false
-            referencedRelation: "treinamentos"
-            referencedColumns: ["id"]
+            referencedRelation: 'treinamentos'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "treinamentos_conclusoes_usuario_id_fkey"
-            columns: ["usuario_id"]
+            foreignKeyName: 'treinamentos_conclusoes_usuario_id_fkey'
+            columns: ['usuario_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1576,11 +1576,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "usuarios_escola_escola_id_fkey"
-            columns: ["escola_id"]
+            foreignKeyName: 'usuarios_escola_escola_id_fkey'
+            columns: ['escola_id']
             isOneToOne: false
-            referencedRelation: "escolas_instituicoes"
-            referencedColumns: ["id"]
+            referencedRelation: 'escolas_instituicoes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1608,18 +1608,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "workflow_analistas_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'workflow_analistas_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "workflow_analistas_denuncia_id_fkey"
-            columns: ["denuncia_id"]
+            foreignKeyName: 'workflow_analistas_denuncia_id_fkey'
+            columns: ['denuncia_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1656,18 +1656,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "workflow_pareceres_analista_id_fkey"
-            columns: ["analista_id"]
+            foreignKeyName: 'workflow_pareceres_analista_id_fkey'
+            columns: ['analista_id']
             isOneToOne: false
-            referencedRelation: "usuarios_escola"
-            referencedColumns: ["id"]
+            referencedRelation: 'usuarios_escola'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "workflow_pareceres_denuncia_id_fkey"
-            columns: ["denuncia_id"]
+            foreignKeyName: 'workflow_pareceres_denuncia_id_fkey'
+            columns: ['denuncia_id']
             isOneToOne: false
-            referencedRelation: "denuncias"
-            referencedColumns: ["id"]
+            referencedRelation: 'denuncias'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1725,33 +1725,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1760,23 +1760,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1785,23 +1785,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1810,36 +1810,36 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -1847,7 +1847,6 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
 
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
 // This section contains actual PostgreSQL column types, constraints, RLS policies,
@@ -2757,16 +2756,16 @@ export const Constants = {
 //   BEGIN
 //       -- Get task details
 //       SELECT * INTO v_task FROM compliance_tasks WHERE id = p_task_id;
-//   
+//
 //       IF v_task.id IS NULL THEN
 //           RAISE EXCEPTION 'Tarefa não encontrada';
 //       END IF;
-//   
+//
 //       -- If there is no proposal, nothing to do (or strictly shouldn't happen via UI)
 //       IF v_task.proposed_complaint_status IS NULL THEN
 //           RETURN;
 //       END IF;
-//   
+//
 //       IF p_approve THEN
 //           -- Validate that it is a complaint task and has a reference
 //           IF (v_task.tipo_modulo = 'Denúncia' OR v_task.tipo_modulo = 'Denuncia') AND v_task.referencia_id IS NOT NULL THEN
@@ -2777,17 +2776,17 @@ export const Constants = {
 //               WHERE id = v_task.referencia_id;
 //           END IF;
 //       END IF;
-//   
+//
 //       -- Clear the proposal as it has been handled (approved or rejected)
 //       -- We keep the task status as is (likely 'in_progress')
 //       UPDATE compliance_tasks
 //       SET proposed_complaint_status = NULL,
 //           updated_at = NOW()
 //       WHERE id = p_task_id;
-//   
+//
 //   END;
 //   $function$
-//   
+//
 // FUNCTION check_analyst_task_updates()
 //   CREATE OR REPLACE FUNCTION public.check_analyst_task_updates()
 //    RETURNS trigger
@@ -2809,14 +2808,14 @@ export const Constants = {
 //          NEW.analista_id IS DISTINCT FROM OLD.analista_id OR
 //          NEW.diretor_id IS DISTINCT FROM OLD.diretor_id OR
 //          NEW.referencia_id IS DISTINCT FROM OLD.referencia_id THEN
-//          
+//
 //          RAISE EXCEPTION 'Analysts can only update status, notes, and completion date.';
 //       END IF;
 //     END IF;
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION check_is_admin_master()
 //   CREATE OR REPLACE FUNCTION public.check_is_admin_master()
 //    RETURNS boolean
@@ -2834,7 +2833,7 @@ export const Constants = {
 //     RETURN is_master;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION check_is_operational()
 //   CREATE OR REPLACE FUNCTION public.check_is_operational()
 //    RETURNS boolean
@@ -2852,7 +2851,7 @@ export const Constants = {
 //     );
 //   END;
 //   $function$
-//   
+//
 // FUNCTION check_is_school_manager(uuid)
 //   CREATE OR REPLACE FUNCTION public.check_is_school_manager(target_escola_id uuid)
 //    RETURNS boolean
@@ -2873,7 +2872,7 @@ export const Constants = {
 //     );
 //   END;
 //   $function$
-//   
+//
 // FUNCTION current_user_has_permission(text)
 //   CREATE OR REPLACE FUNCTION public.current_user_has_permission(perm_key text)
 //    RETURNS boolean
@@ -2885,7 +2884,7 @@ export const Constants = {
 //     WHERE id = auth.uid()
 //     LIMIT 1;
 //   $function$
-//   
+//
 // FUNCTION denuncias_before_insert()
 //   CREATE OR REPLACE FUNCTION public.denuncias_before_insert()
 //    RETURNS trigger
@@ -2902,7 +2901,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION generate_complaint_protocol()
 //   CREATE OR REPLACE FUNCTION public.generate_complaint_protocol()
 //    RETURNS trigger
@@ -2917,24 +2916,24 @@ export const Constants = {
 //     IF NEW.protocolo IS NOT NULL THEN
 //       RETURN NEW;
 //     END IF;
-//   
+//
 //     LOOP
 //       -- Generate protocol: YYYYMMDD-XXXX (4 random digits)
 //       new_protocol := to_char(now(), 'YYYYMMDD') || '-' || lpad(floor(random() * 10000)::text, 4, '0');
-//       
+//
 //       -- Check uniqueness
 //       SELECT EXISTS(SELECT 1 FROM public.denuncias WHERE protocolo = new_protocol) INTO exists_protocol;
-//       
+//
 //       IF NOT exists_protocol THEN
 //         NEW.protocolo := new_protocol;
 //         EXIT;
 //       END IF;
 //     END LOOP;
-//     
+//
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION get_auth_user_id()
 //   CREATE OR REPLACE FUNCTION public.get_auth_user_id()
 //    RETURNS uuid
@@ -2943,7 +2942,7 @@ export const Constants = {
 //   AS $function$
 //     SELECT (auth.uid())::uuid;
 //   $function$
-//   
+//
 // FUNCTION get_complaint_by_protocol(text)
 //   CREATE OR REPLACE FUNCTION public.get_complaint_by_protocol(protocol_query text)
 //    RETURNS TABLE(status text, updated_at timestamp with time zone)
@@ -2961,7 +2960,7 @@ export const Constants = {
 //     WHERE d.protocolo = protocol_query;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION get_complaint_tracking_details(text)
 //   CREATE OR REPLACE FUNCTION public.get_complaint_tracking_details(protocol_query text)
 //    RETURNS jsonb
@@ -2993,23 +2992,23 @@ export const Constants = {
 //     FROM denuncias d
 //     LEFT JOIN status_denuncia s ON d.status = s.id
 //     WHERE d.protocolo = protocol_query;
-//   
+//
 //     IF v_complaint.id IS NULL THEN
 //       RETURN NULL;
 //     END IF;
-//   
+//
 //     -- Check if an analyst is assigned
 //     IF v_complaint.analista_1_id IS NOT NULL OR v_complaint.analista_id IS NOT NULL THEN
 //       v_is_assigned := true;
 //     END IF;
-//   
+//
 //     -- Check multiple analysts (from workflow_analistas)
 //     IF EXISTS (SELECT 1 FROM workflow_analistas WHERE denuncia_id = v_complaint.id AND fase = 1) THEN
 //       v_is_assigned := true;
 //     END IF;
-//   
+//
 //     -- Get phase 1 votes
-//     SELECT 
+//     SELECT
 //       COALESCE(jsonb_agg(jsonb_build_object(
 //         'analista_id', w.analista_id,
 //         'conclusao', w.conclusao
@@ -3017,12 +3016,12 @@ export const Constants = {
 //     INTO v_votes
 //     FROM workflow_pareceres w
 //     WHERE w.denuncia_id = v_complaint.id AND w.fase = 1;
-//   
+//
 //     v_total_analysts := jsonb_array_length(v_votes);
 //     IF v_total_analysts > 1 THEN
 //       v_has_multiple := true;
 //     END IF;
-//   
+//
 //     -- Calculate team decision
 //     IF v_total_analysts > 0 THEN
 //       -- Check consensus
@@ -3041,20 +3040,20 @@ export const Constants = {
 //           IF v_elem->>'conclusao' != v_first_conc THEN
 //             v_is_consensus := false;
 //           END IF;
-//           
+//
 //           IF (v_elem->>'analista_id')::uuid = v_complaint.analista_1_id THEN
 //             v_leader_vote := v_elem->>'conclusao';
 //           END IF;
-//   
+//
 //           -- Count for majority
 //           v_counts := jsonb_set(
-//             v_counts, 
-//             ARRAY[v_elem->>'conclusao'], 
+//             v_counts,
+//             ARRAY[v_elem->>'conclusao'],
 //             to_jsonb(COALESCE((v_counts->>(v_elem->>'conclusao'))::int, 0) + 1),
 //             true
 //           );
 //         END LOOP;
-//   
+//
 //         IF v_is_consensus THEN
 //           v_team_decision := v_first_conc;
 //           v_leader_agreed := true;
@@ -3079,20 +3078,20 @@ export const Constants = {
 //     ELSIF v_complaint.parecer_1 IS NOT NULL THEN
 //       v_team_decision := 'Parecer preliminar emitido';
 //     END IF;
-//   
+//
 //     -- Get latest director log
-//     SELECT 
+//     SELECT
 //       l.new_status,
 //       l.comments,
 //       l.created_at
 //     INTO v_director_log
 //     FROM compliance_workflow_logs l
 //     JOIN usuarios_escola u ON l.changed_by = u.id
-//     WHERE l.complaint_id = v_complaint.id 
+//     WHERE l.complaint_id = v_complaint.id
 //       AND u.perfil IN ('DIRETOR_COMPLIANCE', 'senior', 'administrador')
 //     ORDER BY l.created_at DESC
 //     LIMIT 1;
-//   
+//
 //     -- Build final JSON
 //     v_result := jsonb_build_object(
 //       'status', v_complaint.status_nome,
@@ -3102,7 +3101,7 @@ export const Constants = {
 //       'teamDecision', v_team_decision,
 //       'leaderAgreed', v_leader_agreed,
 //       'isAssigned', v_is_assigned,
-//       'directorDecision', CASE 
+//       'directorDecision', CASE
 //         WHEN v_director_log.new_status IS NOT NULL THEN jsonb_build_object(
 //           'new_status', v_director_log.new_status,
 //           'comments', v_director_log.comments,
@@ -3111,11 +3110,11 @@ export const Constants = {
 //         ELSE NULL
 //       END
 //     );
-//   
+//
 //     RETURN v_result;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION get_user_escola_id(uuid)
 //   CREATE OR REPLACE FUNCTION public.get_user_escola_id(user_id uuid)
 //    RETURNS uuid
@@ -3129,11 +3128,11 @@ export const Constants = {
 //     SELECT escola_id INTO v_escola_id
 //     FROM public.usuarios_escola
 //     WHERE id = user_id;
-//     
+//
 //     RETURN v_escola_id;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION get_user_id_by_email(text)
 //   CREATE OR REPLACE FUNCTION public.get_user_id_by_email(p_email text)
 //    RETURNS uuid
@@ -3142,7 +3141,7 @@ export const Constants = {
 //   AS $function$
 //     SELECT id FROM auth.users WHERE email = p_email LIMIT 1;
 //   $function$
-//   
+//
 // FUNCTION handle_escolas_updated_at()
 //   CREATE OR REPLACE FUNCTION public.handle_escolas_updated_at()
 //    RETURNS trigger
@@ -3153,7 +3152,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION handle_new_complaint_log()
 //   CREATE OR REPLACE FUNCTION public.handle_new_complaint_log()
 //    RETURNS trigger
@@ -3165,15 +3164,15 @@ export const Constants = {
 //   BEGIN
 //     -- Get status name
 //     SELECT nome_status INTO status_label FROM public.status_denuncia WHERE id = NEW.status;
-//     
+//
 //     -- Insert log
 //     INSERT INTO public.compliance_workflow_logs (complaint_id, new_status, comments)
 //     VALUES (NEW.id, COALESCE(status_label, 'Status Inicial'), 'Denúncia registrada via Portal (Status Inicial)');
-//     
+//
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION handle_user_changes()
 //   CREATE OR REPLACE FUNCTION public.handle_user_changes()
 //    RETURNS trigger
@@ -3207,7 +3206,7 @@ export const Constants = {
 //       RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION is_compliance_analyst()
 //   CREATE OR REPLACE FUNCTION public.is_compliance_analyst()
 //    RETURNS boolean
@@ -3221,7 +3220,7 @@ export const Constants = {
 //     );
 //   END;
 //   $function$
-//   
+//
 // FUNCTION is_compliance_director()
 //   CREATE OR REPLACE FUNCTION public.is_compliance_director()
 //    RETURNS boolean
@@ -3234,7 +3233,7 @@ export const Constants = {
 //       AND perfil = 'DIRETOR_COMPLIANCE'
 //     );
 //   $function$
-//   
+//
 // FUNCTION is_compliance_member()
 //   CREATE OR REPLACE FUNCTION public.is_compliance_member()
 //    RETURNS boolean
@@ -3247,7 +3246,7 @@ export const Constants = {
 //       AND perfil IN ('DIRETOR_COMPLIANCE', 'ANALISTA_COMPLIANCE')
 //     );
 //   $function$
-//   
+//
 // FUNCTION is_user_member_of_escola(uuid)
 //   CREATE OR REPLACE FUNCTION public.is_user_member_of_escola(p_escola_id uuid)
 //    RETURNS boolean
@@ -3259,7 +3258,7 @@ export const Constants = {
 //       WHERE ue.escola_id = p_escola_id AND ue.id = (SELECT auth.uid())
 //     );
 //   $function$
-//   
+//
 // FUNCTION log_denuncia_auth_change()
 //   CREATE OR REPLACE FUNCTION public.log_denuncia_auth_change()
 //    RETURNS trigger
@@ -3269,8 +3268,8 @@ export const Constants = {
 //       IF NEW.autorizado_gestao <> OLD.autorizado_gestao THEN
 //           INSERT INTO public.logs_sistema (user_id, action_type, description, table_affected, metadata)
 //           VALUES (
-//               auth.uid(), 
-//               'UPDATE_COMPLAINT_AUTH', 
+//               auth.uid(),
+//               'UPDATE_COMPLAINT_AUTH',
 //               CASE WHEN NEW.autorizado_gestao THEN 'Acesso liberado para gestão escolar' ELSE 'Acesso revogado para gestão escolar' END,
 //               'denuncias',
 //               jsonb_build_object('complaint_id', NEW.id, 'authorized', NEW.autorizado_gestao)
@@ -3279,7 +3278,7 @@ export const Constants = {
 //       RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION notify_audit_completion()
 //   CREATE OR REPLACE FUNCTION public.notify_audit_completion()
 //    RETURNS trigger
@@ -3294,7 +3293,7 @@ export const Constants = {
 //   BEGIN
 //       -- Get 'Concluída' status ID
 //       SELECT id INTO completed_status_id FROM public.status_auditoria WHERE nome_status = 'Concluída';
-//       
+//
 //       -- Check if status changed to completed
 //       IF NEW.status = completed_status_id::text AND (OLD.status IS NULL OR OLD.status != completed_status_id::text) THEN
 //           -- Get Audit details
@@ -3302,13 +3301,13 @@ export const Constants = {
 //           FROM public.auditorias a
 //           JOIN public.escolas_instituicoes e ON a.escola_id = e.id
 //           WHERE a.id = NEW.id;
-//   
+//
 //           -- Find Directors (assuming profile 'DIRETOR_COMPLIANCE')
 //           -- We select from usuarios_escola which should match auth.users id
-//           SELECT ARRAY_AGG(id) INTO director_ids 
-//           FROM public.usuarios_escola 
+//           SELECT ARRAY_AGG(id) INTO director_ids
+//           FROM public.usuarios_escola
 //           WHERE perfil = 'DIRETOR_COMPLIANCE';
-//   
+//
 //           IF director_ids IS NOT NULL THEN
 //               FOREACH director_id_var IN ARRAY director_ids
 //               LOOP
@@ -3327,7 +3326,7 @@ export const Constants = {
 //       RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION prevent_sensitive_user_update()
 //   CREATE OR REPLACE FUNCTION public.prevent_sensitive_user_update()
 //    RETURNS trigger
@@ -3345,7 +3344,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION update_updated_at()
 //   CREATE OR REPLACE FUNCTION public.update_updated_at()
 //    RETURNS trigger
@@ -3356,7 +3355,7 @@ export const Constants = {
 //       RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION update_updated_at(text, uuid)
 //   CREATE OR REPLACE FUNCTION public.update_updated_at(p_table_name text, p_row_id uuid)
 //    RETURNS void
@@ -3367,22 +3366,22 @@ export const Constants = {
 //   BEGIN
 //     -- Save current search_path (safe - returns NULL if not set)
 //     SELECT current_setting('search_path', true) INTO _old_search_path;
-//   
+//
 //     -- Set a conservative, deterministic search_path for the function runtime
 //     PERFORM set_config('search_path', 'public', true);
-//   
+//
 //     /*
 //       Build a parameterized UPDATE that sets updated_at = now() for the given id.
 //       Using format(..., p_table_name) with %I ensures the table name is used as an identifier
 //       (properly quoted). The id is passed via USING to avoid embedding values directly.
 //     * /
 //     _sql := format('UPDATE public.%I SET updated_at = now() WHERE id = $1', p_table_name);
-//   
+//
 //     EXECUTE _sql USING p_row_id;
-//   
+//
 //     -- Restore prior search_path
 //     PERFORM set_config('search_path', COALESCE(_old_search_path, ''), true);
-//   
+//
 //     RETURN;
 //   EXCEPTION
 //     WHEN OTHERS THEN
@@ -3390,7 +3389,7 @@ export const Constants = {
 //       PERFORM set_config('search_path', COALESCE(_old_search_path, ''), true);
 //       RAISE;
 //   END;$function$
-//   
+//
 // FUNCTION validate_compliance_task_reference()
 //   CREATE OR REPLACE FUNCTION public.validate_compliance_task_reference()
 //    RETURNS trigger
@@ -3407,7 +3406,7 @@ export const Constants = {
 //       RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 
 // --- TRIGGERS ---
 // Table: auditorias
@@ -3505,4 +3504,3 @@ export const Constants = {
 //   CREATE UNIQUE INDEX workflow_analistas_denuncia_id_analista_id_fase_key ON public.workflow_analistas USING btree (denuncia_id, analista_id, fase)
 // Table: workflow_pareceres
 //   CREATE UNIQUE INDEX workflow_pareceres_denuncia_id_analista_id_fase_key ON public.workflow_pareceres USING btree (denuncia_id, analista_id, fase)
-
