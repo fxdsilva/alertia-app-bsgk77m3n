@@ -77,10 +77,19 @@ export default function Support() {
 
       if (error) throw error
 
+      // Disparo assíncrono do e-mail (Edge Function) para não bloquear a UI
+      supabase.functions
+        .invoke('send-support-email', {
+          body: { record: ticketData },
+        })
+        .catch(console.error)
+
       toast.success(
         'Recebemos sua mensagem! Nossa equipe analisará sua dúvida e entraremos em contato em breve.',
       )
-      form.reset()
+      if (form) {
+        form.reset()
+      }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       toast.error(
