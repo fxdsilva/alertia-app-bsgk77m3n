@@ -762,4 +762,11 @@ export const workflowService = {
       pendencias: 1,
     })
   },
+
+  async deleteComplaint(complaintId: string) {
+    const { error } = await supabase.rpc('delete_denuncia', {
+      p_denuncia_id: complaintId,
+    })
+    if (error) throw error
+  },
 }

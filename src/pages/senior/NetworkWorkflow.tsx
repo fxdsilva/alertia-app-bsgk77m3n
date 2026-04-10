@@ -1,15 +1,22 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  workflowService,
-  WorkflowComplaint,
-  WORKFLOW_STATUS,
-} from '@/services/workflowService'
+import { workflowService, WorkflowComplaint } from '@/services/workflowService'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import {
   Search,
   FileSearch,
@@ -21,20 +28,27 @@ import {
   Inbox,
   FolderOpen,
   Filter,
+  Trash2,
+  Loader2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import useAppStore from '@/stores/useAppStore'
-import { Loader2 } from 'lucide-react'
 
 export default function NetworkWorkflow() {
   const navigate = useNavigate()
   const { profile } = useAppStore()
   const [loading, setLoading] = useState(true)
-  const [complaints, setComplaints] = useState<WorkflowComplaint[]>([])
+  const [dashboardData, setDashboardData] = useState<{
+    f1: any[]
+    f2: any[]
+    f3: any[]
+    closed: any[]
+  }>({ f1: [], f2: [], f3: [], closed: [] })
   const [activeTab, setActiveTab] = useState('f1')
   const [search, setSearch] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (profile === 'senior') {
@@ -47,10 +61,8 @@ export default function NetworkWorkflow() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const data = await workflowService.getComplaintsByStatus(
-        Object.values(WORKFLOW_STATUS),
-      )
-      setComplaints(data)
+      const data = await workflowService.getWorkflowDashboardData()
+      setDashboardData(data)
     } catch (error) {
       console.error(error)
     } finally {
@@ -58,65 +70,57 @@ export default function NetworkWorkflow() {
     }
   }
 
-  const phases = useMemo(
-    () => ({
-      f1: [
-        WORKFLOW_STATUS.REGISTERED,
-        WORKFLOW_STATUS.WAITING_ANALYST_1,
-        WORKFLOW_STATUS.ANALYSIS_1,
-        WORKFLOW_STATUS.REVIEW_1,
-        WORKFLOW_STATUS.RETURNED_1,
-      ],
-      f2: [
-        WORKFLOW_STATUS.APPROVED_PROCEDURE,
-        WORKFLOW_STATUS.INVESTIGATION_2,
-        WORKFLOW_STATUS.REVIEW_2,
-      ],
-      f3: [
-        WORKFLOW_STATUS.WAITING_ANALYST_3,
-        WORKFLOW_STATUS.MEDIATION_3,
-        WORKFLOW_STATUS.DISCIPLINARY_3,
-        WORKFLOW_STATUS.REVIEW_3,
-      ],
-      closed: [WORKFLOW_STATUS.CLOSED, WORKFLOW_STATUS.ARCHIVED],
-    }),
-    [],
-  )
-
-  const filteredData = useMemo(() => {
-    return complaints.filter((c) => {
-      const searchMatch =
-        !search ||
-        c.protocolo.toLowerCase().includes(search.toLowerCase()) ||
-        c.descricao.toLowerCase().includes(search.toLowerCase()) ||
-        c.escolas_instituicoes?.nome_escola
-          .toLowerCase()
-          .includes(search.toLowerCase())
-
-      return searchMatch
-    })
-  }, [complaints, search])
-
   const currentTabData = useMemo(() => {
-    const currentStatuses = phases[activeTab as keyof typeof phases] || []
-    return filteredData.filter((c) => currentStatuses.includes(c.status))
-  }, [filteredData, activeTab, phases])
+    const data = dashboardData[activeTab as keyof typeof dashboardData] || []
+    return data.filter((c: any) => {
+      if (!search) return true
+      const s = search.toLowerCase()
+      return (
+        c.protocolo?.toLowerCase().includes(s) ||
+        c.descricao?.toLowerCase().includes(s) ||
+        c.escolas_instituicoes?.nome_escola?.toLowerCase().includes(s)
+      )
+    })
+  }, [dashboardData, activeTab, search])
 
   const counts = useMemo(() => {
-    return {
-      f1: filteredData.filter((c) => phases.f1.includes(c.status)).length,
-      f2: filteredData.filter((c) => phases.f2.includes(c.status)).length,
-      f3: filteredData.filter((c) => phases.f3.includes(c.status)).length,
-      closed: filteredData.filter((c) => phases.closed.includes(c.status))
-        .length,
-    }
-  }, [filteredData, phases])
+    const filterBySearch = (data: any[]) =>
+      data.filter((c) => {
+        if (!search) return true
+        const s = search.toLowerCase()
+        return (
+          c.protocolo?.toLowerCase().includes(s) ||
+          c.descricao?.toLowerCase().includes(s) ||
+          c.escolas_instituicoes?.nome_escola?.toLowerCase().includes(s)
+        )
+      }).length
 
-  const renderCard = (c: WorkflowComplaint) => {
+    return {
+      f1: filterBySearch(dashboardData.f1),
+      f2: filterBySearch(dashboardData.f2),
+      f3: filterBySearch(dashboardData.f3),
+      closed: filterBySearch(dashboardData.closed),
+    }
+  }, [dashboardData, search])
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      setDeletingId(id)
+      await workflowService.deleteComplaint(id)
+      await fetchData()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const renderCard = (c: any) => {
     return (
       <Card
         key={c.id}
-        className="hover:shadow-md transition-all duration-200 border-l-4 border-l-indigo-500 cursor-pointer group"
+        className="hover:shadow-md transition-all duration-200 border-l-4 border-l-indigo-500 cursor-pointer group relative"
         onClick={() => navigate(`/senior/workflow/${c.id}`)}
       >
         <CardContent className="p-5 space-y-4">
@@ -162,27 +166,74 @@ export default function NetworkWorkflow() {
             {c.descricao}
           </p>
         </CardContent>
-        <CardFooter className="bg-slate-50/50 p-3 px-5 flex justify-between items-center border-t">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+        <CardFooter className="bg-slate-50/50 p-3 px-5 flex justify-between items-center border-t gap-2">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500 flex-1 min-w-0">
             <div
-              className={cn('h-2 w-2 rounded-full', {
-                'bg-indigo-500': phases.f1.includes(c.status),
-                'bg-blue-500': phases.f2.includes(c.status),
-                'bg-orange-500': phases.f3.includes(c.status),
-                'bg-green-500': phases.closed.includes(c.status),
+              className={cn('h-2 w-2 rounded-full shrink-0', {
+                'bg-indigo-500': c._phase === 'f1',
+                'bg-blue-500': c._phase === 'f2',
+                'bg-orange-500': c._phase === 'f3',
+                'bg-green-500': c._phase === 'closed',
               })}
             />
             <span className="truncate max-w-[200px]" title={c.status}>
               {c.status}
             </span>
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-          >
-            Detalhes <ArrowRight className="ml-1 h-3 w-3" />
-          </Button>
+
+          <div className="flex items-center gap-1 shrink-0">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 z-10"
+                  onClick={(e) => e.stopPropagation()}
+                  disabled={deletingId === c.id}
+                >
+                  {deletingId === c.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir denúncia?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir a denúncia protocolo{' '}
+                    <strong>{c.protocolo}</strong>? Esta ação removerá
+                    permanentemente todos os dados vinculados e não poderá ser
+                    desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={(e) =>
+                      handleDelete(c.id, e as unknown as React.MouseEvent)
+                    }
+                  >
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 z-10"
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/senior/workflow/${c.id}`)
+              }}
+            >
+              Detalhes <ArrowRight className="ml-1 h-3 w-3" />
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     )
