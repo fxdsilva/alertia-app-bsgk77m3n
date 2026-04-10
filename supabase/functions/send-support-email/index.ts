@@ -10,7 +10,7 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    
+
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     const payload = await req.json()
@@ -29,10 +29,11 @@ Deno.serve(async (req: Request) => {
       .eq('key', 'support_contact_info')
       .single()
 
-    const toEmail = settingsData?.settings?.email || 'suporte@alertia.goskip.app'
+    const toEmail =
+      settingsData?.settings?.email || 'suporte@alertia.goskip.app'
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-    
+
     if (RESEND_API_KEY) {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -56,7 +57,7 @@ Deno.serve(async (req: Request) => {
           `,
         }),
       })
-      
+
       const data = await res.json()
       console.log('Resend response:', data)
     } else {
@@ -67,10 +68,13 @@ Deno.serve(async (req: Request) => {
       console.log(`Message: ${message}`)
     }
 
-    return new Response(JSON.stringify({ success: true, deliveredTo: toEmail }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
+    return new Response(
+      JSON.stringify({ success: true, deliveredTo: toEmail }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
   } catch (error: any) {
     console.error('Error sending email:', error)
     return new Response(JSON.stringify({ error: error.message }), {

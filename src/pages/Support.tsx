@@ -115,7 +115,7 @@ export default function Support() {
             ALERTIA
           </span>
         </div>
-        <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+        <Button variant="ghost" onClick={() => navigate('/')} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Button>
       </header>
