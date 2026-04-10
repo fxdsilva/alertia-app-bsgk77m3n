@@ -28,6 +28,11 @@ import { settingsService, FAQItem } from '@/services/settingsService'
 
 const contactSchema = z.object({
   email: z.string().email('Email inválido'),
+  receivingEmail: z
+    .string()
+    .email('Email inválido')
+    .optional()
+    .or(z.literal('')),
   phone: z.string().min(1, 'Telefone é obrigatório'),
   whatsapp: z.string().url('Link do WhatsApp deve ser uma URL válida'),
 })
@@ -43,6 +48,7 @@ export default function SupportManager() {
     resolver: zodResolver(contactSchema),
     defaultValues: {
       email: '',
+      receivingEmail: '',
       phone: '',
       whatsapp: '',
     },
@@ -146,7 +152,8 @@ export default function SupportManager() {
           <CardHeader>
             <CardTitle>Informações de Contato</CardTitle>
             <CardDescription>
-              Canais oficiais exibidos para o público.
+              Canais oficiais exibidos para o público e configurações de
+              recebimento.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -154,10 +161,29 @@ export default function SupportManager() {
               <form className="space-y-4">
                 <FormField
                   control={form.control}
+                  name="receivingEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        E-mail de Recebimento (Formulário de Contato)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="recebimento@exemplo.com"
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email de Suporte</FormLabel>
+                      <FormLabel>Email de Suporte (Público)</FormLabel>
                       <FormControl>
                         <Input placeholder="suporte@exemplo.com" {...field} />
                       </FormControl>

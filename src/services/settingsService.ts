@@ -23,6 +23,7 @@ export interface SupportContactInfo {
   email: string
   phone: string
   whatsapp: string
+  receivingEmail?: string
 }
 
 export interface FAQItem {
