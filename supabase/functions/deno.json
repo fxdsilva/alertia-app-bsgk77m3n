@@ -1,7 +1,7 @@
 {
   "_versions": {
     "create-user": 6,
-    "delete-user": 2,
+    "delete-user": 3,
     "create-admin-master": 2,
     "check-audits": 1
   }
