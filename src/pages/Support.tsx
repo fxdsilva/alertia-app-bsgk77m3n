@@ -31,6 +31,7 @@ import {
   SupportContactInfo,
   FAQItem,
 } from '@/services/settingsService'
+import { supabase } from '@/lib/supabase/client'
 
 export default function Support() {
   const navigate = useNavigate()
@@ -56,16 +57,37 @@ export default function Support() {
     fetchSettings()
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
-    // Mock submission
-    setTimeout(() => {
-      setLoading(false)
+
+    const formData = new FormData(e.currentTarget)
+    const ticketData = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      subject: formData.get('subject') as string,
+      message: formData.get('message') as string,
+    }
+
+    try {
+      const { error } = await supabase
+        .from('support_tickets' as any)
+        .insert([ticketData])
+
+      if (error) throw error
+
       toast.success(
-        'Mensagem enviada com sucesso! Entraremos em contato em breve.',
+        'Recebemos sua mensagem! Nossa equipe analisará sua dúvida e entraremos em contato em breve.',
       )
-    }, 1500)
+      e.currentTarget.reset()
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error)
+      toast.error(
+        'Ocorreu um erro ao enviar a mensagem. Tente novamente mais tarde.',
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -115,12 +137,18 @@ export default function Support() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome</Label>
-                    <Input id="name" placeholder="Seu nome" required />
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="Seu nome"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
+                      name="email"
                       type="email"
                       placeholder="seu@email.com"
                       required
@@ -131,6 +159,7 @@ export default function Support() {
                   <Label htmlFor="subject">Assunto</Label>
                   <Input
                     id="subject"
+                    name="subject"
                     placeholder="Como podemos ajudar?"
                     required
                   />
@@ -139,6 +168,7 @@ export default function Support() {
                   <Label htmlFor="message">Mensagem</Label>
                   <Textarea
                     id="message"
+                    name="message"
                     placeholder="Descreva sua dúvida ou problema..."
                     className="min-h-[120px]"
                     required
