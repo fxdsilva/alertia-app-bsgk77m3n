@@ -16,6 +16,7 @@ import {
   MessageSquare,
   LifeBuoy,
   Info,
+  Download,
   LogOut,
   School,
   LayoutDashboard,
@@ -44,10 +45,12 @@ import useAppStore from '@/stores/useAppStore'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ModuleKey } from '@/lib/rbac'
+import { usePWAInstall } from '@/hooks/usePWAInstall'
 
 export function AppSidebar() {
   const { pathname } = useLocation()
   const { user, logout, profile, hasAccess } = useAppStore()
+  const { isInstallable, install } = usePWAInstall()
 
   if (!user) return null
 
@@ -152,6 +155,9 @@ export function AppSidebar() {
     { title: 'Compartilhar App', url: '/share', icon: Share2 },
     { title: 'Mensagens', url: '/messages', icon: MessageSquare },
     { title: 'Suporte', url: '/support', icon: LifeBuoy },
+    ...(isInstallable
+      ? [{ title: 'Instalar App', action: install, icon: Download }]
+      : []),
     { title: 'Sobre', url: '/about', icon: Info },
   ]
 
@@ -673,20 +679,43 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {baseItems.map((item) => {
-                const isActive = pathname === item.url
+                const isActive = item.url ? pathname === item.url : false
                 return (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      className={cn(
-                        'w-full justify-start gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
-                        isActive
-                          ? 'bg-primary/10 text-primary font-medium shadow-sm'
-                          : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
-                      )}
-                    >
-                      <Link to={item.url}>
+                  <SidebarMenuItem key={item.title}>
+                    {item.url ? (
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        className={cn(
+                          'w-full justify-start gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
+                          isActive
+                            ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                            : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                        )}
+                      >
+                        <Link to={item.url}>
+                          <item.icon
+                            className={cn(
+                              'h-5 w-5 transition-colors',
+                              isActive
+                                ? 'text-primary'
+                                : 'text-muted-foreground',
+                            )}
+                          />
+                          <span className="text-sm">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    ) : (
+                      <SidebarMenuButton
+                        onClick={item.action}
+                        isActive={isActive}
+                        className={cn(
+                          'w-full justify-start gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
+                          isActive
+                            ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                            : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                        )}
+                      >
                         <item.icon
                           className={cn(
                             'h-5 w-5 transition-colors',
@@ -694,8 +723,8 @@ export function AppSidebar() {
                           )}
                         />
                         <span className="text-sm">{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                      </SidebarMenuButton>
+                    )}
                   </SidebarMenuItem>
                 )
               })}
