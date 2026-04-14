@@ -23,10 +23,13 @@ import {
   PanelLeft,
   Globe,
   AlertCircle,
+  Download,
 } from 'lucide-react'
+import { usePWAInstall } from '@/hooks/use-pwa-install'
 
 const Index = () => {
   const { user, profile, loading } = useAppStore()
+  const { isInstallable, installPWA } = usePWAInstall()
   const navigate = useNavigate()
 
   const [isTermsOpen, setIsTermsOpen] = useState(false)
@@ -77,13 +80,28 @@ const Index = () => {
             ALERTIA
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/support')}>
+        <div className="flex items-center gap-2 sm:gap-4">
+          {isInstallable && (
+            <Button
+              variant="outline"
+              onClick={installPWA}
+              className="flex items-center gap-2 text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 h-9 px-3 sm:h-10 sm:px-4"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Instalar App</span>
+              <span className="sm:hidden">Instalar</span>
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/support')}
+            className="hidden sm:inline-flex h-10 px-4"
+          >
             Suporte
           </Button>
           <Button
             onClick={() => navigate('/login')}
-            className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-6"
+            className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium h-9 px-4 sm:h-10 sm:px-6"
           >
             Entrar
           </Button>

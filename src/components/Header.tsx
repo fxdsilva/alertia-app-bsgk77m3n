@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Building2, UserCircle, LogOut, Settings } from 'lucide-react'
+import { Building2, UserCircle, LogOut, Settings, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,10 +11,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import useAppStore from '@/stores/useAppStore'
+import { usePWAInstall } from '@/hooks/use-pwa-install'
 
 export function Header() {
   const { selectedSchool, user, logout, clearSchool } = useAppStore()
   const navigate = useNavigate()
+  const { isInstallable, installPWA } = usePWAInstall()
 
   const handleLogout = () => {
     logout()
@@ -51,7 +53,18 @@ export function Header() {
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
+        {isInstallable && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={installPWA}
+            className="hidden sm:flex items-center gap-2 text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
+          >
+            <Download className="h-4 w-4" />
+            Instalar App
+          </Button>
+        )}
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
