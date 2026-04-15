@@ -70,6 +70,37 @@ export const trainingService = {
     return data
   },
 
+  async markAsCompleted(trainingId: string, userId: string) {
+    const { data: existing } = await supabase
+      .from('treinamentos_conclusoes')
+      .select('id')
+      .eq('treinamento_id', trainingId)
+      .eq('usuario_id', userId)
+      .single()
+
+    if (existing) {
+      const { error } = await supabase
+        .from('treinamentos_conclusoes')
+        .update({
+          status: 'concluido',
+          progresso: 100,
+          data_conclusao: new Date().toISOString(),
+        })
+        .eq('id', existing.id)
+      if (error) throw error
+    } else {
+      const { error } = await supabase.from('treinamentos_conclusoes').insert({
+        treinamento_id: trainingId,
+        usuario_id: userId,
+        status: 'concluido',
+        progresso: 100,
+        data_conclusao: new Date().toISOString(),
+      })
+      if (error) throw error
+    }
+    return true
+  },
+
   async getTrainingsWithProgress(
     schoolId: string,
     userId: string,

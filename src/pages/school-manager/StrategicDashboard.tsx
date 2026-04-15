@@ -236,7 +236,6 @@ export default function StrategicDashboard() {
           title="Denúncias"
           status={`${metrics.denuncias.count} TOTAL`}
           icon={AlertTriangle}
-          onClickUrl="/school-admin/complaints"
         />
         <MetricCard
           title="Relatórios"
@@ -246,10 +245,10 @@ export default function StrategicDashboard() {
         />
 
         <MetricCard
-          title="Treinamentos"
+          title="Conteúdo Educativo"
           status={`${metrics.treinamentos.count} ATIVOS`}
           icon={GraduationCap}
-          onClickUrl="/collaborator/training"
+          onClickUrl="/school-management/educational-content"
         />
         <MetricCard
           title="Gestão de Riscos"

@@ -57,6 +57,7 @@ import Reports from '@/pages/admin/Reports'
 import UserManagement from '@/pages/school-admin/UserManagement'
 import SchoolComplaints from '@/pages/school-admin/SchoolComplaints'
 import StrategicDashboard from '@/pages/school-manager/StrategicDashboard'
+import EducationalContentManager from '@/pages/school-manager/EducationalContentManager'
 
 // Compliance Pages
 import TaskDistribution from '@/pages/compliance/TaskDistribution'
@@ -178,6 +179,10 @@ const App = () => {
                   path="/school-management/dashboard"
                   element={<StrategicDashboard />}
                 />
+                <Route
+                  path="/school-management/educational-content"
+                  element={<EducationalContentManager />}
+                />
 
                 {/* Secretary Route */}
                 <Route
@@ -206,6 +211,10 @@ const App = () => {
                 <Route
                   path="/compliance/director/workflow"
                   element={<ComplaintWorkflow />}
+                />
+                <Route
+                  path="/compliance/director/educational-content"
+                  element={<EducationalContentManager />}
                 />
                 <Route
                   path="/compliance/director/workflow/:id"

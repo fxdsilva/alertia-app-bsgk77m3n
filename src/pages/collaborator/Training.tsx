@@ -17,6 +17,14 @@ import {
   Loader2,
   BookOpen,
 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import useAppStore from '@/stores/useAppStore'
 import {
   trainingService,
@@ -37,6 +45,10 @@ export default function Training() {
     }
   }, [selectedSchool, user])
 
+  const [selectedQuiz, setSelectedQuiz] = useState<TrainingWithProgress | null>(
+    null,
+  )
+
   const fetchTrainings = async () => {
     if (!selectedSchool || !user) return
     setLoading(true)
@@ -54,11 +66,28 @@ export default function Training() {
     }
   }
 
-  const handleStart = (url: string | null) => {
-    if (url) {
-      window.open(url, '_blank')
+  const handleStart = (t: TrainingWithProgress) => {
+    if (t.tipo_conteudo === 'questionario') {
+      setSelectedQuiz(t)
+    } else if (t.conteudo_url) {
+      window.open(t.conteudo_url, '_blank')
+      // Auto complete for simple links/pdfs to keep UX smooth
+      handleComplete(t.id)
     } else {
       toast.info('O conteúdo deste treinamento estará disponível em breve.')
+    }
+  }
+
+  const handleComplete = async (trainingId: string) => {
+    if (!user) return
+    try {
+      await trainingService.markAsCompleted(trainingId, user.id)
+      fetchTrainings()
+      setSelectedQuiz(null)
+      toast.success('Treinamento concluído com sucesso!')
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao registrar conclusão.')
     }
   }
 
@@ -148,6 +177,30 @@ export default function Training() {
                       </Badge>
                     )}
                   </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    {t.tipo_conteudo === 'pdf' ? (
+                      <Badge
+                        variant="outline"
+                        className="bg-orange-50 text-orange-700 border-orange-200"
+                      >
+                        PDF
+                      </Badge>
+                    ) : t.tipo_conteudo === 'questionario' ? (
+                      <Badge
+                        variant="outline"
+                        className="bg-purple-50 text-purple-700 border-purple-200"
+                      >
+                        Questionário
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-50 text-blue-700 border-blue-200"
+                      >
+                        Link Externo
+                      </Badge>
+                    )}
+                  </div>
                   <CardTitle className="line-clamp-2 text-xl leading-tight group-hover:text-primary transition-colors">
                     {t.titulo}
                   </CardTitle>
@@ -194,11 +247,15 @@ export default function Training() {
                   ) : (
                     <Button
                       className="w-full gap-2 shadow-sm font-semibold text-white transition-all hover:scale-[1.02]"
-                      onClick={() => handleStart(t.conteudo_url)}
+                      onClick={() => handleStart(t)}
                       size="lg"
                     >
                       <PlayCircle className="h-5 w-5 fill-current" />
-                      {t.progress > 0 ? 'Continuar Curso' : 'Iniciar Curso'}
+                      {t.tipo_conteudo === 'questionario'
+                        ? 'Responder Questionário'
+                        : t.tipo_conteudo === 'pdf'
+                          ? 'Ler Material'
+                          : 'Acessar Conteúdo'}
                     </Button>
                   )}
                 </CardFooter>
@@ -206,6 +263,65 @@ export default function Training() {
             )
           })}
         </div>
+      )}
+
+      {selectedQuiz && (
+        <Dialog
+          open={!!selectedQuiz}
+          onOpenChange={(o) => !o && setSelectedQuiz(null)}
+        >
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{selectedQuiz.titulo}</DialogTitle>
+              <DialogDescription>
+                Responda às questões abaixo para concluir este módulo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              {selectedQuiz.questoes &&
+              Array.isArray(selectedQuiz.questoes) &&
+              selectedQuiz.questoes.length > 0 ? (
+                selectedQuiz.questoes.map((q: any, i: number) => (
+                  <div
+                    key={i}
+                    className="space-y-3 bg-slate-50 p-4 rounded-lg border"
+                  >
+                    <p className="font-medium text-slate-800">
+                      {i + 1}. {q.pergunta}
+                    </p>
+                    <div className="space-y-2">
+                      {q.opcoes?.map((opt: string, j: number) => (
+                        <label
+                          key={j}
+                          className="flex items-center space-x-3 cursor-pointer"
+                        >
+                          <input
+                            type="radio"
+                            name={`q${i}`}
+                            className="w-4 h-4 text-primary"
+                          />
+                          <span className="text-slate-700">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  Nenhuma questão cadastrada para este questionário.
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelectedQuiz(null)}>
+                Cancelar
+              </Button>
+              <Button onClick={() => handleComplete(selectedQuiz.id)}>
+                Finalizar e Enviar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
