@@ -53,7 +53,11 @@ export default function NetworkWorkflow() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (profile === 'senior') {
+    if (
+      ['senior', 'administrador', 'admin_gestor', 'admin_master'].includes(
+        profile as string,
+      )
+    ) {
       fetchData()
     } else {
       navigate('/')
@@ -195,45 +199,49 @@ export default function NetworkWorkflow() {
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 z-10"
-                  onClick={(e) => e.stopPropagation()}
-                  disabled={deletingId === c.id}
-                >
-                  {deletingId === c.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir denúncia?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja excluir a denúncia protocolo{' '}
-                    <strong>{c.protocolo}</strong>? Esta ação removerá
-                    permanentemente todos os dados vinculados e não poderá ser
-                    desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                    onClick={(e) =>
-                      handleDelete(c.id, e as unknown as React.MouseEvent)
-                    }
+            {['senior', 'administrador', 'admin_master'].includes(
+              profile as string,
+            ) && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 z-10"
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={deletingId === c.id}
                   >
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    {deletingId === c.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir denúncia?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir a denúncia protocolo{' '}
+                      <strong>{c.protocolo}</strong>? Esta ação removerá
+                      permanentemente todos os dados vinculados e não poderá ser
+                      desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={(e) =>
+                        handleDelete(c.id, e as unknown as React.MouseEvent)
+                      }
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
 
             <Button
               size="sm"
