@@ -25,4 +25,4 @@ BEGIN
   -- Finally delete the complaint (cascades to investigacoes, workflow_logs, etc.)
   DELETE FROM public.denuncias WHERE id = p_denuncia_id;
 END;
-$function$
+$function$;
