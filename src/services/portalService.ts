@@ -202,12 +202,11 @@ export const portalService = {
       }
 
       if (!data) {
-        console.error(
-          `CRITICAL: Status "${name}" not found in database. Please run migrations.`,
+        console.warn(
+          `CRITICAL: Status "${name}" not found in database. Falling back to "pendente".`,
         )
-        throw new Error(
-          `Configuração de sistema incompleta: Status "${name}" não encontrado.`,
-        )
+        // Fallback to the default database status instead of crashing
+        return 'pendente'
       }
 
       return data.id

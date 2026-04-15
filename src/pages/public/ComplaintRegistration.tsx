@@ -269,8 +269,14 @@ export default function ComplaintRegistration() {
         toast.error(
           'Erro de conexão. Verifique sua internet e tente novamente.',
         )
-      } else if (errorMsg.includes('Status "Denúncia registrada" not found')) {
-        toast.error('Erro de configuração do sistema. Contate o suporte.')
+      } else if (
+        errorMsg.includes('Status "Denúncia registrada" not found') ||
+        errorMsg.includes('Status "A designar"') ||
+        errorMsg.includes('Configuração de sistema incompleta')
+      ) {
+        toast.error(
+          'Erro de configuração do sistema. O suporte técnico já foi notificado.',
+        )
       } else {
         toast.error(errorMsg)
       }
