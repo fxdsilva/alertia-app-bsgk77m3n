@@ -132,15 +132,15 @@ export default function ComplaintsDashboard() {
         onOpenChange={(open) => !open && setSelectedComplaint(null)}
       >
         <DialogContent className="max-w-lg max-h-screen overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Denúncia</DialogTitle>
+            <DialogDescription>
+              Protocolo: {selectedComplaint?.protocolo}
+            </DialogDescription>
+          </DialogHeader>
+
           {selectedComplaint && (
             <>
-              <DialogHeader>
-                <DialogTitle>Detalhes da Denúncia</DialogTitle>
-                <DialogDescription>
-                  Protocolo: {selectedComplaint.protocolo}
-                </DialogDescription>
-              </DialogHeader>
-
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-4 text-sm bg-muted/20 p-3 rounded-lg border">
                   <div>
