@@ -17,7 +17,7 @@ export interface Complaint extends Denuncia {
   attachments?: Attachment[]
 }
 
-async function parseAttachments(
+export async function parseAttachments(
   urls: string[] | null,
   createdAt: string,
 ): Promise<Attachment[]> {

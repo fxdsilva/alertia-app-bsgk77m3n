@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
 import { Loader2, ArrowLeft, Send, History, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { AttachmentList } from '@/components/complaints/AttachmentList'
 
 export default function WorkflowTask() {
   const { id } = useParams()
@@ -142,6 +143,18 @@ export default function WorkflowTask() {
           <div className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap">
             {complaint.descricao}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Anexos e Evidências</CardTitle>
+          <CardDescription>
+            Documentos e arquivos enviados para análise.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AttachmentList attachments={complaint.attachments} />
         </CardContent>
       </Card>
 

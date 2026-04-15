@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 import { auditService } from './auditService'
+import { parseAttachments, Attachment } from './complaintService'
 
 export interface WorkflowComplaint {
   id: string
@@ -32,6 +33,7 @@ export interface WorkflowComplaint {
   _phase?: string
   record_id?: string
   is_investigacao?: boolean
+  attachments?: Attachment[]
 }
 
 export const WORKFLOW_STATUS = {
@@ -288,6 +290,10 @@ export const workflowService = {
     return {
       ...data,
       status: data.status_denuncia?.nome_status || data.status,
+      attachments: await parseAttachments(
+        data.evidencias_urls,
+        data.created_at,
+      ),
     } as WorkflowComplaint
   },
 
