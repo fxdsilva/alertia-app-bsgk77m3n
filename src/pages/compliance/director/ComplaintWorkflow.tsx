@@ -8,7 +8,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import useAppStore from '@/stores/useAppStore'
+import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -31,6 +43,8 @@ import {
   UserCheck,
   Inbox,
   Users,
+  Trash2,
+  Loader2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -41,8 +55,16 @@ import { supabase } from '@/lib/supabase/client'
 export default function ComplaintWorkflow() {
   const navigate = useNavigate()
   const { profile } = useAppStore()
-  const isDirector = profile === 'DIRETOR_COMPLIANCE'
+  const { toast } = useToast()
+  const isDirector = [
+    'DIRETOR_COMPLIANCE',
+    'senior',
+    'administrador',
+    'admin_gestor',
+    'admin_master',
+  ].includes(profile as string)
   const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [complaints, setComplaints] = useState<WorkflowComplaint[]>([])
   const [workflowAnalysts, setWorkflowAnalysts] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState('f1')
@@ -135,6 +157,30 @@ export default function ComplaintWorkflow() {
 
   const handleReview = (id: string) => {
     navigate(`/compliance/director/workflow/${id}`)
+  }
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      setDeletingId(id)
+      await workflowService.deleteComplaint(id)
+      toast({
+        title: 'Sucesso',
+        description: 'Denúncia excluída permanentemente.',
+      })
+      await fetchData()
+    } catch (error: any) {
+      console.error(error)
+      toast({
+        variant: 'destructive',
+        title: 'Acesso negado',
+        description:
+          error?.message ||
+          'Você não tem permissão para excluir esta denúncia.',
+      })
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const getGravityBadgeStyle = (gravity?: string | null) => {
@@ -405,7 +451,54 @@ export default function ComplaintWorkflow() {
               {c.status}
             </span>
           </div>
-          <div className="w-full sm:w-auto shrink-0 flex">{action}</div>
+          <div className="w-full sm:w-auto shrink-0 flex items-center gap-2">
+            {[
+              'senior',
+              'administrador',
+              'admin_gestor',
+              'admin_master',
+            ].includes(profile as string) && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 z-10 shrink-0"
+                    disabled={deletingId === c.id}
+                  >
+                    {deletingId === c.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir denúncia?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir a denúncia protocolo{' '}
+                      <strong>{c.protocolo}</strong>? Esta ação removerá
+                      permanentemente todos os dados vinculados e não poderá ser
+                      desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={(e) =>
+                        handleDelete(c.id, e as unknown as React.MouseEvent)
+                      }
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {action}
+          </div>
         </CardFooter>
       </Card>
     )
