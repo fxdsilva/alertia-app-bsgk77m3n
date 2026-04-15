@@ -49,23 +49,32 @@ async function parseAttachments(
       else if (['zip', 'rar', '7z', 'tar'].includes(extension || ''))
         type = 'archive'
 
+      let bucket = ''
+      let path = ''
+
       // Generate signed URL if it is a supabase storage URL
       if (url.includes('/storage/v1/object/')) {
         const bucketAndPathStr = url.split('/storage/v1/object/')[1]
         const pathParts = bucketAndPathStr.split('/')
-        if (pathParts[0] === 'public' || pathParts[0] === 'sign') {
+        if (['public', 'sign', 'authenticated'].includes(pathParts[0])) {
           pathParts.shift()
         }
-        const bucket = pathParts.shift()
-        const path = pathParts.join('/')
+        bucket = pathParts.shift() || ''
+        path = pathParts.join('/')
+      } else if (!url.startsWith('http') && url.includes('/')) {
+        const pathParts = url.split('/')
+        bucket = pathParts.shift() || ''
+        path = pathParts.join('/')
+      }
 
-        if (bucket && path) {
-          const { data } = await supabase.storage
-            .from(bucket)
-            .createSignedUrl(path, 3600)
-          if (data?.signedUrl) {
-            url = data.signedUrl
-          }
+      if (bucket && path) {
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(path, 3600)
+        if (data?.signedUrl) {
+          url = data.signedUrl
+        } else if (error) {
+          console.error('Error creating signed url for attachment', error)
         }
       }
     } catch (e) {

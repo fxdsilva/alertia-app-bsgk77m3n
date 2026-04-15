@@ -18,7 +18,10 @@ interface AttachmentListProps {
 }
 
 export function AttachmentList({ attachments }: AttachmentListProps) {
-  const [selectedUrl, setSelectedUrl] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<{
+    url: string
+    type: string
+  } | null>(null)
 
   if (!attachments || attachments.length === 0) {
     return (
@@ -73,11 +76,13 @@ export function AttachmentList({ attachments }: AttachmentListProps) {
               </div>
             </div>
             <div className="flex items-center space-x-1 flex-shrink-0">
-              {file.type === 'image' ? (
+              {['image', 'video', 'audio'].includes(file.type) ? (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setSelectedUrl(file.url)}
+                  onClick={() =>
+                    setSelectedFile({ url: file.url, type: file.type })
+                  }
                   title="Visualizar"
                 >
                   <ExternalLink className="h-4 w-4 text-muted-foreground" />
@@ -105,10 +110,11 @@ export function AttachmentList({ attachments }: AttachmentListProps) {
         ))}
       </div>
 
-      {selectedUrl && (
+      {selectedFile && (
         <AttachmentViewer
-          url={selectedUrl}
-          onClose={() => setSelectedUrl(null)}
+          url={selectedFile.url}
+          type={selectedFile.type}
+          onClose={() => setSelectedFile(null)}
         />
       )}
     </div>
