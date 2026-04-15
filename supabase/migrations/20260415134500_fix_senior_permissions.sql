@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION public.delete_denuncia(p_denuncia_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
-AS $function$
+AS $$
 BEGIN
   -- Verify if user is senior, admin_master, administrador, admin_gestor or DIRETOR_COMPLIANCE
   IF NOT EXISTS (
@@ -26,7 +26,7 @@ BEGIN
   -- Finally delete the complaint (cascades to investigacoes, workflow_logs, workflow_analistas, workflow_pareceres etc.)
   DELETE FROM public.denuncias WHERE id = p_denuncia_id;
 END;
-$function$
+$;
 
 DO $$
 BEGIN
