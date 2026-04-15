@@ -10,6 +10,18 @@ export interface TrainingWithProgress extends Training {
 }
 
 export const trainingService = {
+  async getTrainings(schoolId: string) {
+    return this.getTrainingsBySchool(schoolId)
+  },
+
+  async createTraining(training: Partial<Training>) {
+    return this.upsertTraining(training)
+  },
+
+  async updateTraining(training: Partial<Training>) {
+    return this.upsertTraining(training)
+  },
+
   async getTrainingsBySchool(schoolId: string) {
     const { data, error } = await supabase
       .from('treinamentos')
@@ -105,7 +117,6 @@ export const trainingService = {
     schoolId: string,
     userId: string,
   ): Promise<TrainingWithProgress[]> {
-    // 1. Fetch active trainings assigned to the school
     const { data: trainings, error: trainingError } = await supabase
       .from('treinamentos')
       .select('*')
@@ -115,31 +126,18 @@ export const trainingService = {
 
     if (trainingError) throw trainingError
 
-    // 2. Fetch user's progress for these trainings
-    // We join with the status table to get the readable status name
     const { data: progressData, error: progressError } = await supabase
       .from('treinamentos_conclusoes')
-      .select(
-        `
-        *,
-        status_treinamento_conclusao (
-          nome_status
-        )
-      `,
-      )
+      .select(`*, status_treinamento_conclusao ( nome_status )`)
       .eq('usuario_id', userId)
 
     if (progressError) throw progressError
 
-    // 3. Merge data
     return trainings.map((training) => {
-      // Find matching progress record
       const userProgress = progressData?.find(
         (p) => p.treinamento_id === training.id,
       )
 
-      // Extract status name safely
-      // Supabase returns the relation as an object or null
       const statusInfo =
         userProgress?.status_treinamento_conclusao as unknown as {
           nome_status: string

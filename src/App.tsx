@@ -21,9 +21,9 @@ import ManagementCommitment from '@/pages/public/ManagementCommitment'
 import ComplaintRegistration from '@/pages/public/ComplaintRegistration'
 import ComplaintStatus from '@/pages/public/ComplaintStatus'
 
-import Training from '@/pages/collaborator/Training'
-import TrainingList from '@/pages/collaborator/TrainingList'
 import InternalContent from '@/pages/collaborator/InternalContent'
+import TrainingsPage from '@/pages/trainings/TrainingsPage'
+import TrainingDetails from '@/pages/trainings/TrainingDetails'
 
 import RiskDashboard from '@/pages/manager/RiskDashboard'
 import Audits from '@/pages/manager/Audits'
@@ -163,8 +163,15 @@ const App = () => {
                   path="/admin/complaints"
                   element={<ComplaintManager />}
                 />
-                <Route path="/admin/trainings" element={<TrainingManager />} />
+                <Route
+                  path="/admin/trainings"
+                  element={<Navigate to="/trainings" replace />}
+                />
                 <Route path="/admin/reports" element={<Reports />} />
+
+                {/* Unified Trainings */}
+                <Route path="/trainings" element={<TrainingsPage />} />
+                <Route path="/trainings/:id" element={<TrainingDetails />} />
 
                 {/* School Admin Routes */}
                 <Route
@@ -279,10 +286,13 @@ const App = () => {
                 />
 
                 {/* Collaborator Pages */}
-                <Route path="/collaborator/training" element={<Training />} />
+                <Route
+                  path="/collaborator/training"
+                  element={<Navigate to="/trainings" replace />}
+                />
                 <Route
                   path="/collaborator/training/public-list"
-                  element={<TrainingList />}
+                  element={<Navigate to="/trainings" replace />}
                 />
                 <Route
                   path="/collaborator/content"
@@ -290,7 +300,7 @@ const App = () => {
                 />
                 <Route
                   path="/collaborator/complaints"
-                  element={<Navigate to="/collaborator/training" replace />}
+                  element={<Navigate to="/trainings" replace />}
                 />
 
                 {/* Professor Pages */}
@@ -300,7 +310,10 @@ const App = () => {
                 />
                 <Route path="/professor/agenda" element={<Agenda />} />
                 <Route path="/professor/library" element={<Library />} />
-                <Route path="/professor/trainings" element={<Training />} />
+                <Route
+                  path="/professor/trainings"
+                  element={<Navigate to="/trainings" replace />}
+                />
                 <Route path="/share" element={<ProfessorShare />} />
                 <Route path="/messages" element={<ProfessorMessages />} />
                 <Route path="/about" element={<ProfessorAbout />} />

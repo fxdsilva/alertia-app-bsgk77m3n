@@ -248,7 +248,7 @@ export default function StrategicDashboard() {
           title="Conteúdo Educativo"
           status={`${metrics.treinamentos.count} ATIVOS`}
           icon={GraduationCap}
-          onClickUrl="/school-management/educational-content"
+          onClickUrl="/trainings"
         />
         <MetricCard
           title="Gestão de Riscos"

@@ -30,7 +30,9 @@ import {
   TrendingUp,
   Info,
   Activity,
+  GraduationCap,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { adminDashboardService } from '@/services/adminDashboardService'
 import { toast } from 'sonner'
 import { AIReportGenerator } from '@/components/dashboard/AIReportGenerator'
@@ -54,6 +56,7 @@ const chartConfig = {
 }
 
 export default function SeniorDashboard() {
+  const navigate = useNavigate()
   const [stats, setStats] = useState({
     schools: 0,
     users: 0,
@@ -102,7 +105,24 @@ export default function SeniorDashboard() {
         <AIReportGenerator onReportGenerated={fetchData} />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <Card
+          className="border-t-4 border-t-purple-500 shadow-sm cursor-pointer hover:shadow-md transition-all"
+          onClick={() => navigate('/trainings')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Capacitação</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold mt-1 text-purple-700">
+              Portal de Cursos
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Acessar treinamentos
+            </p>
+          </CardContent>
+        </Card>
         <Card className="border-t-4 border-t-blue-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">

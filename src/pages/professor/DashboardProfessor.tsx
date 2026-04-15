@@ -98,7 +98,7 @@ export default function DashboardProfessor() {
               size="sm"
               variant="outline"
               className="bg-white border-orange-300 text-orange-700 hover:bg-orange-100 hover:text-orange-800 font-semibold shadow-sm"
-              onClick={() => navigate('/professor/trainings')}
+              onClick={() => navigate('/trainings')}
             >
               Acessar Agora
             </Button>
@@ -111,7 +111,7 @@ export default function DashboardProfessor() {
         {/* Capacitação */}
         <Card
           className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-orange-400"
-          onClick={() => navigate('/professor/trainings')}
+          onClick={() => navigate('/trainings')}
         >
           <CardHeader className="pb-4">
             <div className="flex justify-between items-start">

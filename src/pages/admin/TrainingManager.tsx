@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { BookOpen, Trash2, Edit, Loader2, AlertTriangle } from 'lucide-react'
+import { TrainingLayout } from '@/components/trainings/TrainingLayout'
 
 export default function TrainingManager() {
   const { selectedSchool, user, profile } = useAppStore()
@@ -149,9 +150,11 @@ export default function TrainingManager() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Gestão: Treinamentos</h1>
+    <TrainingLayout
+      title="Gestão de Treinamentos"
+      description="Crie e gerencie os treinamentos da instituição."
+    >
+      <div className="flex items-center justify-end mb-4">
         {!canEdit && (
           <div className="flex items-center gap-2 text-yellow-600 bg-yellow-50 px-4 py-2 rounded-lg border border-yellow-200">
             <AlertTriangle className="h-4 w-4" />
@@ -355,6 +358,6 @@ export default function TrainingManager() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </TrainingLayout>
   )
 }
