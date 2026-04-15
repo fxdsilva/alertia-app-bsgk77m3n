@@ -35,12 +35,15 @@ export const secretaryService = {
       if (schoolsError) throw schoolsError
 
       // 2. Fetch all active complaints (not archived or resolved)
-      const { data: complaintsData, error: complaintsError } = await supabase
+      const { data: rawComplaints, error: complaintsError } = await supabase
         .from('denuncias')
         .select('escola_id, status')
-        .not('status', 'in', '("arquivado","resolvido")')
 
       if (complaintsError) throw complaintsError
+
+      const complaintsData = (rawComplaints || []).filter(
+        (c) => c.status !== 'arquivado' && c.status !== 'resolvido',
+      )
 
       // 3. Fetch all active investigations
       const { data: investigationsData, error: invError } = await supabase
