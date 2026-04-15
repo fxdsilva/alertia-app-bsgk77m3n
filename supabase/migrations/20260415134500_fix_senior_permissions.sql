@@ -26,44 +26,40 @@ BEGIN
   -- Finally delete the complaint (cascades to investigacoes, workflow_logs, workflow_analistas, workflow_pareceres etc.)
   DELETE FROM public.denuncias WHERE id = p_denuncia_id;
 END;
-$;
+$$;
 
-DO $$
-BEGIN
-    -- Allow Senior and Admins to manage compliance tasks to have parity with Compliance Director
-    DROP POLICY IF EXISTS "Senior and Admin Manage Tasks" ON public.compliance_tasks;
-    CREATE POLICY "Senior and Admin Manage Tasks" ON public.compliance_tasks
-      FOR ALL TO authenticated
-      USING (
-        EXISTS ( SELECT 1 FROM public.usuarios_escola WHERE id = auth.uid() AND perfil IN ('senior', 'administrador', 'admin_gestor') )
-        OR public.check_is_admin_master()
-      );
+-- Allow Senior and Admins to manage compliance tasks to have parity with Compliance Director
+DROP POLICY IF EXISTS "Senior and Admin Manage Tasks" ON public.compliance_tasks;
+CREATE POLICY "Senior and Admin Manage Tasks" ON public.compliance_tasks
+  FOR ALL TO authenticated
+  USING (
+    EXISTS ( SELECT 1 FROM public.usuarios_escola WHERE id = auth.uid() AND perfil IN ('senior', 'administrador', 'admin_gestor') )
+    OR public.check_is_admin_master()
+  );
 
-    -- Allow Senior and Admins to view all compliance task evidences
-    DROP POLICY IF EXISTS "Senior and Admin view all evidences" ON public.compliance_task_evidences;
-    CREATE POLICY "Senior and Admin view all evidences" ON public.compliance_task_evidences
-      FOR ALL TO authenticated
-      USING (
-        EXISTS ( SELECT 1 FROM public.usuarios_escola WHERE id = auth.uid() AND perfil IN ('senior', 'administrador', 'admin_gestor') )
-        OR public.check_is_admin_master()
-      );
+-- Allow Senior and Admins to view all compliance task evidences
+DROP POLICY IF EXISTS "Senior and Admin view all evidences" ON public.compliance_task_evidences;
+CREATE POLICY "Senior and Admin view all evidences" ON public.compliance_task_evidences
+  FOR ALL TO authenticated
+  USING (
+    EXISTS ( SELECT 1 FROM public.usuarios_escola WHERE id = auth.uid() AND perfil IN ('senior', 'administrador', 'admin_gestor') )
+    OR public.check_is_admin_master()
+  );
 
-    -- Allow Senior and Admins to manage analyst assignments
-    DROP POLICY IF EXISTS "Senior and Admin manage assignments" ON public.analyst_assignments;
-    CREATE POLICY "Senior and Admin manage assignments" ON public.analyst_assignments
-      FOR ALL TO authenticated
-      USING (
-        EXISTS ( SELECT 1 FROM public.usuarios_escola WHERE id = auth.uid() AND perfil IN ('senior', 'administrador', 'admin_gestor') )
-        OR public.check_is_admin_master()
-      );
+-- Allow Senior and Admins to manage analyst assignments
+DROP POLICY IF EXISTS "Senior and Admin manage assignments" ON public.analyst_assignments;
+CREATE POLICY "Senior and Admin manage assignments" ON public.analyst_assignments
+  FOR ALL TO authenticated
+  USING (
+    EXISTS ( SELECT 1 FROM public.usuarios_escola WHERE id = auth.uid() AND perfil IN ('senior', 'administrador', 'admin_gestor') )
+    OR public.check_is_admin_master()
+  );
 
-    -- Allow Senior and Admins global view of all users to manage workflows
-    DROP POLICY IF EXISTS "Senior Global View Users" ON public.usuarios_escola;
-    CREATE POLICY "Senior Global View Users" ON public.usuarios_escola
-      FOR SELECT TO authenticated
-      USING (
-        EXISTS ( SELECT 1 FROM public.usuarios_escola ue WHERE ue.id = auth.uid() AND ue.perfil IN ('senior', 'administrador', 'admin_gestor') )
-        OR public.check_is_admin_master()
-      );
-
-END $$;
+-- Allow Senior and Admins global view of all users to manage workflows
+DROP POLICY IF EXISTS "Senior Global View Users" ON public.usuarios_escola;
+CREATE POLICY "Senior Global View Users" ON public.usuarios_escola
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS ( SELECT 1 FROM public.usuarios_escola ue WHERE ue.id = auth.uid() AND ue.perfil IN ('senior', 'administrador', 'admin_gestor') )
+    OR public.check_is_admin_master()
+  );
