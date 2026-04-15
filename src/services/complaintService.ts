@@ -17,13 +17,16 @@ export interface Complaint extends Denuncia {
   attachments?: Attachment[]
 }
 
-function parseAttachments(
+async function parseAttachments(
   urls: string[] | null,
   createdAt: string,
-): Attachment[] {
+): Promise<Attachment[]> {
   if (!urls || urls.length === 0) return []
 
-  return urls.map((url, index) => {
+  const attachments: Attachment[] = []
+
+  for (let index = 0; index < urls.length; index++) {
+    let url = urls[index]
     let fileName = `Anexo_${index + 1}`
     let type = 'other'
 
@@ -39,22 +42,46 @@ function parseAttachments(
       )
         type = 'image'
       else if (extension === 'pdf') type = 'pdf'
-      else if (['mp4', 'webm', 'mov'].includes(extension || '')) type = 'video'
-      else if (['mp3', 'wav', 'ogg'].includes(extension || '')) type = 'audio'
+      else if (['mp4', 'webm', 'mov', 'avi'].includes(extension || ''))
+        type = 'video'
+      else if (['mp3', 'wav', 'ogg', 'm4a'].includes(extension || ''))
+        type = 'audio'
       else if (['zip', 'rar', '7z', 'tar'].includes(extension || ''))
         type = 'archive'
+
+      // Generate signed URL if it is a supabase storage URL
+      if (url.includes('/storage/v1/object/')) {
+        const bucketAndPathStr = url.split('/storage/v1/object/')[1]
+        const pathParts = bucketAndPathStr.split('/')
+        if (pathParts[0] === 'public' || pathParts[0] === 'sign') {
+          pathParts.shift()
+        }
+        const bucket = pathParts.shift()
+        const path = pathParts.join('/')
+
+        if (bucket && path) {
+          const { data } = await supabase.storage
+            .from(bucket)
+            .createSignedUrl(path, 3600)
+          if (data?.signedUrl) {
+            url = data.signedUrl
+          }
+        }
+      }
     } catch (e) {
-      // fallback
+      console.error('Error parsing attachment URL', e)
     }
 
-    return {
+    attachments.push({
       id: `att_${index}`,
       fileName,
       url,
       type,
       uploadedAt: createdAt,
-    }
-  })
+    })
+  }
+
+  return attachments
 }
 
 export const complaintService = {
@@ -87,12 +114,16 @@ export const complaintService = {
     const { data, error } = await query
     if (error) throw error
 
-    return data.map((d: any) => ({
-      ...d,
-      escola_nome: d.escolas_instituicoes?.nome_escola,
-      status_nome: d.status_denuncia?.nome_status,
-      attachments: parseAttachments(d.evidencias_urls, d.created_at),
-    })) as Complaint[]
+    const result = []
+    for (const d of data) {
+      result.push({
+        ...d,
+        escola_nome: d.escolas_instituicoes?.nome_escola,
+        status_nome: d.status_denuncia?.nome_status,
+        attachments: await parseAttachments(d.evidencias_urls, d.created_at),
+      })
+    }
+    return result as Complaint[]
   },
 
   async getComplaintById(id: string) {
@@ -114,7 +145,10 @@ export const complaintService = {
       ...data,
       escola_nome: data.escolas_instituicoes?.nome_escola,
       status_nome: data.status_denuncia?.nome_status,
-      attachments: parseAttachments(data.evidencias_urls, data.created_at),
+      attachments: await parseAttachments(
+        data.evidencias_urls,
+        data.created_at,
+      ),
     } as Complaint
   },
 

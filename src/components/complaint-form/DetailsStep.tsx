@@ -106,8 +106,10 @@ export function DetailsStep({
               multiple
               accept={ACCEPTED_FILE_TYPES_STRING}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              onChange={onFileChange}
-              value=""
+              onChange={(e) => {
+                onFileChange(e)
+                e.target.value = ''
+              }}
             />
           </div>
 
