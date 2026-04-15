@@ -45,6 +45,10 @@ import SupportManager from '@/pages/senior/SupportManager'
 import InternalInvestigations from '@/pages/InternalInvestigations'
 import ReportGeneration from '@/pages/ReportGeneration'
 
+// Compliance Modules
+import ComplaintsList from '@/pages/compliance/modules/ComplaintsList'
+import ComplaintDetails from '@/pages/compliance/modules/ComplaintDetails'
+
 // Admin Pages
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import CodeOfConductManager from '@/pages/admin/CodeOfConductManager'
@@ -260,6 +264,16 @@ const App = () => {
                 <Route
                   path="/compliance/analyst/risk-management"
                   element={<RiskManagementDashboard />}
+                />
+
+                {/* Compliance Shared Modules */}
+                <Route
+                  path="/compliance/complaints"
+                  element={<ComplaintsList />}
+                />
+                <Route
+                  path="/compliance/complaints/:id"
+                  element={<ComplaintDetails />}
                 />
 
                 {/* Portal Public Pages */}
