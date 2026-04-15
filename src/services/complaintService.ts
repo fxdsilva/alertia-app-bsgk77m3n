@@ -40,7 +40,9 @@ async function parseAttachments(
       try {
         const parsed = JSON.parse(url)
         url = parsed.url || parsed.path || url
-      } catch (e) {}
+      } catch (e) {
+        // Ignore parse error and keep original url
+      }
     }
 
     try {
