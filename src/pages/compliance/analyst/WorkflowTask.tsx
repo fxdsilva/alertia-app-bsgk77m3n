@@ -5,6 +5,7 @@ import {
   WorkflowComplaint,
   WORKFLOW_STATUS,
 } from '@/services/workflowService'
+import { complaintService } from '@/services/complaintService'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -41,6 +42,16 @@ export default function WorkflowTask() {
     setLoading(true)
     try {
       const data = await workflowService.getComplaintDetails(id!)
+
+      try {
+        const fullComplaint = await complaintService.getComplaintById(id!)
+        if (fullComplaint.attachments) {
+          data.attachments = fullComplaint.attachments
+        }
+      } catch (e) {
+        console.error('Failed to load attachments', e)
+      }
+
       setComplaint(data)
 
       let currentPhase = 1
