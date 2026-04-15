@@ -35,10 +35,12 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import useAppStore from '@/stores/useAppStore'
+import { useToast } from '@/hooks/use-toast'
 
 export default function NetworkWorkflow() {
   const navigate = useNavigate()
   const { profile } = useAppStore()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [dashboardData, setDashboardData] = useState<{
     f1: any[]
@@ -108,9 +110,20 @@ export default function NetworkWorkflow() {
     try {
       setDeletingId(id)
       await workflowService.deleteComplaint(id)
+      toast({
+        title: 'Sucesso',
+        description: 'Denúncia excluída permanentemente.',
+      })
       await fetchData()
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
+      toast({
+        variant: 'destructive',
+        title: 'Acesso negado',
+        description:
+          error?.message ||
+          'Você não tem permissão para excluir esta denúncia.',
+      })
     } finally {
       setDeletingId(null)
     }
