@@ -42,6 +42,9 @@ import {
   User,
   Inbox,
   Filter,
+  Paperclip,
+  Music,
+  ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { complianceService } from '@/services/complianceService'
@@ -438,6 +441,76 @@ export default function ComplaintTriage() {
                   {selectedComplaint.descricao}
                 </div>
               </div>
+
+              {selectedComplaint.evidencias_urls &&
+                selectedComplaint.evidencias_urls.length > 0 && (
+                  <div className="space-y-3 mt-4 pt-4 border-t">
+                    <Label className="text-base font-semibold flex items-center gap-2">
+                      <Paperclip className="h-4 w-4" />
+                      Anexos / Evidências (
+                      {selectedComplaint.evidencias_urls.length})
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {selectedComplaint.evidencias_urls.map(
+                        (url: string, index: number) => {
+                          // Basic check to see if URL looks like an image or audio
+                          const isImage =
+                            url.match(
+                              /\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i,
+                            ) != null
+                          const isAudio =
+                            url.match(/\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/i) !=
+                            null
+
+                          return (
+                            <div
+                              key={index}
+                              className="border rounded-md p-3 flex flex-col items-center justify-center bg-muted/5 gap-2 relative overflow-hidden group"
+                            >
+                              {isImage ? (
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block w-full h-full flex items-center justify-center"
+                                  title="Clique para ampliar"
+                                >
+                                  <img
+                                    src={url}
+                                    alt={`Anexo ${index + 1}`}
+                                    className="max-w-full h-auto max-h-40 object-contain rounded mx-auto hover:opacity-90 transition-opacity"
+                                  />
+                                </a>
+                              ) : isAudio ? (
+                                <div className="w-full flex flex-col items-center justify-center gap-3 p-2">
+                                  <Music className="h-8 w-8 text-primary/60" />
+                                  <audio
+                                    src={url}
+                                    controls
+                                    className="w-full h-10"
+                                  />
+                                </div>
+                              ) : (
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex flex-col items-center gap-3 text-primary hover:text-primary/80 p-4 transition-colors"
+                                  title="Abrir anexo externo"
+                                >
+                                  <ExternalLink className="h-8 w-8" />
+                                  <span className="text-sm font-medium text-center line-clamp-2 break-all">
+                                    Ver Anexo {index + 1}
+                                  </span>
+                                </a>
+                              )}
+                            </div>
+                          )
+                        },
+                      )}
+                    </div>
+                  </div>
+                )}
             </div>
           )}
 
