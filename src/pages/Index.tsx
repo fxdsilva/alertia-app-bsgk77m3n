@@ -24,7 +24,6 @@ import {
   Globe,
   AlertCircle,
   Download,
-  GraduationCap,
 } from 'lucide-react'
 import { usePWAInstall } from '@/hooks/use-pwa-install'
 
@@ -164,7 +163,7 @@ const Index = () => {
           </Card>
 
           {/* Secondary Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Consult Status */}
             <Card
               className="group border-0 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer bg-white"
@@ -199,24 +198,6 @@ const Index = () => {
                     Área Restrita
                   </h3>
                   <p className="text-sm text-slate-500">Acesso colaboradores</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Capacitação */}
-            <Card
-              className="group border-0 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer bg-white"
-              onClick={() => navigate('/trainings')}
-            >
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="h-12 w-12 bg-purple-50 rounded-xl flex items-center justify-center shrink-0">
-                  <GraduationCap className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Capacitação
-                  </h3>
-                  <p className="text-sm text-slate-500">Treinamentos</p>
                 </div>
               </CardContent>
             </Card>
