@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { workflowService, WorkflowComplaint } from '@/services/workflowService'
+import { supabase } from '@/lib/supabase/client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -30,6 +30,7 @@ import {
   Filter,
   Trash2,
   Loader2,
+  Users,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -67,10 +68,100 @@ export default function NetworkWorkflow() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const data = await workflowService.getWorkflowDashboardData()
-      setDashboardData(data)
+      const { data, error } = await supabase
+        .from('denuncias')
+        .select(
+          `
+          *,
+          escolas_instituicoes (nome_escola),
+          status_denuncia (nome_status),
+          analista_1:usuarios_escola!denuncias_analista_1_id_fkey(nome_usuario),
+          analista_2:usuarios_escola!denuncias_analista_2_id_fkey(nome_usuario),
+          analista_3:usuarios_escola!denuncias_analista_3_id_fkey(nome_usuario),
+          analista_principal:usuarios_escola!denuncias_analista_id_fkey(nome_usuario),
+          workflow_analistas (
+            fase,
+            analista_id,
+            usuarios_escola!workflow_analistas_analista_id_fkey (nome_usuario)
+          )
+        `,
+        )
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      const f1: any[] = []
+      const f2: any[] = []
+      const f3: any[] = []
+      const closed: any[] = []
+
+      data.forEach((c: any) => {
+        const statusName = (
+          c.status_denuncia?.nome_status ||
+          c.status ||
+          ''
+        ).toLowerCase()
+
+        let phase = 'f1'
+        if (
+          statusName.includes('encerrada') ||
+          statusName.includes('arquivada') ||
+          statusName.includes('concluíd') ||
+          statusName.includes('improcedente')
+        ) {
+          phase = 'closed'
+        } else if (
+          statusName.includes('execução') ||
+          statusName.includes('comitê') ||
+          statusName.includes('disciplinar') ||
+          statusName.includes('decisão') ||
+          statusName.includes('fase 3')
+        ) {
+          phase = 'f3'
+        } else if (
+          statusName.includes('investigação') ||
+          statusName.includes('diligência') ||
+          statusName.includes('andamento') ||
+          statusName.includes('fase 2')
+        ) {
+          phase = 'f2'
+        }
+
+        c._phase = phase
+        c.statusName = c.status_denuncia?.nome_status || c.status
+
+        const designados = new Set<string>()
+        if (c.analista_principal?.nome_usuario)
+          designados.add(c.analista_principal.nome_usuario)
+        if (c.analista_1?.nome_usuario)
+          designados.add(c.analista_1.nome_usuario)
+        if (c.analista_2?.nome_usuario)
+          designados.add(c.analista_2.nome_usuario)
+        if (c.analista_3?.nome_usuario)
+          designados.add(c.analista_3.nome_usuario)
+
+        c.workflow_analistas?.forEach((wa: any) => {
+          if (wa.usuarios_escola?.nome_usuario) {
+            designados.add(wa.usuarios_escola.nome_usuario)
+          }
+        })
+
+        c.designados = Array.from(designados)
+
+        if (phase === 'closed') closed.push(c)
+        else if (phase === 'f3') f3.push(c)
+        else if (phase === 'f2') f2.push(c)
+        else f1.push(c)
+      })
+
+      setDashboardData({ f1, f2, f3, closed })
     } catch (error) {
-      console.error(error)
+      console.error('Error fetching dashboard data:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível carregar as denúncias.',
+      })
     } finally {
       setLoading(false)
     }
@@ -113,7 +204,11 @@ export default function NetworkWorkflow() {
     e.stopPropagation()
     try {
       setDeletingId(id)
-      await workflowService.deleteComplaint(id)
+      const { error } = await supabase.rpc('delete_denuncia', {
+        p_denuncia_id: id,
+      })
+      if (error) throw error
+
       toast({
         title: 'Sucesso',
         description: 'Denúncia excluída permanentemente.',
@@ -182,8 +277,25 @@ export default function NetworkWorkflow() {
           <p className="text-sm text-slate-600 line-clamp-2 min-h-[40px]">
             {c.descricao}
           </p>
+
+          {c.designados && c.designados.length > 0 && (
+            <div className="flex flex-wrap gap-1 pt-2 border-t border-slate-100 mt-2">
+              <span className="text-xs text-slate-500 w-full mb-1 flex items-center gap-1 font-medium">
+                <Users className="h-3 w-3" /> Designados
+              </span>
+              {c.designados.map((nome: string, idx: number) => (
+                <Badge
+                  key={idx}
+                  variant="secondary"
+                  className="text-[10px] py-0 px-1.5 h-4 bg-slate-100 text-slate-600 font-normal"
+                >
+                  {nome}
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardContent>
-        <CardFooter className="bg-slate-50/50 p-3 px-5 flex justify-between items-center border-t gap-2">
+        <CardFooter className="bg-slate-50/50 p-3 px-5 flex justify-between items-center border-t gap-2 mt-auto">
           <div className="flex items-center gap-2 text-xs font-medium text-slate-500 flex-1 min-w-0">
             <div
               className={cn('h-2 w-2 rounded-full shrink-0', {
@@ -193,8 +305,8 @@ export default function NetworkWorkflow() {
                 'bg-green-500': c._phase === 'closed',
               })}
             />
-            <span className="truncate max-w-[200px]" title={c.status}>
-              {c.status}
+            <span className="truncate max-w-[200px]" title={c.statusName}>
+              {c.statusName}
             </span>
           </div>
 
