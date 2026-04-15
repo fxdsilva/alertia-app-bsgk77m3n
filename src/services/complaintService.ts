@@ -25,16 +25,40 @@ async function parseAttachments(
 
   const attachments: Attachment[] = []
 
+  // Group paths by bucket to fetch signed URLs in bulk and avoid rate limits/slow loading
+  const buckets: Record<string, string[]> = {}
+  const attachmentMap: Record<string, any> = {}
+
   for (let index = 0; index < urls.length; index++) {
-    let url = urls[index]
+    let originalUrl = urls[index]
+    let url = originalUrl
     let fileName = `Anexo_${index + 1}`
     let type = 'other'
+
+    // Try to parse if it's JSON stringified
+    if (url.startsWith('{') && url.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(url)
+        url = parsed.url || parsed.path || url
+      } catch (e) {}
+    }
 
     try {
       const cleanUrl = url.split('?')[0]
       const decoded = decodeURIComponent(cleanUrl)
       const parts = decoded.split('/')
-      fileName = parts[parts.length - 1] || fileName
+
+      if (parts.length > 0 && parts[parts.length - 1]) {
+        fileName = parts[parts.length - 1]
+        // Clean UUID prefix from filename if present (e.g. "uuid-filename.ext")
+        if (
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/.test(
+            fileName,
+          )
+        ) {
+          fileName = fileName.substring(37)
+        }
+      }
 
       const extension = fileName.split('.').pop()?.toLowerCase()
       if (
@@ -46,47 +70,113 @@ async function parseAttachments(
         type = 'video'
       else if (['mp3', 'wav', 'ogg', 'm4a'].includes(extension || ''))
         type = 'audio'
-      else if (['zip', 'rar', '7z', 'tar'].includes(extension || ''))
+      else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension || ''))
         type = 'archive'
+      else if (['doc', 'docx'].includes(extension || '')) type = 'document'
+      else if (['xls', 'xlsx', 'csv'].includes(extension || ''))
+        type = 'spreadsheet'
 
-      let bucket = ''
+      let bucket = 'evidencias'
       let path = ''
 
-      // Generate signed URL if it is a supabase storage URL
-      if (url.includes('/storage/v1/object/')) {
-        const bucketAndPathStr = url.split('/storage/v1/object/')[1]
+      if (cleanUrl.includes('/storage/v1/object/')) {
+        const bucketAndPathStr = cleanUrl.split('/storage/v1/object/')[1]
         const pathParts = bucketAndPathStr.split('/')
         if (['public', 'sign', 'authenticated'].includes(pathParts[0])) {
           pathParts.shift()
         }
-        bucket = pathParts.shift() || ''
+        bucket = pathParts.shift() || 'evidencias'
         path = pathParts.join('/')
-      } else if (!url.startsWith('http') && url.includes('/')) {
-        const pathParts = url.split('/')
-        bucket = pathParts.shift() || ''
+      } else if (!cleanUrl.startsWith('http')) {
+        const pathParts = cleanUrl.split('/')
+        if (['evidencias', 'denuncias', 'anexos'].includes(pathParts[0])) {
+          bucket = pathParts.shift() || 'evidencias'
+        }
         path = pathParts.join('/')
       }
 
-      if (bucket && path) {
-        const { data, error } = await supabase.storage
-          .from(bucket)
-          .createSignedUrl(path, 3600)
-        if (data?.signedUrl) {
-          url = data.signedUrl
-        } else if (error) {
-          console.error('Error creating signed url for attachment', error)
-        }
+      const attId = `att_${index}`
+      attachmentMap[attId] = {
+        id: attId,
+        fileName,
+        url: originalUrl, // Initial fallback
+        type,
+        uploadedAt: createdAt,
+        bucket,
+        path,
+      }
+
+      if (path && bucket) {
+        if (!buckets[bucket]) buckets[bucket] = []
+        buckets[bucket].push(path)
       }
     } catch (e) {
       console.error('Error parsing attachment URL', e)
+      attachmentMap[`att_${index}`] = {
+        id: `att_${index}`,
+        fileName,
+        url: originalUrl,
+        type: 'other',
+        uploadedAt: createdAt,
+      }
     }
+  }
 
+  // Fetch signed URLs in bulk per bucket
+  for (const bucket of Object.keys(buckets)) {
+    const paths = buckets[bucket]
+    if (paths.length > 0) {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrls(paths, 3600)
+      if (data) {
+        data.forEach((item) => {
+          if (item.signedUrl) {
+            for (const key of Object.keys(attachmentMap)) {
+              if (
+                attachmentMap[key].bucket === bucket &&
+                attachmentMap[key].path === item.path
+              ) {
+                attachmentMap[key].url = item.signedUrl
+              }
+            }
+          } else if (item.error) {
+            // Fallback to public URL
+            for (const key of Object.keys(attachmentMap)) {
+              if (
+                attachmentMap[key].bucket === bucket &&
+                attachmentMap[key].path === item.path
+              ) {
+                attachmentMap[key].url = supabase.storage
+                  .from(bucket)
+                  .getPublicUrl(item.path).data.publicUrl
+              }
+            }
+          }
+        })
+      } else if (error) {
+        console.error(`Error creating signed urls for bucket ${bucket}`, error)
+        // Fallback to public URLs
+        for (const key of Object.keys(attachmentMap)) {
+          if (attachmentMap[key].bucket === bucket) {
+            attachmentMap[key].url = supabase.storage
+              .from(bucket)
+              .getPublicUrl(attachmentMap[key].path).data.publicUrl
+          }
+        }
+      }
+    }
+  }
+
+  // Ensure they are pushed in the original order
+  for (let index = 0; index < urls.length; index++) {
+    const att = attachmentMap[`att_${index}`]
     attachments.push({
-      id: `att_${index}`,
-      fileName,
-      url,
-      type,
-      uploadedAt: createdAt,
+      id: att.id,
+      fileName: att.fileName,
+      url: att.url,
+      type: att.type,
+      uploadedAt: att.uploadedAt,
     })
   }
 

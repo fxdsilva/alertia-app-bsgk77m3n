@@ -4,10 +4,11 @@ import {
   FileText,
   Image as ImageIcon,
   Download,
-  ExternalLink,
   FileArchive,
   FileVideo,
   FileAudio,
+  Eye,
+  FileSpreadsheet,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AttachmentViewer } from './AttachmentViewer'
@@ -46,8 +47,25 @@ export function AttachmentList({ attachments }: AttachmentListProps) {
         return <FileVideo className="h-5 w-5" />
       case 'audio':
         return <FileAudio className="h-5 w-5" />
+      case 'spreadsheet':
+        return <FileSpreadsheet className="h-5 w-5" />
+      case 'document':
+        return <FileText className="h-5 w-5" />
       default:
         return <Paperclip className="h-5 w-5" />
+    }
+  }
+
+  const handleAction = (file: Attachment, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+
+    if (['image', 'video', 'audio', 'pdf'].includes(file.type)) {
+      setSelectedFile({ url: file.url, type: file.type })
+    } else {
+      window.open(file.url, '_blank', 'noopener,noreferrer')
     }
   }
 
@@ -57,51 +75,52 @@ export function AttachmentList({ attachments }: AttachmentListProps) {
         {attachments.map((file) => (
           <div
             key={file.id}
-            className="flex items-center justify-between p-3 bg-card border rounded-md shadow-sm transition-colors hover:bg-accent/50 group"
+            onClick={() => handleAction(file)}
+            className="flex items-center justify-between p-3 bg-card border rounded-md shadow-sm transition-colors hover:bg-accent/50 hover:border-primary/50 cursor-pointer group"
           >
             <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="p-2 bg-muted rounded-md text-muted-foreground group-hover:text-foreground transition-colors">
+              <div className="p-2 bg-muted rounded-md text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                 {getFileIcon(file.type)}
               </div>
               <div className="truncate">
                 <p
-                  className="text-sm font-medium truncate"
+                  className="text-sm font-medium truncate group-hover:text-primary transition-colors"
                   title={file.fileName}
                 >
                   {file.fileName}
                 </p>
-                <p className="text-xs text-muted-foreground uppercase">
+                <p className="text-xs text-muted-foreground uppercase mt-0.5">
                   {file.type}
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-1 flex-shrink-0">
-              {['image', 'video', 'audio'].includes(file.type) ? (
+            <div className="flex items-center space-x-1 flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity pl-2">
+              {['image', 'video', 'audio', 'pdf'].includes(file.type) ? (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() =>
-                    setSelectedFile({ url: file.url, type: file.type })
-                  }
+                  className="h-8 w-8 rounded-full"
+                  onClick={(e) => handleAction(file, e)}
                   title="Visualizar"
                 >
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              ) : file.type === 'pdf' ? (
-                <Button variant="ghost" size="icon" asChild title="Abrir PDF">
-                  <a href={file.url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  </a>
+                  <Eye className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                 </Button>
               ) : (
-                <Button variant="ghost" size="icon" asChild title="Baixar">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  asChild
+                  title="Baixar"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <a
                     href={file.url}
                     download
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Download className="h-4 w-4 text-muted-foreground" />
+                    <Download className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                   </a>
                 </Button>
               )}
