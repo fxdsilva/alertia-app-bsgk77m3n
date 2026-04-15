@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useComplaints } from '@/hooks/useComplaints'
 import { useAuth } from '@/hooks/use-auth'
 import {
@@ -28,9 +28,15 @@ import { Label } from '@/components/ui/label'
 
 export default function ComplaintsDashboard() {
   const { user } = useAuth()
-  const { complaints, loading, error } = useComplaints({
-    analista_id: user?.id,
-  })
+
+  const filters = useMemo(
+    () => ({
+      analista_id: user?.id,
+    }),
+    [user?.id],
+  )
+
+  const { complaints, loading, error } = useComplaints(filters)
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(
     null,
   )

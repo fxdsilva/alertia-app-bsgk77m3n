@@ -12,10 +12,13 @@ export function useComplaints(filters?: {
   const [error, setError] = useState<Error | null>(null)
   const { toast } = useToast()
 
+  const filtersJson = JSON.stringify(filters)
+
   const fetchComplaints = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await complaintService.getComplaints(filters)
+      const parsedFilters = filtersJson ? JSON.parse(filtersJson) : undefined
+      const data = await complaintService.getComplaints(parsedFilters)
       setComplaints(data)
       setError(null)
     } catch (err: any) {
@@ -28,7 +31,7 @@ export function useComplaints(filters?: {
     } finally {
       setLoading(false)
     }
-  }, [filters, toast])
+  }, [filtersJson, toast])
 
   useEffect(() => {
     fetchComplaints()
