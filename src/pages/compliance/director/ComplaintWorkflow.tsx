@@ -88,8 +88,27 @@ export default function ComplaintWorkflow() {
     setLoading(true)
     try {
       const result = await workflowService.getWorkflowDashboardData()
-      const all = [...result.f1, ...result.f2, ...result.f3, ...result.closed]
-      setComplaints(all)
+      let all = [...result.f1, ...result.f2, ...result.f3, ...result.closed]
+
+      // Ensure closed complaints only appear in the 'closed' tab
+      all = all.map((c) => {
+        const statusStr = (c.status || '').toLowerCase()
+        if (
+          statusStr.includes('encerrad') ||
+          statusStr.includes('concluíd') ||
+          statusStr.includes('arquivad')
+        ) {
+          return { ...c, _phase: 'closed' }
+        }
+        return c
+      })
+
+      // Deduplicate in case backend returns the same item in multiple lists
+      const uniqueComplaints = Array.from(
+        new Map(all.map((c) => [c.id, c])).values(),
+      )
+
+      setComplaints(uniqueComplaints)
 
       const { data } = await supabase
         .from('workflow_analistas')
