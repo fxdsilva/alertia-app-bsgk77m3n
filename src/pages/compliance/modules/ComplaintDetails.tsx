@@ -17,15 +17,36 @@ import {
   ShieldAlert,
   User,
   Building,
+  History,
 } from 'lucide-react'
 import { AttachmentList } from '@/components/complaints/AttachmentList'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { supabase } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react'
 
 export default function ComplaintDetails() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { complaint, loading, error } = useComplaint(id)
+
+  const [logs, setLogs] = useState<any[]>([])
+  const [loadingLogs, setLoadingLogs] = useState(false)
+
+  useEffect(() => {
+    if (!id) return
+    const fetchLogs = async () => {
+      setLoadingLogs(true)
+      const { data } = await supabase
+        .from('compliance_workflow_logs')
+        .select('*, usuarios_escola(nome_usuario, perfil)')
+        .eq('complaint_id', id)
+        .order('created_at', { ascending: false })
+      setLogs(data || [])
+      setLoadingLogs(false)
+    }
+    fetchLogs()
+  }, [id])
 
   if (loading) {
     return (
@@ -116,6 +137,63 @@ export default function ComplaintDetails() {
             </CardHeader>
             <CardContent>
               <AttachmentList attachments={complaint.attachments} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <History className="mr-2 h-5 w-5" />
+                Histórico de Ações
+              </CardTitle>
+              <CardDescription>
+                Registro de movimentações e decisões.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingLogs ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-16 w-full rounded-md" />
+                  <Skeleton className="h-16 w-full rounded-md" />
+                </div>
+              ) : logs.length === 0 ? (
+                <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
+                  Nenhum registro de histórico encontrado para esta denúncia.
+                </div>
+              ) : (
+                <div className="relative space-y-4 pl-4 before:absolute before:inset-y-0 before:left-[7px] before:w-[2px] before:bg-muted">
+                  {logs.map((log) => (
+                    <div key={log.id} className="relative pl-6">
+                      <div className="absolute left-[-13px] top-1.5 h-3 w-3 rounded-full border-2 border-background bg-primary" />
+                      <div className="bg-muted/30 border rounded-lg p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                          <span className="font-semibold text-sm">
+                            {log.new_status}
+                          </span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {format(
+                              new Date(log.created_at),
+                              "dd/MM/yyyy 'às' HH:mm",
+                            )}
+                          </span>
+                        </div>
+
+                        {log.comments && (
+                          <div className="text-sm text-muted-foreground bg-background border p-3 rounded-md mb-2 whitespace-pre-wrap">
+                            {log.comments}
+                          </div>
+                        )}
+
+                        <div className="text-xs text-muted-foreground font-medium mt-2">
+                          Por: {log.usuarios_escola?.nome_usuario || 'Sistema'}
+                          {log.usuarios_escola?.perfil &&
+                            ` • ${log.usuarios_escola.perfil.replace(/_/g, ' ')}`}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
