@@ -128,6 +128,14 @@ export default function WorkflowTask() {
   const isReturned = complaint.status === WORKFLOW_STATUS.RETURNED_1
   const isLeader = complaint.analista_1_id === user?.id
 
+  let phase: 1 | 2 | 3 = 1
+  if (complaint.status === WORKFLOW_STATUS.INVESTIGATION_2) phase = 2
+  if (
+    complaint.status === WORKFLOW_STATUS.MEDIATION_3 ||
+    complaint.status === WORKFLOW_STATUS.DISCIPLINARY_3
+  )
+    phase = 3
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6 pb-20">
       <Button variant="ghost" onClick={() => navigate(-1)}>
@@ -206,16 +214,22 @@ export default function WorkflowTask() {
 
       <Card className="border-primary shadow-sm">
         <CardHeader>
-          <CardTitle>Meu Parecer</CardTitle>
+          <CardTitle>
+            {phase === 3 ? 'Relatório de Execução' : 'Meu Parecer'}
+          </CardTitle>
           <CardDescription>
-            {isLeader
-              ? 'Você é o Líder desta fase. Em caso de divergência com os outros analistas, seu voto será a decisão final.'
-              : 'Registre sua conclusão independente. O sistema calculará o consenso da equipe.'}
+            {phase === 3
+              ? 'Registre os procedimentos, tratativas e ações realizadas nesta fase. Ao enviar, o relatório será encaminhado ao Diretor de Compliance para validação final.'
+              : isLeader
+                ? 'Você é o Líder desta fase. Em caso de divergência com os outros analistas, seu voto será a decisão final.'
+                : 'Registre sua conclusão independente. O sistema calculará o consenso da equipe.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
-            <Label className="text-base">Conclusão</Label>
+            <Label className="text-base">
+              {phase === 3 ? 'Status da Execução' : 'Conclusão'}
+            </Label>
             <RadioGroup
               value={conclusao}
               onValueChange={setConclusao}
@@ -227,7 +241,7 @@ export default function WorkflowTask() {
                   htmlFor="proc"
                   className="cursor-pointer font-medium text-green-700"
                 >
-                  Procedente
+                  {phase === 3 ? 'Concluído' : 'Procedente'}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -236,25 +250,35 @@ export default function WorkflowTask() {
                   htmlFor="imp"
                   className="cursor-pointer font-medium text-red-700"
                 >
-                  Improcedente
+                  {phase === 3 ? 'Sem Sucesso' : 'Improcedente'}
                 </Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Necessita mais análise" id="mais" />
-                <Label
-                  htmlFor="mais"
-                  className="cursor-pointer font-medium text-yellow-700"
-                >
-                  Necessita mais análise
-                </Label>
-              </div>
+              {phase !== 3 && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Necessita mais análise" id="mais" />
+                  <Label
+                    htmlFor="mais"
+                    className="cursor-pointer font-medium text-yellow-700"
+                  >
+                    Necessita mais análise
+                  </Label>
+                </div>
+              )}
             </RadioGroup>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base">Justificativa e Análise</Label>
+            <Label className="text-base">
+              {phase === 3
+                ? 'Detalhamento das Ações'
+                : 'Justificativa e Análise'}
+            </Label>
             <Textarea
-              placeholder="Descreva detalhadamente os motivos da sua conclusão..."
+              placeholder={
+                phase === 3
+                  ? 'Descreva os procedimentos e tratativas realizadas...'
+                  : 'Descreva detalhadamente os motivos da sua conclusão...'
+              }
               className="min-h-[200px]"
               value={parecer}
               onChange={(e) => setParecer(e.target.value)}
@@ -278,7 +302,7 @@ export default function WorkflowTask() {
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
-              Registrar Meu Voto
+              {phase === 3 ? 'Enviar para Diretor' : 'Registrar Meu Voto'}
             </Button>
           </div>
         </CardContent>

@@ -116,29 +116,19 @@ export const workflowService = {
   },
 
   async getWorkflowDashboardData() {
-    const normalize = (c: any, defaultStatus: string, phase: string): any => {
-      const den = c.denuncias || c
+    const normalize = (d: any, defaultStatus: string, phase: string): any => {
       const statusName =
-        den.status_denuncia?.nome_status || den.status || defaultStatus
+        d.status_denuncia?.nome_status || d.status || defaultStatus
       return {
-        ...den,
-        id: den.id || c.id,
-        record_id: c.id,
+        ...d,
+        record_id: d.id,
         status: statusName,
         _phase: phase,
-        is_investigacao: !!c.denuncia_id,
-        escolas_instituicoes:
-          c.escolas_instituicoes || den.escolas_instituicoes,
-        created_at: c.created_at || den.created_at,
-        analista_1: den.analista_1,
-        analista_2: den.analista_2 || (phase === 'f2' ? c.responsavel : null),
-        analista_3: den.analista_3 || (phase === 'f3' ? c.responsavel : null),
-        analista_id: c.analista_id || den.analista_id,
-        protocolo: den.protocolo || 'S/ Protocolo',
-        descricao:
-          den.descricao || c.descricao || c.titulo || c.caso || 'Sem descrição',
-        gravidade: den.gravidade || 'Não classificada',
-        categoria: den.categoria || [],
+        is_investigacao: phase === 'f2',
+        protocolo: d.protocolo || 'S/ Protocolo',
+        descricao: d.descricao || 'Sem descrição',
+        gravidade: d.gravidade || 'Não classificada',
+        categoria: d.categoria || [],
       }
     }
 
@@ -149,51 +139,32 @@ export const workflowService = {
       )
       .order('created_at', { ascending: false })
 
-    const { data: f2 } = await supabase
-      .from('investigacoes')
-      .select(
-        '*, denuncias(*, status_denuncia(nome_status)), escolas_instituicoes(nome_escola), responsavel:analista_id(nome_usuario)',
-      )
-      .in('status', ['em_andamento', 'Pendente', 'pendente'])
+    const f1: any[] = []
+    const f2: any[] = []
+    const f3: any[] = []
+    const closed: any[] = []
 
-    const { data: f3Proc } = await supabase
-      .from('processos_disciplinares')
-      .select(
-        '*, denuncias(*, status_denuncia(nome_status)), escolas_instituicoes(nome_escola), responsavel:analista_id(nome_usuario)',
-      )
-      .not('status', 'in', '("concluido","Concluído","Encerrado")')
+    const f2Statuses = [
+      WORKFLOW_STATUS.APPROVED_PROCEDURE,
+      WORKFLOW_STATUS.INVESTIGATION_2,
+      WORKFLOW_STATUS.REVIEW_2,
+    ]
 
-    const { data: f3Med } = await supabase
-      .from('mediacoes')
-      .select(
-        '*, denuncias(*, status_denuncia(nome_status)), escolas_instituicoes(nome_escola), responsavel:analista_id(nome_usuario)',
-      )
-      .not('status', 'in', '("concluida","Concluída","Encerrada")')
-
-    const f3Combined = [...(f3Proc || []), ...(f3Med || [])]
-
-    const f1Statuses = [
-      'A designar',
-      'Aguardando designação de Analista 1',
-      'Em análise de procedência – Analista 1',
-      'Parecer preliminar enviado para aprovação do Diretor de Compliance',
-      'Parecer devolvido para reavaliação – Analista 1',
-      'Denúncia registrada',
-      'pendente',
-      'em_analise',
+    const f3Statuses = [
+      WORKFLOW_STATUS.WAITING_ANALYST_3,
+      WORKFLOW_STATUS.MEDIATION_3,
+      WORKFLOW_STATUS.DISCIPLINARY_3,
+      WORKFLOW_STATUS.REVIEW_3,
     ]
 
     const closedStatuses = [
+      WORKFLOW_STATUS.CLOSED,
+      WORKFLOW_STATUS.ARCHIVED,
       'resolvido',
       'arquivado',
       'Arquivamento aprovado',
       'Denúncia encerrada',
     ]
-
-    const f1: any[] = []
-    const closed: any[] = []
-    const f2DenunciaIds = new Set((f2 || []).map((i) => i.denuncia_id))
-    const f3DenunciaIds = new Set(f3Combined.map((i) => i.denuncia_id))
 
     if (allDenuncias) {
       allDenuncias.forEach((d) => {
@@ -203,23 +174,28 @@ export const workflowService = {
           closedStatuses.includes(sName) ||
           closedStatuses.includes(d.status)
         ) {
-          closed.push(d)
+          closed.push(normalize(d, 'Encerrada', 'closed'))
         } else if (
-          f1Statuses.includes(sName) ||
-          f1Statuses.includes(d.status)
+          f3Statuses.includes(sName) ||
+          f3Statuses.includes(d.status)
         ) {
-          f1.push(d)
-        } else if (!f2DenunciaIds.has(d.id) && !f3DenunciaIds.has(d.id)) {
-          f1.push(d)
+          f3.push(normalize(d, 'Em Execução', 'f3'))
+        } else if (
+          f2Statuses.includes(sName) ||
+          f2Statuses.includes(d.status)
+        ) {
+          f2.push(normalize(d, 'Em Investigação', 'f2'))
+        } else {
+          f1.push(normalize(d, 'Pendente', 'f1'))
         }
       })
     }
 
     return {
-      f1: f1.map((x) => normalize(x, 'Pendente', 'f1')),
-      f2: (f2 || []).map((x) => normalize(x, 'Em Investigação', 'f2')),
-      f3: f3Combined.map((x) => normalize(x, 'Em Execução', 'f3')),
-      closed: closed.map((x) => normalize(x, 'Encerrada', 'closed')),
+      f1,
+      f2,
+      f3,
+      closed,
     }
   },
 

@@ -33,6 +33,9 @@ export default function WorkflowDetail() {
   const [processing, setProcessing] = useState(false)
   const [analysts, setAnalysts] = useState<any[]>([])
   const [selectedAnalyst, setSelectedAnalyst] = useState<string>('')
+  const [resolutionTypeSelect, setResolutionTypeSelect] = useState<
+    'mediacao' | 'disciplinar'
+  >('disciplinar')
   const [votes, setVotes] = useState<any[]>([])
 
   useEffect(() => {
@@ -164,7 +167,7 @@ export default function WorkflowDetail() {
       if (needsAnalyst2) phase = 2
       if (needsAnalyst3) {
         phase = 3
-        resolutionType = (complaint.tipo_resolucao as any) || 'disciplinar'
+        resolutionType = resolutionTypeSelect
       }
 
       await workflowService.assignAnalyst(
@@ -234,6 +237,24 @@ export default function WorkflowDetail() {
                   ))}
                 </select>
               </div>
+              {needsAnalyst3 && (
+                <div className="flex-1 w-full space-y-2">
+                  <label className="text-sm font-medium">
+                    Tipo de Resolução
+                  </label>
+                  <select
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={resolutionTypeSelect}
+                    onChange={(e) =>
+                      setResolutionTypeSelect(e.target.value as any)
+                    }
+                    disabled={processing}
+                  >
+                    <option value="disciplinar">Medida Disciplinar</option>
+                    <option value="mediacao">Mediação</option>
+                  </select>
+                </div>
+              )}
               <Button
                 className="w-full md:w-auto min-w-[200px]"
                 onClick={handleAssignAnalyst}
