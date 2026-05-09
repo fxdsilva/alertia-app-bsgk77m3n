@@ -33,24 +33,34 @@ export default function ComplaintTriage() {
     null,
   )
   const [logs, setLogs] = useState<any[]>([])
+  const [pareceres, setPareceres] = useState<any[]>([])
   const [loadingLogs, setLoadingLogs] = useState(false)
 
   useEffect(() => {
     if (!selectedComplaint) {
       setLogs([])
+      setPareceres([])
       return
     }
-    const fetchLogs = async () => {
+    const fetchDetails = async () => {
       setLoadingLogs(true)
-      const { data } = await supabase
-        .from('compliance_workflow_logs')
-        .select('*, usuarios_escola(nome_usuario, perfil)')
-        .eq('complaint_id', selectedComplaint.id)
-        .order('created_at', { ascending: false })
-      setLogs(data || [])
+      const [logsRes, pareceresRes] = await Promise.all([
+        supabase
+          .from('compliance_workflow_logs')
+          .select('*, usuarios_escola(nome_usuario, perfil)')
+          .eq('complaint_id', selectedComplaint.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('workflow_pareceres')
+          .select('*, usuarios_escola(nome_usuario, perfil)')
+          .eq('denuncia_id', selectedComplaint.id)
+          .order('fase', { ascending: true }),
+      ])
+      setLogs(logsRes.data || [])
+      setPareceres(pareceresRes.data || [])
       setLoadingLogs(false)
     }
-    fetchLogs()
+    fetchDetails()
   }, [selectedComplaint])
 
   return (
@@ -128,7 +138,7 @@ export default function ComplaintTriage() {
                   <TableCell className="max-w-[200px]">
                     <Badge
                       variant="outline"
-                      className="whitespace-normal text-center min-w-[120px] block w-full py-1"
+                      className="inline-flex items-center justify-center whitespace-normal text-center min-w-[120px] w-full py-1.5 px-3 h-auto leading-tight"
                     >
                       {complaint.status_nome || complaint.status}
                     </Badge>
@@ -218,6 +228,126 @@ export default function ComplaintTriage() {
                     <AttachmentList
                       attachments={selectedComplaint.attachments}
                     />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">
+                    Pareceres e Relatos
+                  </Label>
+                  <div className="pt-2">
+                    {(() => {
+                      const directorConclusions = logs.filter(
+                        (log) =>
+                          log.usuarios_escola?.perfil ===
+                            'DIRETOR_COMPLIANCE' &&
+                          log.comments &&
+                          log.comments.trim() !== '' &&
+                          [
+                            'encerrada',
+                            'concluída',
+                            'arquivada',
+                            'resolvido',
+                            'arquivamento aprovado',
+                          ].some((s) =>
+                            log.new_status?.toLowerCase().includes(s),
+                          ),
+                      )
+
+                      if (
+                        pareceres.length === 0 &&
+                        directorConclusions.length === 0 &&
+                        !(selectedComplaint as any).parecer_1
+                      ) {
+                        return (
+                          <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
+                            Nenhum relato ou parecer registrado até o momento.
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <div className="space-y-4">
+                          {pareceres.map((p) => (
+                            <div
+                              key={p.id}
+                              className="bg-muted/30 border rounded-lg p-4 space-y-2"
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
+                                <span className="font-semibold text-sm">
+                                  Fase {p.fase} - Parecer do Analista
+                                </span>
+                                <Badge
+                                  variant={
+                                    p.conclusao === 'Procedente'
+                                      ? 'destructive'
+                                      : p.conclusao === 'Improcedente'
+                                        ? 'secondary'
+                                        : 'default'
+                                  }
+                                >
+                                  {p.conclusao}
+                                </Badge>
+                              </div>
+                              <div className="text-sm whitespace-pre-wrap text-muted-foreground">
+                                {p.parecer_texto || 'Sem texto de parecer.'}
+                              </div>
+                              <div className="text-xs text-muted-foreground font-medium pt-2 border-t">
+                                Analista:{' '}
+                                {p.usuarios_escola?.nome_usuario || 'Sistema'}
+                              </div>
+                            </div>
+                          ))}
+
+                          {(selectedComplaint as any).parecer_1 &&
+                            pareceres.length === 0 && (
+                              <div className="bg-muted/30 border rounded-lg p-4 space-y-2">
+                                <div className="flex items-center justify-between border-b pb-2">
+                                  <span className="font-semibold text-sm">
+                                    Parecer do Analista
+                                  </span>
+                                </div>
+                                <div className="text-sm whitespace-pre-wrap text-muted-foreground">
+                                  {(selectedComplaint as any).parecer_1}
+                                </div>
+                              </div>
+                            )}
+
+                          {directorConclusions.map((log) => (
+                            <div
+                              key={log.id}
+                              className="bg-primary/5 border-primary/20 border rounded-lg p-4 space-y-2"
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-primary/10 pb-2">
+                                <span className="font-semibold text-sm text-primary">
+                                  Conclusão do Diretor
+                                </span>
+                                <Badge
+                                  variant="default"
+                                  className="bg-primary text-primary-foreground"
+                                >
+                                  {log.new_status}
+                                </Badge>
+                              </div>
+                              <div className="text-sm whitespace-pre-wrap text-foreground">
+                                {log.comments}
+                              </div>
+                              <div className="text-xs text-muted-foreground font-medium pt-2 border-t border-primary/10">
+                                Diretor:{' '}
+                                {log.usuarios_escola?.nome_usuario || 'Sistema'}{' '}
+                                •{' '}
+                                {format(
+                                  new Date(log.created_at),
+                                  "dd/MM/yyyy 'às' HH:mm",
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
                 </div>
 

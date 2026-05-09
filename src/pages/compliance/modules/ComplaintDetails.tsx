@@ -31,21 +31,30 @@ export default function ComplaintDetails() {
   const { complaint, loading, error } = useComplaint(id)
 
   const [logs, setLogs] = useState<any[]>([])
+  const [pareceres, setPareceres] = useState<any[]>([])
   const [loadingLogs, setLoadingLogs] = useState(false)
 
   useEffect(() => {
     if (!id) return
-    const fetchLogs = async () => {
+    const fetchDetails = async () => {
       setLoadingLogs(true)
-      const { data } = await supabase
-        .from('compliance_workflow_logs')
-        .select('*, usuarios_escola(nome_usuario, perfil)')
-        .eq('complaint_id', id)
-        .order('created_at', { ascending: false })
-      setLogs(data || [])
+      const [logsRes, pareceresRes] = await Promise.all([
+        supabase
+          .from('compliance_workflow_logs')
+          .select('*, usuarios_escola(nome_usuario, perfil)')
+          .eq('complaint_id', id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('workflow_pareceres')
+          .select('*, usuarios_escola(nome_usuario, perfil)')
+          .eq('denuncia_id', id)
+          .order('fase', { ascending: true }),
+      ])
+      setLogs(logsRes.data || [])
+      setPareceres(pareceresRes.data || [])
       setLoadingLogs(false)
     }
-    fetchLogs()
+    fetchDetails()
   }, [id])
 
   if (loading) {
@@ -106,7 +115,7 @@ export default function ComplaintDetails() {
         </div>
         <Badge
           variant={complaint.status === 'pendente' ? 'secondary' : 'default'}
-          className="text-sm px-3 py-1"
+          className="text-sm px-3 py-1.5 h-auto whitespace-normal text-center max-w-[250px] leading-tight"
         >
           {complaint.status_nome || complaint.status}
         </Badge>
@@ -137,6 +146,133 @@ export default function ComplaintDetails() {
             </CardHeader>
             <CardContent>
               <AttachmentList attachments={complaint.attachments} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <FileWarning className="mr-2 h-5 w-5" />
+                Pareceres e Relatos
+              </CardTitle>
+              <CardDescription>
+                Análises e conclusões da equipe de compliance.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const directorConclusions = logs.filter(
+                  (log) =>
+                    log.usuarios_escola?.perfil === 'DIRETOR_COMPLIANCE' &&
+                    log.comments &&
+                    log.comments.trim() !== '' &&
+                    [
+                      'encerrada',
+                      'concluída',
+                      'arquivada',
+                      'resolvido',
+                      'arquivamento aprovado',
+                    ].some((s) => log.new_status?.toLowerCase().includes(s)),
+                )
+
+                if (loadingLogs) {
+                  return (
+                    <div className="space-y-3">
+                      <Skeleton className="h-20 w-full rounded-md" />
+                    </div>
+                  )
+                }
+
+                if (
+                  pareceres.length === 0 &&
+                  directorConclusions.length === 0 &&
+                  !(complaint as any).parecer_1
+                ) {
+                  return (
+                    <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
+                      Nenhum relato ou parecer registrado até o momento.
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {pareceres.map((p) => (
+                      <div
+                        key={p.id}
+                        className="bg-muted/30 border rounded-lg p-4 space-y-2"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
+                          <span className="font-semibold text-sm">
+                            Fase {p.fase} - Parecer do Analista
+                          </span>
+                          <Badge
+                            variant={
+                              p.conclusao === 'Procedente'
+                                ? 'destructive'
+                                : p.conclusao === 'Improcedente'
+                                  ? 'secondary'
+                                  : 'default'
+                            }
+                          >
+                            {p.conclusao}
+                          </Badge>
+                        </div>
+                        <div className="text-sm whitespace-pre-wrap text-muted-foreground">
+                          {p.parecer_texto || 'Sem texto de parecer.'}
+                        </div>
+                        <div className="text-xs text-muted-foreground font-medium pt-2 border-t">
+                          Analista:{' '}
+                          {p.usuarios_escola?.nome_usuario || 'Sistema'}
+                        </div>
+                      </div>
+                    ))}
+
+                    {(complaint as any).parecer_1 && pareceres.length === 0 && (
+                      <div className="bg-muted/30 border rounded-lg p-4 space-y-2">
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <span className="font-semibold text-sm">
+                            Parecer do Analista
+                          </span>
+                        </div>
+                        <div className="text-sm whitespace-pre-wrap text-muted-foreground">
+                          {(complaint as any).parecer_1}
+                        </div>
+                      </div>
+                    )}
+
+                    {directorConclusions.map((log) => (
+                      <div
+                        key={log.id}
+                        className="bg-primary/5 border-primary/20 border rounded-lg p-4 space-y-2"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-primary/10 pb-2">
+                          <span className="font-semibold text-sm text-primary">
+                            Conclusão do Diretor
+                          </span>
+                          <Badge
+                            variant="default"
+                            className="bg-primary text-primary-foreground"
+                          >
+                            {log.new_status}
+                          </Badge>
+                        </div>
+                        <div className="text-sm whitespace-pre-wrap text-foreground">
+                          {log.comments}
+                        </div>
+                        <div className="text-xs text-muted-foreground font-medium pt-2 border-t border-primary/10">
+                          Diretor:{' '}
+                          {log.usuarios_escola?.nome_usuario || 'Sistema'} •{' '}
+                          {format(
+                            new Date(log.created_at),
+                            "dd/MM/yyyy 'às' HH:mm",
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
 
