@@ -92,6 +92,17 @@ import {
   ProfessorAbout,
 } from '@/pages/professor/Placeholders'
 
+const PendingReportsProxy = () => {
+  const { profile } = useAppStore()
+  if (profile === 'DIRETOR_COMPLIANCE') {
+    return <Navigate to="/compliance/director/complaints" replace />
+  }
+  if (profile === 'ANALISTA_COMPLIANCE') {
+    return <Navigate to="/compliance/analyst/complaints" replace />
+  }
+  return <PendingReports />
+}
+
 const DashboardRouter = () => {
   const { profile } = useAppStore()
   if (profile === 'gestao_escola')
@@ -217,6 +228,12 @@ const App = () => {
                 <Route
                   path="/compliance/director/analysts"
                   element={<AnalystManagement />}
+                />
+                <Route
+                  path="/compliance/director/pending-reports"
+                  element={
+                    <Navigate to="/compliance/director/complaints" replace />
+                  }
                 />
                 {/* New Workflow Routes */}
                 <Route
@@ -360,7 +377,7 @@ const App = () => {
                 <Route path="/senior/audit-logs" element={<AuditLogs />} />
                 <Route
                   path="/senior/pending-reports"
-                  element={<PendingReports />}
+                  element={<PendingReportsProxy />}
                 />
                 <Route path="/senior/workflow" element={<NetworkWorkflow />} />
                 <Route
