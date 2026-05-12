@@ -71,94 +71,157 @@ export default function ComplaintTriage() {
         </h1>
       </div>
 
-      <div className="rounded-md border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Protocolo</TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead>Escola</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Gravidade</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  <Skeleton className="h-8 w-full max-w-md mx-auto" />
-                </TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="text-center py-8 text-destructive"
-                >
-                  Erro ao carregar denúncias.
-                </TableCell>
-              </TableRow>
-            ) : complaints.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="text-center py-8 text-muted-foreground"
-                >
-                  Nenhuma denúncia encontrada.
-                </TableCell>
-              </TableRow>
-            ) : (
-              complaints.map((complaint) => (
-                <TableRow key={complaint.id}>
-                  <TableCell className="font-medium">
-                    {complaint.protocolo}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(complaint.created_at), 'dd/MM/yyyy HH:mm')}
-                  </TableCell>
-                  <TableCell>
-                    {complaint.escola_nome || 'Não informada'}
-                  </TableCell>
-                  <TableCell>
-                    {complaint.categoria?.join(', ') || '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        complaint.gravidade === 'Alta'
-                          ? 'destructive'
-                          : 'secondary'
-                      }
-                    >
-                      {complaint.gravidade || 'Baixa'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="max-w-[200px]">
-                    <Badge
-                      variant="outline"
-                      className="inline-flex items-center justify-center whitespace-normal text-center min-w-[120px] w-full py-1.5 px-3 h-auto leading-tight"
-                    >
-                      {complaint.status_nome || complaint.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedComplaint(complaint)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Visualizar
-                    </Button>
-                  </TableCell>
+      {loading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-destructive border rounded-md bg-card">
+          Erro ao carregar denúncias.
+        </div>
+      ) : complaints.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground border rounded-md bg-card">
+          Nenhuma denúncia encontrada.
+        </div>
+      ) : (
+        <>
+          {/* Mobile View */}
+          <div className="md:hidden space-y-4">
+            {complaints.map((complaint) => (
+              <div
+                key={complaint.id}
+                className="bg-card border rounded-lg p-4 space-y-3 shadow-sm"
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <div className="font-semibold">{complaint.protocolo}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {format(
+                        new Date(complaint.created_at),
+                        'dd/MM/yyyy HH:mm',
+                      )}
+                    </div>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] sm:text-xs text-center whitespace-normal leading-tight px-2 py-1 h-auto max-w-[140px]"
+                  >
+                    {complaint.status_nome || complaint.status}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground text-[10px] uppercase tracking-wider block mb-0.5">
+                      Escola
+                    </span>
+                    <span className="font-medium line-clamp-1">
+                      {complaint.escola_nome || 'Não informada'}
+                    </span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground text-[10px] uppercase tracking-wider block mb-0.5">
+                      Categoria
+                    </span>
+                    <span className="line-clamp-1">
+                      {complaint.categoria?.join(', ') || '-'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t mt-3">
+                  <Badge
+                    variant={
+                      complaint.gravidade === 'Alta'
+                        ? 'destructive'
+                        : 'secondary'
+                    }
+                  >
+                    {complaint.gravidade || 'Baixa'}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedComplaint(complaint)}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    Visualizar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop View */}
+          <div className="hidden md:block rounded-md border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Protocolo</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Escola</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Gravidade</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {complaints.map((complaint) => (
+                  <TableRow key={complaint.id}>
+                    <TableCell className="font-medium">
+                      {complaint.protocolo}
+                    </TableCell>
+                    <TableCell>
+                      {format(
+                        new Date(complaint.created_at),
+                        'dd/MM/yyyy HH:mm',
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {complaint.escola_nome || 'Não informada'}
+                    </TableCell>
+                    <TableCell>
+                      {complaint.categoria?.join(', ') || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          complaint.gravidade === 'Alta'
+                            ? 'destructive'
+                            : 'secondary'
+                        }
+                      >
+                        {complaint.gravidade || 'Baixa'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-[200px]">
+                      <Badge
+                        variant="outline"
+                        className="inline-flex items-center justify-center whitespace-normal text-center min-w-[120px] w-full py-1.5 px-3 h-auto leading-tight"
+                      >
+                        {complaint.status_nome || complaint.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedComplaint(complaint)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Visualizar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
 
       <Dialog
         open={!!selectedComplaint}
