@@ -19,13 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { supabase } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import {
-  AlertCircle,
-  FileSearch,
-  ShieldCheck,
-  Scale,
-  SearchCheck,
-} from 'lucide-react'
+import { AlertCircle, FileSearch, ShieldCheck, SearchCheck } from 'lucide-react'
 
 export default function DueDiligence() {
   const [records, setRecords] = useState<any[]>([])
@@ -168,81 +162,7 @@ export default function DueDiligence() {
         </TabsContent>
 
         <TabsContent value="conceitos" className="mt-6 space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Scale className="h-5 w-5 text-primary" />
-                  Due Diligence vs Auditoria
-                </CardTitle>
-                <CardDescription>
-                  Tabela-resumo das principais diferenças
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[120px]">Aspecto</TableHead>
-                        <TableHead>Due Diligence</TableHead>
-                        <TableHead>Auditoria</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell className="font-medium">Visão</TableCell>
-                        <TableCell className="text-sm">
-                          Posição no mercado, valor real e riscos futuros.
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          Precisão dos registros fiscais, contábeis e
-                          conformidade legal.
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Objetivo</TableCell>
-                        <TableCell className="text-sm">
-                          Analisar números da empresa, para avaliar a realidade
-                          econômica da organização e potenciais riscos.
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          Verificar se os aspectos contábeis, financeiros e
-                          fiscais estão corretos e em conformidade com a
-                          legislação.
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Foco</TableCell>
-                        <TableCell className="text-sm">
-                          Compartilha procedimentos com auditoria, mas com
-                          diferentes objetivos, abrangência e princípios
-                          técnicos.
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          Avalia ativos, passivos, capital, lucros, dividendos e
-                          demonstrações do balanço patrimonial.
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">
-                          Procedimentos
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          Econômica e de mercado, considerando o potencial
-                          presente e futuro.
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          Contábil e legal, focada na exatidão dos registros
-                          financeiros atuais e na conformidade.
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-
+          <div className="grid gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
