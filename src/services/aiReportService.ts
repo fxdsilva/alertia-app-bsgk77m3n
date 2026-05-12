@@ -1,29 +1,67 @@
 import { supabase } from '@/lib/supabase/client'
 
 export const aiReportService = {
-  async generateReport(scope: 'global' | 'school', schoolId?: string) {
+  async generateReport(
+    scope: 'global' | 'school',
+    schoolId?: string,
+    sources: string[] = ['denuncias'],
+  ) {
     // Simulate AI generation delay
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+
+    const sourcesText = sources
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(', ')
 
     const title =
       scope === 'global'
-        ? `Relatório Consolidado da Rede - ${new Date().toLocaleDateString()}`
-        : `Relatório de Integridade Escolar - ${new Date().toLocaleDateString()}`
+        ? `Relatório Estratégico Global - ${new Date().toLocaleDateString()}`
+        : `Diagnóstico Institucional - ${new Date().toLocaleDateString()}`
 
-    const type = scope === 'global' ? 'Consolidado Rede' : 'Diagnóstico Escolar'
+    const type = scope === 'global' ? 'Análise de Rede' : 'Análise Local'
 
-    // Mock AI Content
+    // Mock AI Content based on sources
+    const highlights = []
+    let riskLevel = 'Baixo'
+
+    if (sources.includes('denuncias')) {
+      highlights.push(
+        'Tempo médio de resolução de denúncias reduziu em 15% no último trimestre.',
+      )
+      highlights.push(
+        'Pico de relatos anônimos identificados no mês passado, necessitando atenção.',
+      )
+    }
+    if (sources.includes('auditorias')) {
+      highlights.push(
+        '90% das não conformidades das últimas auditorias foram resolvidas.',
+      )
+      riskLevel = 'Moderado'
+    }
+    if (sources.includes('treinamentos')) {
+      highlights.push(
+        'Adesão aos treinamentos de Código de Conduta alcançou 95% do quadro de colaboradores.',
+      )
+    }
+    if (sources.includes('riscos')) {
+      highlights.push(
+        'Dois novos riscos críticos identificados na matriz de controles internos.',
+      )
+      riskLevel = scope === 'global' ? 'Alto' : 'Moderado'
+    }
+
+    if (highlights.length === 0) {
+      highlights.push(
+        'Os indicadores mantiveram-se estáveis no período analisado.',
+      )
+    }
+
     const content = {
-      summary:
-        'Análise baseada nos indicadores de integridade e compliance do período.',
-      highlights: [
-        'Aumento de 10% na eficiência de resolução de casos.',
-        'Identificação de novos focos de risco em áreas administrativas.',
-        'Adesão aos treinamentos acima da média esperada.',
-      ],
-      risk_assessment: scope === 'global' ? 'Moderado' : 'Baixo',
+      summary: `Análise gerada por Inteligência Artificial baseada nas seguintes fontes de dados: ${sourcesText}. O algoritmo identificou padrões comportamentais e métricas de compliance que auxiliam na tomada de decisão da alta gestão.`,
+      highlights: highlights,
+      risk_assessment: riskLevel,
       recommendations:
-        'Recomenda-se intensificar as ações de conscientização sobre assédio moral.',
+        'Recomenda-se focar na resolução proativa dos pontos destacados, intensificar campanhas de conscientização contínuas e manter o monitoramento das áreas de maior vulnerabilidade detectadas pela análise.',
     }
 
     let targetSchoolId = schoolId
@@ -57,7 +95,7 @@ export const aiReportService = {
     return data
   },
 
-  async getReports(limit = 5) {
+  async getReports(limit = 10) {
     const { data, error } = await supabase
       .from('relatorios_ia')
       .select('*, escolas_instituicoes(nome_escola)')
