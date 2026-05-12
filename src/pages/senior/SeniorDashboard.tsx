@@ -31,8 +31,9 @@ import {
   Info,
   Activity,
   GraduationCap,
+  Calculator,
 } from 'lucide-react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { adminDashboardService } from '@/services/adminDashboardService'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -44,8 +45,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { supabase } from '@/lib/supabase/client'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const chartConfig = {
   complaints: {
@@ -72,6 +83,16 @@ export default function SeniorDashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
 
+  // Modals state
+  const [resolutionModalOpen, setResolutionModalOpen] = useState(false)
+  const [resolutionDetails, setResolutionDetails] = useState({
+    total: 0,
+    resolved: 0,
+  })
+  const [alertsModalOpen, setAlertsModalOpen] = useState(false)
+  const [criticalAlerts, setCriticalAlerts] = useState<any[]>([])
+  const [detailsLoading, setDetailsLoading] = useState(false)
+
   const fetchData = async () => {
     try {
       const [kpis, charts, activities] = await Promise.all([
@@ -94,6 +115,69 @@ export default function SeniorDashboard() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  const openResolutionModal = async () => {
+    setResolutionModalOpen(true)
+    setDetailsLoading(true)
+    try {
+      const { data, error } = await supabase.from('denuncias').select(`
+        id, 
+        status:status_denuncia(nome_status)
+      `)
+
+      if (data && !error) {
+        const total = data.length
+        const resolved = data.filter((d) => {
+          const statusName = (d.status as any)?.nome_status?.toLowerCase() || ''
+          return (
+            statusName.includes('resolvid') ||
+            statusName.includes('concluíd') ||
+            statusName.includes('arquivad')
+          )
+        }).length
+        setResolutionDetails({ total, resolved })
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setDetailsLoading(false)
+    }
+  }
+
+  const openAlertsModal = async () => {
+    setAlertsModalOpen(true)
+    setDetailsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('denuncias')
+        .select(
+          `
+          id, protocolo, descricao, gravidade, created_at,
+          status:status_denuncia(nome_status)
+        `,
+        )
+        .in('gravidade', ['Alta', 'Crítica', 'Crítico', 'Alto'])
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (data && !error) {
+        // filter out resolved
+        const active = data.filter((d) => {
+          const statusName = (d.status as any)?.nome_status?.toLowerCase() || ''
+          return !(
+            statusName.includes('resolvid') ||
+            statusName.includes('concluíd') ||
+            statusName.includes('arquivad')
+          )
+        })
+        setCriticalAlerts(active)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setDetailsLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-6 animate-fade-in p-6">
@@ -237,9 +321,9 @@ export default function SeniorDashboard() {
                   variant="outline"
                   size="sm"
                   className="w-full mt-auto border-red-200 hover:bg-red-50 hover:text-red-700"
-                  onClick={() => navigate('/senior/consolidated')}
+                  onClick={openAlertsModal}
                 >
-                  Analisar Alertas
+                  Ver Lista de Alertas
                 </Button>
               </CardContent>
             </Card>
@@ -273,9 +357,9 @@ export default function SeniorDashboard() {
                   variant="outline"
                   size="sm"
                   className="w-full mt-auto border-green-200 hover:bg-green-50 hover:text-green-700"
-                  onClick={() => navigate('/senior/consolidated')}
+                  onClick={openResolutionModal}
                 >
-                  Ver Detalhes
+                  Ver Detalhes do Cálculo
                 </Button>
               </CardContent>
             </Card>
@@ -286,7 +370,7 @@ export default function SeniorDashboard() {
               <CardHeader>
                 <CardTitle>Volume de Ocorrências</CardTitle>
                 <CardDescription>
-                  Comparativo mensal de novas denúncias vs. casos resolvidos.
+                  Comparativo mensal de novas denúncias vs. casos resolvidas.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 pb-4">
@@ -477,6 +561,164 @@ export default function SeniorDashboard() {
           {activeTab === 'training' && <TrainingsPage />}
         </TabsContent>
       </Tabs>
+
+      {/* Resolution Rate Modal */}
+      <Dialog open={resolutionModalOpen} onOpenChange={setResolutionModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-green-600" />
+              Cálculo da Taxa de Resolução
+            </DialogTitle>
+            <DialogDescription>
+              Entenda como o indicador de taxa de resolução é calculado para a
+              sua rede de ensino.
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailsLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="space-y-6 py-4">
+              <div className="bg-muted/50 p-4 rounded-lg border">
+                <h4 className="text-sm font-semibold mb-2">Fórmula Aplicada</h4>
+                <code className="text-sm text-muted-foreground bg-background px-2 py-1 rounded border block text-center">
+                  (Denúncias Resolvidas ÷ Total de Denúncias) × 100
+                </code>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="shadow-none border-dashed bg-background/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Total de Denúncias
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">
+                      {resolutionDetails.total}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-none border-dashed bg-background/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Casos Resolvidos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-green-600">
+                      {resolutionDetails.resolved}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="flex items-center justify-between border-t pt-4">
+                <span className="font-medium text-lg">
+                  Taxa Atual Consolidada:
+                </span>
+                <span className="text-3xl font-bold text-green-700">
+                  {resolutionDetails.total > 0
+                    ? Math.round(
+                        (resolutionDetails.resolved / resolutionDetails.total) *
+                          100,
+                      )
+                    : 0}
+                  %
+                </span>
+              </div>
+
+              <div className="text-xs text-muted-foreground flex items-start gap-2 bg-blue-50/50 p-3 rounded-md border border-blue-100">
+                <Info className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
+                <p className="text-blue-700/80">
+                  Os dados refletem o volume histórico consolidado na tabela{' '}
+                  <strong>denuncias</strong>. São consideradas resolvidas
+                  ocorrências nos status "Concluída", "Resolvida" ou
+                  "Arquivada".
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Critical Alerts Modal */}
+      <Dialog open={alertsModalOpen} onOpenChange={setAlertsModalOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Alertas Críticos Pendentes
+            </DialogTitle>
+            <DialogDescription>
+              Ocorrências de alta gravidade não resolvidas que exigem
+              intervenção imediata.
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailsLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <ScrollArea className="max-h-[500px] mt-2 rounded-md border bg-muted/20">
+              <div className="p-4 space-y-3">
+                {criticalAlerts.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <CheckCircle className="h-12 w-12 text-green-300/50 mx-auto mb-3" />
+                    <p>Nenhum alerta crítico pendente no momento.</p>
+                  </div>
+                ) : (
+                  criticalAlerts.map((alert) => (
+                    <div
+                      key={alert.id}
+                      className="bg-background border rounded-lg p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-1.5 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                              {alert.protocolo}
+                            </span>
+                            <Badge
+                              variant="destructive"
+                              className="shrink-0 text-[10px] h-5"
+                            >
+                              {alert.gravidade || 'Crítico'}
+                            </Badge>
+                          </div>
+                          <h4 className="font-medium text-sm line-clamp-2 leading-relaxed">
+                            {alert.descricao}
+                          </h4>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t">
+                        <span className="flex items-center gap-1">
+                          <Activity className="h-3.5 w-3.5" />
+                          {(alert.status as any)?.nome_status ||
+                            'Status não definido'}
+                        </span>
+                        <span>
+                          Registrado em:{' '}
+                          <strong className="font-medium text-foreground">
+                            {format(new Date(alert.created_at), 'dd/MM/yyyy', {
+                              locale: ptBR,
+                            })}
+                          </strong>
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
