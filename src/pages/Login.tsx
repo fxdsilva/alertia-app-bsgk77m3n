@@ -49,12 +49,16 @@ export default function Login() {
       const { error } = await signIn(email, password)
 
       if (error) {
+        const errorStr = error.message
+          ? String(error.message).toLowerCase()
+          : String(error).toLowerCase()
         if (
           error.status === 400 ||
-          error.message.includes('Invalid login credentials')
+          errorStr.includes('invalid login credentials') ||
+          errorStr.includes('invalid_credentials')
         ) {
           setErrorMsg(
-            'E-mail ou senha inválidos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".',
+            'E-mail ou senha incorretos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".',
           )
         } else {
           setErrorMsg('Ocorreu um erro ao tentar entrar. Tente novamente.')

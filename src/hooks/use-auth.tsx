@@ -11,8 +11,14 @@ import { supabase } from '@/lib/supabase/client'
 interface AuthContextType {
   user: User | null
   session: Session | null
-  signUp: (email: string, password: string) => Promise<{ error: any }>
-  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: any; data?: any }>
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: any; data?: any }>
   signOut: () => Promise<{ error: any }>
   loading: boolean
 }
@@ -47,23 +53,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/` },
-    })
-    return { error }
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/` },
+      })
+      return { error, data }
+    } catch (err: any) {
+      return { error: err }
+    }
   }
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { error }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error, data }
+    } catch (err: any) {
+      return { error: err }
+    }
   }
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    return { error }
+    try {
+      const { error } = await supabase.auth.signOut()
+      return { error }
+    } catch (err: any) {
+      return { error: err }
+    }
   }
 
   return (
