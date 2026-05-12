@@ -181,9 +181,9 @@ export default function ConsolidatedData() {
             <Activity className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-green-600">9.2</div>
+            <div className="text-4xl font-bold text-green-600">92.0</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Média ponderada da rede
+              Média ponderada da rede (escala 0-100)
             </p>
           </CardContent>
         </Card>
@@ -298,88 +298,225 @@ export default function ConsolidatedData() {
                 )}
 
                 {activeMetric === 'integridade' && (
-                  <div className="space-y-6">
-                    <div className="grid gap-4 md:grid-cols-4">
-                      <div className="bg-muted p-4 rounded-lg">
-                        <div className="text-sm text-muted-foreground mb-1">
-                          Pesos do Cálculo
+                  <div className="space-y-8 animate-fade-in">
+                    {/* Pesos do Cálculo */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 border-b pb-2">
+                        Pesos do Cálculo — Fórmula Padrão V2
+                      </h3>
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="bg-muted p-4 rounded-lg border border-border/50">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="font-medium text-base">
+                              Taxa de Resolução
+                            </div>
+                            <div className="font-bold text-green-600 bg-green-100/50 px-2 py-0.5 rounded text-sm">
+                              + 4.5 pts
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Aumenta o índice conforme o percentual de denúncias
+                            resolvidas
+                          </p>
                         </div>
-                        <div className="font-medium">Fórmula Padrão V2</div>
-                      </div>
-                      <div className="bg-muted p-4 rounded-lg">
-                        <div className="text-sm text-muted-foreground mb-1">
-                          Taxa de Resolução
+                        <div className="bg-muted p-4 rounded-lg border border-border/50">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="font-medium text-base">
+                              Adesão a Treinamentos
+                            </div>
+                            <div className="font-bold text-green-600 bg-green-100/50 px-2 py-0.5 rounded text-sm">
+                              + 3.2 pts
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Valoriza participação e conclusão de treinamentos
+                            obrigatórios
+                          </p>
                         </div>
-                        <div className="font-medium text-green-600">
-                          + 4.5 pts
-                        </div>
-                      </div>
-                      <div className="bg-muted p-4 rounded-lg">
-                        <div className="text-sm text-muted-foreground mb-1">
-                          Adesão a Treinamentos
-                        </div>
-                        <div className="font-medium text-green-600">
-                          + 3.2 pts
-                        </div>
-                      </div>
-                      <div className="bg-muted p-4 rounded-lg">
-                        <div className="text-sm text-muted-foreground mb-1">
-                          Auditorias Pendentes
-                        </div>
-                        <div className="font-medium text-amber-600">
-                          - 1.5 pts
+                        <div className="bg-muted p-4 rounded-lg border border-border/50">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="font-medium text-base">
+                              Auditorias Pendentes
+                            </div>
+                            <div className="font-bold text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded text-sm">
+                              - 1.5 pts
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Reduz o índice conforme existirem auditorias em
+                            aberto
+                          </p>
                         </div>
                       </div>
                     </div>
 
+                    {/* Critérios Utilizados */}
                     <div>
-                      <h4 className="font-medium mb-3">
+                      <h3 className="text-lg font-semibold mb-4 border-b pb-2">
+                        Critérios Utilizados
+                      </h3>
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-base flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                            Taxa de Resolução
+                          </h4>
+                          <p className="text-sm text-muted-foreground pl-4">
+                            Mede a eficiência na conclusão e encerramento das
+                            denúncias registradas.
+                          </p>
+                          <div className="ml-4 bg-muted/50 p-3 rounded-md border font-mono text-sm inline-block">
+                            Taxa de Resolução = (Denúncias Resolvidas / Total de
+                            Denúncias) × 100
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-base flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                            Adesão a Treinamentos
+                          </h4>
+                          <p className="text-sm text-muted-foreground pl-4">
+                            Avalia o percentual de participação dos
+                            colaboradores em treinamentos obrigatórios ou
+                            estratégicos.
+                          </p>
+                          <div className="ml-4 bg-muted/50 p-3 rounded-md border font-mono text-sm inline-block">
+                            Adesão = (Treinamentos Concluídos / Treinamentos
+                            Disponíveis) × 100
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-base flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                            Auditorias Pendentes
+                          </h4>
+                          <p className="text-sm text-muted-foreground pl-4">
+                            Representa fatores de risco relacionados a
+                            auditorias ainda não concluídas.
+                            <br />
+                            Quanto maior o número de pendências, maior a redução
+                            do índice final.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Fórmula Consolidada do Índice */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 border-b pb-2">
+                        Fórmula Consolidada do Índice
+                      </h3>
+                      <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 shadow-sm">
+                        <p className="font-mono text-sm md:text-base text-primary/90 text-center font-medium">
+                          Índice de Integridade = (Taxa de Resolução × 4.5) +
+                          (Adesão a Treinamentos × 3.2) - (Auditorias Pendentes
+                          × 1.5)
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Interpretação do Resultado */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 border-b pb-2">
+                        Interpretação do Resultado
+                      </h3>
+                      <div className="overflow-hidden rounded-lg border">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-muted text-muted-foreground">
+                            <tr>
+                              <th className="px-4 py-3 font-medium">Faixa</th>
+                              <th className="px-4 py-3 font-medium">
+                                Classificação
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b">
+                              <td className="px-4 py-3 font-mono">90 - 100</td>
+                              <td className="px-4 py-3 font-medium text-green-600">
+                                Excelente
+                              </td>
+                            </tr>
+                            <tr className="border-b">
+                              <td className="px-4 py-3 font-mono">70 - 89</td>
+                              <td className="px-4 py-3 font-medium text-blue-600">
+                                Adequado
+                              </td>
+                            </tr>
+                            <tr className="border-b">
+                              <td className="px-4 py-3 font-mono">50 - 69</td>
+                              <td className="px-4 py-3 font-medium text-amber-600">
+                                Atenção
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="px-4 py-3 font-mono">
+                                Abaixo de 50
+                              </td>
+                              <td className="px-4 py-3 font-medium text-red-600">
+                                Crítico
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Histórico Recente de Pontuação */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 border-b pb-2">
                         Histórico Recente de Pontuação
-                      </h4>
-                      <table className="w-full text-sm text-left">
-                        <thead className="text-xs uppercase bg-muted text-muted-foreground border-b">
-                          <tr>
-                            <th className="px-4 py-3 font-medium">Período</th>
-                            <th className="px-4 py-3 font-medium">
-                              Pontuação Base
-                            </th>
-                            <th className="px-4 py-3 font-medium">
-                              Ajustes de Risco
-                            </th>
-                            <th className="px-4 py-3 font-medium">
-                              Índice Final
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="border-b hover:bg-muted/50">
-                            <td className="px-4 py-3">Mês Atual (Dez/2026)</td>
-                            <td className="px-4 py-3">8.5</td>
-                            <td className="px-4 py-3 text-green-600">+0.7</td>
-                            <td className="px-4 py-3 font-bold text-green-600">
-                              9.2
-                            </td>
-                          </tr>
-                          <tr className="border-b hover:bg-muted/50">
-                            <td className="px-4 py-3">
-                              Mês Anterior (Nov/2026)
-                            </td>
-                            <td className="px-4 py-3">8.2</td>
-                            <td className="px-4 py-3 text-green-600">+0.6</td>
-                            <td className="px-4 py-3 font-bold text-green-600">
-                              8.8
-                            </td>
-                          </tr>
-                          <tr className="border-b hover:bg-muted/50">
-                            <td className="px-4 py-3">Out/2026</td>
-                            <td className="px-4 py-3">8.0</td>
-                            <td className="px-4 py-3 text-red-500">-0.2</td>
-                            <td className="px-4 py-3 font-bold text-amber-600">
-                              7.8
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      </h3>
+                      <div className="overflow-hidden rounded-lg border">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-muted text-muted-foreground">
+                            <tr>
+                              <th className="px-4 py-3 font-medium">Período</th>
+                              <th className="px-4 py-3 font-medium">
+                                Pontuação Base
+                              </th>
+                              <th className="px-4 py-3 font-medium">
+                                Ajustes de Risco
+                              </th>
+                              <th className="px-4 py-3 font-medium">
+                                Índice Final
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b hover:bg-muted/50">
+                              <td className="px-4 py-3">
+                                Mês Atual (Dez/2026)
+                              </td>
+                              <td className="px-4 py-3">85.0</td>
+                              <td className="px-4 py-3 text-green-600">+7.0</td>
+                              <td className="px-4 py-3 font-bold text-green-600">
+                                92.0
+                              </td>
+                            </tr>
+                            <tr className="border-b hover:bg-muted/50">
+                              <td className="px-4 py-3">
+                                Mês Anterior (Nov/2026)
+                              </td>
+                              <td className="px-4 py-3">82.0</td>
+                              <td className="px-4 py-3 text-green-600">+6.0</td>
+                              <td className="px-4 py-3 font-bold text-blue-600">
+                                88.0
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-muted/50">
+                              <td className="px-4 py-3">Out/2026</td>
+                              <td className="px-4 py-3">80.0</td>
+                              <td className="px-4 py-3 text-red-500">-2.0</td>
+                              <td className="px-4 py-3 font-bold text-amber-600">
+                                78.0
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
                 )}
