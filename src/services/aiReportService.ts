@@ -24,6 +24,11 @@ export const aiReportService = {
     const highlights = []
     let riskLevel = 'Baixo'
 
+    let complaint_types = 'Não selecionado na análise.'
+    let treatment_status = 'Não selecionado na análise.'
+    let training_correlation = 'Não selecionado na análise.'
+    let risk_matrix = 'Não selecionado na análise.'
+
     if (sources.includes('denuncias')) {
       highlights.push(
         'Tempo médio de resolução de denúncias reduziu em 15% no último trimestre.',
@@ -31,23 +36,38 @@ export const aiReportService = {
       highlights.push(
         'Pico de relatos anônimos identificados no mês passado, necessitando atenção.',
       )
+      complaint_types =
+        'Assédio Moral (45%), Conduta Inadequada (30%), Desvios Éticos (25%).'
+      treatment_status =
+        'Aproximadamente 75% dos casos foram apurados e arquivados/resolvidos no prazo legal. 25% encontram-se em fase de investigação aprofundada ou due diligence.'
     }
-    if (sources.includes('auditorias')) {
-      highlights.push(
-        '90% das não conformidades das últimas auditorias foram resolvidas.',
-      )
-      riskLevel = 'Moderado'
-    }
+
     if (sources.includes('treinamentos')) {
       highlights.push(
         'Adesão aos treinamentos de Código de Conduta alcançou 95% do quadro de colaboradores.',
       )
+      if (sources.includes('denuncias')) {
+        training_correlation =
+          'Identificada correlação positiva: após a campanha de treinamento sobre "Prevenção ao Assédio", houve um pico de notificações seguido de uma queda progressiva nos incidentes nos meses subsequentes.'
+      } else {
+        training_correlation =
+          'Treinamentos de compliance foram efetivos, atingindo as metas de conformidade do semestre.'
+      }
     }
+
     if (sources.includes('riscos')) {
       highlights.push(
         'Dois novos riscos críticos identificados na matriz de controles internos.',
       )
       riskLevel = scope === 'global' ? 'Alto' : 'Moderado'
+      risk_matrix = `Matriz de risco indica exposição ${riskLevel.toUpperCase()} para falhas de conduta e desvios éticos em áreas operacionais. Novos planos de mitigação foram propostos e estão sendo monitorados pela equipe de compliance.`
+    }
+
+    if (sources.includes('auditorias')) {
+      highlights.push(
+        '90% das não conformidades das últimas auditorias foram resolvidas.',
+      )
+      if (riskLevel === 'Baixo') riskLevel = 'Moderado'
     }
 
     if (highlights.length === 0) {
@@ -59,6 +79,10 @@ export const aiReportService = {
     const content = {
       summary: `Análise gerada por Inteligência Artificial baseada nas seguintes fontes de dados: ${sourcesText}. O algoritmo identificou padrões comportamentais e métricas de compliance que auxiliam na tomada de decisão da alta gestão.`,
       highlights: highlights,
+      complaint_types,
+      treatment_status,
+      training_correlation,
+      risk_matrix,
       risk_assessment: riskLevel,
       recommendations:
         'Recomenda-se focar na resolução proativa dos pontos destacados, intensificar campanhas de conscientização contínuas e manter o monitoramento das áreas de maior vulnerabilidade detectadas pela análise.',
@@ -104,5 +128,10 @@ export const aiReportService = {
 
     if (error) throw error
     return data
+  },
+
+  async deleteReport(id: string) {
+    const { error } = await supabase.from('relatorios_ia').delete().eq('id', id)
+    if (error) throw error
   },
 }

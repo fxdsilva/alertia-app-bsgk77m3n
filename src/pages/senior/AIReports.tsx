@@ -8,9 +8,22 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Sparkles, Download, Loader2, Calendar } from 'lucide-react'
+import { Sparkles, Download, Loader2, Calendar, Trash2 } from 'lucide-react'
 import { AIReportGenerator } from '@/components/dashboard/AIReportGenerator'
 import { aiReportService } from '@/services/aiReportService'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { getPdfHtml } from '@/lib/pdf-templates'
 
 export default function AIReports() {
   const [reports, setReports] = useState<any[]>([])
@@ -32,69 +45,21 @@ export default function AIReports() {
     loadReports()
   }, [])
 
+  const handleDelete = async (id: string) => {
+    try {
+      await aiReportService.deleteReport(id)
+      toast.success('Relatório excluído com sucesso')
+      setReports((prev) => prev.filter((r) => r.id !== id))
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao excluir o relatório')
+    }
+  }
+
   const exportToPDF = (report: any) => {
     const printWindow = window.open('', '_blank')
     if (!printWindow) return
-
-    const content = report.conteudo_json
-    const highlightsHtml =
-      content.highlights?.map((h: string) => `<li>${h}</li>`).join('') || ''
-
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${report.titulo}</title>
-          <style>
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; padding: 40px; max-width: 800px; margin: 0 auto; }
-            h1 { color: #1a365d; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 24px; }
-            h2 { color: #2b6cb0; margin-top: 30px; font-size: 18px; }
-            .meta { color: #718096; font-size: 0.9em; margin-bottom: 30px; }
-            .section { margin-bottom: 20px; background: #f7fafc; padding: 20px; border-radius: 8px; }
-            .risk { display: inline-block; padding: 4px 8px; background: #fed7d7; color: #c53030; border-radius: 4px; font-weight: bold; }
-            ul { margin-top: 10px; padding-left: 20px; }
-            li { margin-bottom: 8px; }
-            @media print {
-              body { padding: 0; }
-              .section { page-break-inside: avoid; background: transparent; border: 1px solid #e2e8f0; }
-            }
-          </style>
-        </head>
-        <body>
-          <h1>${report.titulo}</h1>
-          <div class="meta">
-            <p><strong>Data de Geração:</strong> ${new Date(report.data_geracao).toLocaleString('pt-BR')}</p>
-            <p><strong>Escopo/Tipo:</strong> ${report.tipo}</p>
-            ${report.escolas_instituicoes?.nome_escola ? `<p><strong>Instituição:</strong> ${report.escolas_instituicoes.nome_escola}</p>` : ''}
-          </div>
-          
-          <div class="section">
-            <h2>Resumo Executivo</h2>
-            <p>${content.summary || 'Não disponível'}</p>
-          </div>
-
-          <div class="section">
-            <h2>Principais Destaques</h2>
-            <ul>${highlightsHtml}</ul>
-          </div>
-
-          <div class="section">
-            <h2>Avaliação de Risco</h2>
-            <p>Nível de Risco Identificado: <span class="risk">${content.risk_assessment || 'N/A'}</span></p>
-          </div>
-
-          <div class="section">
-            <h2>Recomendações Estratégicas</h2>
-            <p>${content.recommendations || 'Não disponível'}</p>
-          </div>
-          
-          <script>
-            window.onload = () => { window.print(); }
-          </script>
-        </body>
-      </html>
-    `
-
+    const html = getPdfHtml(report)
     printWindow.document.write(html)
     printWindow.document.close()
   }
@@ -109,7 +74,7 @@ export default function AIReports() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Gere e exporte análises inteligentes baseadas nos dados de
-            compliance da instituição.
+            compliance.
           </p>
         </div>
         <AIReportGenerator onReportGenerated={loadReports} />
@@ -127,8 +92,7 @@ export default function AIReports() {
               Nenhum relatório gerado ainda.
             </p>
             <p className="text-sm text-slate-500 mt-1">
-              Utilize o botão acima para iniciar sua primeira análise
-              inteligente.
+              Utilize o botão acima para iniciar sua primeira análise.
             </p>
           </div>
         ) : (
@@ -142,7 +106,41 @@ export default function AIReports() {
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
                     {report.tipo}
                   </span>
-                  <Sparkles className="h-4 w-4 text-indigo-400" />
+
+                  <div className="flex items-center gap-1">
+                    <Sparkles className="h-4 w-4 text-indigo-400 mr-2" />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Excluir Relatório?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. O relatório será
+                            removido permanentemente.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(report.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
                 <CardTitle
                   className="text-lg leading-tight line-clamp-2"
