@@ -39,6 +39,7 @@ import {
   ShieldAlert,
   ClipboardList,
   UserCog,
+  Handshake,
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import useAppStore from '@/stores/useAppStore'
@@ -152,6 +153,7 @@ export function AppSidebar() {
 
   const baseItems = [
     { title: 'Início', url: '/home', icon: Home },
+    { title: 'Instituições Parceiras', url: '/partners', icon: Handshake },
     { title: 'Compartilhar App', url: '/share', icon: Share2 },
     { title: 'Mensagens', url: '/messages', icon: MessageSquare },
     { title: 'Suporte', url: '/support', icon: LifeBuoy },
@@ -163,8 +165,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <SidebarHeader className="h-16 flex items-center px-6 border-b border-border/40 bg-primary/5">
-        <Link to="/home" className="flex items-center gap-2 font-bold text-xl">
+      <SidebarHeader className="h-16 flex items-center justify-center px-6 border-b border-border/40 bg-primary/5 text-center">
+        <Link
+          to="/home"
+          className="flex items-center justify-center gap-2 font-bold text-xl w-full"
+        >
           <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground shadow-sm">
             A
           </div>
