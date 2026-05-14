@@ -24,7 +24,14 @@ import {
   Globe,
   AlertCircle,
   Download,
+  Menu,
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { usePWAInstall } from '@/hooks/use-pwa-install'
 
 const Index = () => {
@@ -92,19 +99,48 @@ const Index = () => {
               <span className="sm:hidden">Instalar</span>
             </Button>
           )}
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/support')}
-            className="hidden sm:inline-flex h-10 px-4"
-          >
-            Suporte
-          </Button>
+
+          <nav className="hidden sm:flex items-center gap-1">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/partners')}
+              className="h-10 px-4 text-slate-600 hover:text-slate-900"
+            >
+              Apoiadores
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/support')}
+              className="h-10 px-4 text-slate-600 hover:text-slate-900"
+            >
+              Suporte
+            </Button>
+          </nav>
+
           <Button
             onClick={() => navigate('/login')}
             className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium h-9 px-4 sm:h-10 sm:px-6"
           >
             Entrar
           </Button>
+
+          <div className="sm:hidden flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Menu className="h-5 w-5 text-slate-600" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => navigate('/partners')}>
+                  Apoiadores
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/support')}>
+                  Suporte
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
@@ -220,12 +256,20 @@ const Index = () => {
           © {new Date().getFullYear()} ALERTIA. Integridade em primeiro lugar.
         </span>
         <span className="hidden sm:inline">•</span>
-        <button
-          onClick={() => navigate('/support')}
-          className="hover:text-slate-600 transition-colors underline underline-offset-4"
-        >
-          Suporte
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/partners')}
+            className="hover:text-slate-600 transition-colors underline underline-offset-4"
+          >
+            Apoiadores
+          </button>
+          <button
+            onClick={() => navigate('/support')}
+            className="hover:text-slate-600 transition-colors underline underline-offset-4"
+          >
+            Suporte
+          </button>
+        </div>
       </footer>
 
       {/* Terms Dialog */}
