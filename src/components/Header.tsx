@@ -53,7 +53,15 @@ export function Header() {
         )}
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-4 sm:gap-6">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+          <Link to="/support" className="hover:text-primary transition-colors">
+            Suporte
+          </Link>
+          <Link to="/partners" className="hover:text-primary transition-colors">
+            Parceiros
+          </Link>
+        </nav>
         {isInstallable && (
           <Button
             variant="outline"

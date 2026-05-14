@@ -13,6 +13,7 @@ import Index from '@/pages/Index'
 import Login from '@/pages/Login'
 import NotFound from '@/pages/NotFound'
 import Support from '@/pages/Support'
+import Partners from '@/pages/public/Partners'
 import PortalHome from '@/pages/public/PortalHome'
 import OfficialChannels from '@/pages/public/OfficialChannels'
 
@@ -156,6 +157,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/support" element={<Support />} />
+                <Route path="/partners" element={<Partners />} />
 
                 {/* Routing Proxies based on AC */}
                 <Route path="/dashboard" element={<DashboardRouter />} />
