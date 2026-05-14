@@ -103,13 +103,6 @@ const Index = () => {
           <nav className="hidden sm:flex items-center gap-1">
             <Button
               variant="ghost"
-              onClick={() => navigate('/partners')}
-              className="h-10 px-4 text-slate-600 hover:text-slate-900"
-            >
-              Apoiadores
-            </Button>
-            <Button
-              variant="ghost"
               onClick={() => navigate('/support')}
               className="h-10 px-4 text-slate-600 hover:text-slate-900"
             >
@@ -132,9 +125,6 @@ const Index = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => navigate('/partners')}>
-                  Apoiadores
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/support')}>
                   Suporte
                 </DropdownMenuItem>
@@ -257,12 +247,6 @@ const Index = () => {
         </span>
         <span className="hidden sm:inline">•</span>
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/partners')}
-            className="hover:text-slate-600 transition-colors underline underline-offset-4"
-          >
-            Apoiadores
-          </button>
           <button
             onClick={() => navigate('/support')}
             className="hover:text-slate-600 transition-colors underline underline-offset-4"

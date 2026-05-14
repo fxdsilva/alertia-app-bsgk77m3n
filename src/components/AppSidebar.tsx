@@ -39,7 +39,6 @@ import {
   ShieldAlert,
   ClipboardList,
   UserCog,
-  Handshake,
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import useAppStore from '@/stores/useAppStore'
@@ -153,12 +152,9 @@ export function AppSidebar() {
 
   const baseItems = [
     { title: 'Início', url: '/home', icon: Home },
-    { title: 'Instituições Parceiras', url: '/partners', icon: Handshake },
     { title: 'Compartilhar App', url: '/share', icon: Share2 },
     { title: 'Mensagens', url: '/messages', icon: MessageSquare },
-    ...(pathname !== '/partners'
-      ? [{ title: 'Suporte', url: '/support', icon: LifeBuoy }]
-      : []),
+    { title: 'Suporte', url: '/support', icon: LifeBuoy },
     ...(isInstallable
       ? [{ title: 'Instalar App', action: install, icon: Download }]
       : []),
