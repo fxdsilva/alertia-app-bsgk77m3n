@@ -156,7 +156,9 @@ export function AppSidebar() {
     { title: 'Instituições Parceiras', url: '/partners', icon: Handshake },
     { title: 'Compartilhar App', url: '/share', icon: Share2 },
     { title: 'Mensagens', url: '/messages', icon: MessageSquare },
-    { title: 'Suporte', url: '/support', icon: LifeBuoy },
+    ...(pathname !== '/partners'
+      ? [{ title: 'Suporte', url: '/support', icon: LifeBuoy }]
+      : []),
     ...(isInstallable
       ? [{ title: 'Instalar App', action: install, icon: Download }]
       : []),
