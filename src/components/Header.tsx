@@ -1,5 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { Building2, UserCircle, LogOut, Settings, Download } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import {
+  Building2,
+  UserCircle,
+  LogOut,
+  Settings,
+  Download,
+  ArrowLeft,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,7 +23,10 @@ import { usePWAInstall } from '@/hooks/use-pwa-install'
 export function Header() {
   const { selectedSchool, user, logout, clearSchool } = useAppStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const { isInstallable, installPWA } = usePWAInstall()
+
+  const isPartnersPage = location.pathname === '/partners'
 
   const handleLogout = () => {
     logout()
@@ -54,6 +64,17 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4 sm:gap-6">
+        {isPartnersPage ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="rounded-full text-muted-foreground hover:bg-muted"
+            title="Voltar"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        ) : null}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
           <Link to="/support" className="hover:text-primary transition-colors">
             Suporte
