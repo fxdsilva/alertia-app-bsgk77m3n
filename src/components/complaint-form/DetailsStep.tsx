@@ -114,21 +114,21 @@ export function DetailsStep({
           </div>
 
           {files.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 mt-4">
               {files.map((file, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between bg-white border p-2 rounded-md shadow-sm"
                 >
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="bg-slate-100 p-2 rounded">
+                  <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                    <div className="bg-slate-100 p-2 rounded shrink-0">
                       {getFileIcon(file.type, file.name)}
                     </div>
-                    <div className="flex flex-col overflow-hidden">
-                      <span className="text-sm truncate max-w-[200px] sm:max-w-xs font-medium">
+                    <div className="flex flex-col overflow-hidden flex-1 min-w-0 pr-2">
+                      <span className="text-sm truncate font-medium text-slate-700">
                         {file.name}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-500 truncate">
                         {(file.size / 1024 / 1024).toFixed(2)} MB •{' '}
                         {file.type.split('/')[1] ||
                           file.name.split('.').pop() ||
@@ -140,7 +140,7 @@ export function DetailsStep({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-red-500 hover:bg-red-50"
+                    className="h-8 w-8 text-red-500 hover:bg-red-50 shrink-0"
                     onClick={() => onRemoveFile(index)}
                   >
                     <X className="h-4 w-4" />

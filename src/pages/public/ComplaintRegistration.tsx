@@ -290,16 +290,16 @@ export default function ComplaintRegistration() {
 
   if (protocol) {
     return (
-      <div className="container mx-auto max-w-lg pt-10 text-center animate-fade-in pb-20">
+      <div className="container mx-auto max-w-lg px-4 pt-10 text-center animate-fade-in pb-20">
         <div className="flex justify-center mb-6">
           <div className="bg-green-100 p-4 rounded-full">
             <CheckCircle2 className="h-16 w-16 text-green-600" />
           </div>
         </div>
-        <h2 className="text-3xl font-bold text-slate-900 mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
           Denúncia Registrada
         </h2>
-        <p className="text-slate-500 mb-8">
+        <p className="text-sm sm:text-base text-slate-500 mb-8">
           Sua denúncia foi recebida com segurança e será analisada.
         </p>
 
@@ -308,26 +308,26 @@ export default function ComplaintRegistration() {
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">
               Seu Protocolo
             </p>
-            <p className="text-5xl font-mono font-bold text-primary select-all tracking-wider">
+            <p className="text-4xl sm:text-5xl font-mono font-bold text-primary select-all tracking-wider break-all">
               {protocol}
             </p>
-            <div className="bg-yellow-50 text-yellow-800 p-3 rounded-md text-sm mt-4 inline-block">
-              <AlertTriangle className="h-4 w-4 inline mr-2 mb-0.5" />
-              Guarde este número para acompanhar o andamento.
+            <div className="bg-yellow-50 text-yellow-800 p-3 rounded-md text-sm mt-4 inline-block text-left">
+              <AlertTriangle className="h-4 w-4 inline mr-2 mb-0.5 shrink-0" />
+              <span>Guarde este número para acompanhar o andamento.</span>
             </div>
           </CardContent>
         </Card>
 
         <div className="flex flex-col gap-3">
           <Button
-            className="w-full h-12 text-lg"
+            className="w-full h-12 text-base sm:text-lg"
             onClick={() => navigate('/public/complaint/status')}
           >
             Acompanhar Status
           </Button>
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full h-12"
             onClick={() => navigate('/')}
           >
             Voltar ao Início
@@ -339,54 +339,56 @@ export default function ComplaintRegistration() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
-      <div className="container mx-auto max-w-3xl py-8 px-4 animate-fade-in space-y-8">
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto max-w-3xl py-6 sm:py-8 px-4 sm:px-6 animate-fade-in space-y-6 sm:space-y-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
           <Button
             variant="ghost"
             onClick={() => navigate('/')}
-            className="text-slate-500 hover:text-slate-900"
+            className="text-slate-500 hover:text-slate-900 w-full sm:w-auto justify-center sm:justify-start"
           >
             <ArrowLeft className="h-4 w-4 mr-2" /> Voltar ao Início
           </Button>
           <Button
             variant="link"
-            className="text-blue-600 gap-2 hover:text-blue-800"
+            className="text-blue-600 gap-2 hover:text-blue-800 w-full sm:w-auto justify-center sm:justify-end"
             onClick={() => navigate('/public/official-channels')}
           >
             Outros Canais Oficiais <ExternalLink className="h-3 w-3" />
           </Button>
         </div>
 
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2 px-2">
           <div className="mx-auto bg-red-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
             <AlertTriangle className="h-6 w-6 text-red-500" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
             Canal de Denúncias
           </h1>
-          <p className="text-slate-500 max-w-lg mx-auto">
+          <p className="text-sm sm:text-base text-slate-500 max-w-lg mx-auto">
             Este é um espaço seguro para relatar violações de ética, conduta ou
             compliance. Sua identidade será preservada se desejar.
           </p>
         </div>
 
-        <Card className="bg-white border shadow-sm">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="bg-blue-50 p-2 rounded-full">
-              <HelpCircle className="h-5 w-5 text-blue-600" />
+        <Card className="bg-white border shadow-sm mx-2 sm:mx-0">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4 w-full">
+              <div className="bg-blue-50 p-2 rounded-full shrink-0">
+                <HelpCircle className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-slate-900 text-sm sm:text-base">
+                  Como podemos ajudar?
+                </p>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Deseja registrar uma denúncia ou consultar canais oficiais?
+                </p>
+              </div>
+              <ExternalLink
+                className="h-4 w-4 text-slate-400 cursor-pointer hover:text-blue-600 shrink-0"
+                onClick={() => navigate('/public/official-channels')}
+              />
             </div>
-            <div>
-              <p className="font-semibold text-slate-900">
-                Como podemos ajudar?
-              </p>
-              <p className="text-sm text-slate-500">
-                Deseja registrar uma denúncia ou consultar canais oficiais?
-              </p>
-            </div>
-            <ExternalLink
-              className="h-4 w-4 text-slate-400 ml-auto cursor-pointer hover:text-blue-600"
-              onClick={() => navigate('/public/official-channels')}
-            />
           </CardContent>
         </Card>
 

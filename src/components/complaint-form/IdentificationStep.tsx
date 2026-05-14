@@ -94,16 +94,16 @@ export function IdentificationStep() {
                     </FormControl>
                     <FormLabel
                       className={cn(
-                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 [&:has([data-state=checked])]:border-primary cursor-pointer',
+                        'flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 h-full hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 [&:has([data-state=checked])]:border-primary cursor-pointer',
                       )}
                     >
-                      <Shield className="mb-3 h-6 w-6 text-slate-500 peer-data-[state=checked]:text-primary" />
+                      <Shield className="mb-2 h-6 w-6 sm:mb-3 sm:h-8 sm:w-8 text-slate-500 peer-data-[state=checked]:text-primary" />
                       <div className="text-center">
-                        <span className="font-semibold block mb-1">
+                        <span className="font-semibold block mb-1 text-sm sm:text-base">
                           Manter Anonimato
                         </span>
                         <span className="text-xs text-muted-foreground font-normal">
-                          Seus dados não serão solicitados nem armazenados.
+                          Seus dados não serão solicitados.
                         </span>
                       </div>
                     </FormLabel>
@@ -114,16 +114,16 @@ export function IdentificationStep() {
                     </FormControl>
                     <FormLabel
                       className={cn(
-                        'flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 [&:has([data-state=checked])]:border-primary cursor-pointer',
+                        'flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 h-full hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 [&:has([data-state=checked])]:border-primary cursor-pointer',
                       )}
                     >
-                      <User className="mb-3 h-6 w-6 text-slate-500 peer-data-[state=checked]:text-primary" />
+                      <User className="mb-2 h-6 w-6 sm:mb-3 sm:h-8 sm:w-8 text-slate-500 peer-data-[state=checked]:text-primary" />
                       <div className="text-center">
-                        <span className="font-semibold block mb-1">
+                        <span className="font-semibold block mb-1 text-sm sm:text-base">
                           Quero me Identificar
                         </span>
                         <span className="text-xs text-muted-foreground font-normal">
-                          Permite que a equipe entre em contato para feedback.
+                          Permite receber retorno.
                         </span>
                       </div>
                     </FormLabel>

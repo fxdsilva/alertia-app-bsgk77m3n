@@ -225,28 +225,28 @@ export function InstitutionStep({
                     href={documents.code.arquivo_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="block"
+                    className="block h-full"
                   >
                     <div className="bg-white border hover:border-blue-400 hover:shadow-sm transition-all rounded-md p-3 flex items-center gap-3 cursor-pointer h-full">
-                      <div className="bg-blue-50 p-2 rounded-full">
+                      <div className="bg-blue-50 p-2 rounded-full shrink-0">
                         <FileText className="h-5 w-5 text-blue-600" />
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">
                           Código de Conduta
                         </p>
                         <p className="text-xs text-slate-500">Ler documento</p>
                       </div>
-                      <ExternalLink className="h-3 w-3 text-slate-400" />
+                      <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
                     </div>
                   </a>
                 ) : (
                   <div className="bg-slate-100/50 border border-slate-100 rounded-md p-3 flex items-center gap-3 h-full opacity-60">
-                    <div className="bg-slate-200 p-2 rounded-full">
+                    <div className="bg-slate-200 p-2 rounded-full shrink-0">
                       <FileText className="h-5 w-5 text-slate-400" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-500">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-500 truncate">
                         Código de Conduta
                       </p>
                       <p className="text-xs text-slate-400">Não disponível</p>
@@ -259,28 +259,28 @@ export function InstitutionStep({
                     href={documents.commitment.arquivo_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="block"
+                    className="block h-full"
                   >
                     <div className="bg-white border hover:border-blue-400 hover:shadow-sm transition-all rounded-md p-3 flex items-center gap-3 cursor-pointer h-full">
-                      <div className="bg-blue-50 p-2 rounded-full">
+                      <div className="bg-blue-50 p-2 rounded-full shrink-0">
                         <Shield className="h-5 w-5 text-blue-600" />
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">
                           Compromisso de Gestão
                         </p>
                         <p className="text-xs text-slate-500">Ler documento</p>
                       </div>
-                      <ExternalLink className="h-3 w-3 text-slate-400" />
+                      <ExternalLink className="h-3 w-3 text-slate-400 shrink-0" />
                     </div>
                   </a>
                 ) : (
                   <div className="bg-slate-100/50 border border-slate-100 rounded-md p-3 flex items-center gap-3 h-full opacity-60">
-                    <div className="bg-slate-200 p-2 rounded-full">
+                    <div className="bg-slate-200 p-2 rounded-full shrink-0">
                       <Shield className="h-5 w-5 text-slate-400" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-500">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-500 truncate">
                         Compromisso de Gestão
                       </p>
                       <p className="text-xs text-slate-400">Não disponível</p>
