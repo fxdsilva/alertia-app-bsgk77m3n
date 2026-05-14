@@ -106,7 +106,9 @@ export function Header() {
           </DropdownMenu>
         ) : (
           <Link to="/login">
-            <Button variant="default">Entrar</Button>
+            <Button className="bg-emerald-700 hover:bg-emerald-800 text-white px-6 font-medium">
+              Entrar
+            </Button>
           </Link>
         )}
       </div>
