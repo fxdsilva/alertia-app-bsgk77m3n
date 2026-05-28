@@ -40,6 +40,7 @@ export function Header() {
   const { isInstallable, installPWA } = usePWAInstall()
 
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [updatingPassword, setUpdatingPassword] = useState(false)
@@ -62,13 +63,28 @@ export function Header() {
       toast.error('As senhas não coincidem.')
       return
     }
-    if (newPassword.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres.')
+    if (newPassword.length < 8) {
+      toast.error('A senha deve ter pelo menos 8 caracteres.')
       return
     }
 
     setUpdatingPassword(true)
     try {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser()
+      if (authUser?.email) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: authUser.email,
+          password: currentPassword,
+        })
+        if (signInError) {
+          toast.error('Senha atual incorreta.')
+          setUpdatingPassword(false)
+          return
+        }
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       })
@@ -78,6 +94,7 @@ export function Header() {
       } else {
         toast.success('Senha atualizada com sucesso.')
         setIsPasswordModalOpen(false)
+        setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
       }
@@ -194,6 +211,17 @@ export function Header() {
           </DialogHeader>
           <form onSubmit={handleUpdatePassword} className="space-y-4 pt-4">
             <div className="space-y-2">
+              <Label htmlFor="current-password">Senha Atual</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                disabled={updatingPassword}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="new-password">Nova Senha</Label>
               <Input
                 id="new-password"
@@ -202,7 +230,7 @@ export function Header() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 disabled={updatingPassword}
-                placeholder="Mínimo de 6 caracteres"
+                placeholder="Mínimo de 8 caracteres"
               />
             </div>
             <div className="space-y-2">

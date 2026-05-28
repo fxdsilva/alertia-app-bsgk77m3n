@@ -11,6 +11,7 @@ import Layout from '@/components/Layout'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import Index from '@/pages/Index'
 import Login from '@/pages/Login'
+import ResetPassword from '@/pages/ResetPassword'
 import NotFound from '@/pages/NotFound'
 import Support from '@/pages/Support'
 import PortalHome from '@/pages/public/PortalHome'
@@ -155,6 +156,7 @@ const App = () => {
               <Route element={<Layout />}>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/support" element={<Support />} />
 
                 {/* Routing Proxies based on AC */}
