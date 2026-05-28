@@ -97,9 +97,7 @@ export default function Login() {
           'Erro ao enviar e-mail de recuperação. Verifique o endereço e tente novamente.',
         )
       } else {
-        toast.success(
-          'E-mail de recuperação enviado com sucesso! Verifique sua caixa de entrada.',
-        )
+        toast.success('Link de recuperação enviado para o seu e-mail.')
         setIsRecovery(false)
       }
     } catch (err) {
