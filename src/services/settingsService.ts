@@ -22,7 +22,7 @@ export interface OfficialChannelsData {
 export interface SupportContactInfo {
   email: string
   phone: string
-  whatsapp: string
+  whatsapp?: string
   receivingEmail?: string
 }
 

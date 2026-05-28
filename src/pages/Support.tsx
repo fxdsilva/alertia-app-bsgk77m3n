@@ -217,10 +217,16 @@ export default function Support() {
                   </p>
                 </CardContent>
               </Card>
-              {contactInfo?.whatsapp && (
+              {contactInfo?.phone && (
                 <Card
                   className="sm:col-span-2 hover:bg-slate-50 transition-colors cursor-pointer"
-                  onClick={() => window.open(contactInfo.whatsapp, '_blank')}
+                  onClick={() => {
+                    let cleanPhone = contactInfo.phone.replace(/\D/g, '')
+                    if (cleanPhone.length >= 10 && cleanPhone.length <= 11) {
+                      cleanPhone = `55${cleanPhone}`
+                    }
+                    window.open(`https://wa.me/${cleanPhone}`, '_blank')
+                  }}
                 >
                   <CardContent className="p-4 flex items-center justify-center gap-3">
                     <div className="p-2 bg-green-100 rounded-full text-green-700">
