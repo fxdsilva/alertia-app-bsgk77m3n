@@ -29,3 +29,15 @@ screenshot.png
 
 # Environment variables
 .env*
+
+# Generated output, caches, and crash artifacts (Skip-managed)
+dev-dist
+dev-dist-ssr
+.pnpm-store
+.pnpm
+*.bak-*
+*.legacy-bak-*
+*.failed-*
+*.tmp
+.oxlintcache
+core.[0-9]*

@@ -6,6 +6,7 @@ import {
   Settings,
   Download,
   ArrowLeft,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,15 +17,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import useAppStore from '@/stores/useAppStore'
 import { usePWAInstall } from '@/hooks/use-pwa-install'
+import { useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 export function Header() {
   const { selectedSchool, user, logout, clearSchool } = useAppStore()
   const navigate = useNavigate()
   const location = useLocation()
   const { isInstallable, installPWA } = usePWAInstall()
+
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [updatingPassword, setUpdatingPassword] = useState(false)
 
   const isPartnersPage = location.pathname === '/partners'
 
@@ -36,6 +54,38 @@ export function Header() {
   const handleChangeSchool = () => {
     clearSchool()
     navigate('/')
+  }
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem.')
+      return
+    }
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres.')
+      return
+    }
+
+    setUpdatingPassword(true)
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (error) {
+        toast.error('Erro ao atualizar senha.')
+      } else {
+        toast.success('Senha atualizada com sucesso.')
+        setIsPasswordModalOpen(false)
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+    } catch (err) {
+      toast.error('Ocorreu um erro inesperado.')
+    } finally {
+      setUpdatingPassword(false)
+    }
   }
 
   return (
@@ -111,7 +161,7 @@ export function Header() {
                 <Building2 className="mr-2 h-4 w-4" />
                 Mudar Escola
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setIsPasswordModalOpen(true)}>
                 <Settings className="mr-2 h-4 w-4" />
                 Minha Conta
               </DropdownMenuItem>
@@ -133,6 +183,58 @@ export function Header() {
           </Link>
         )}
       </div>
+
+      <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Minha Conta</DialogTitle>
+            <DialogDescription>
+              Atualize sua senha de acesso ao sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdatePassword} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nova Senha</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                disabled={updatingPassword}
+                placeholder="Mínimo de 6 caracteres"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={updatingPassword}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPasswordModalOpen(false)}
+                disabled={updatingPassword}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updatingPassword}>
+                {updatingPassword && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Salvar Alterações
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </header>
   )
 }
