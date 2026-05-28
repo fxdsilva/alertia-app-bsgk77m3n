@@ -12,41 +12,66 @@ import {
 } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
-import { Loader2, AlertCircle, ArrowLeft, Download } from 'lucide-react'
-import { usePWAInstall } from '@/hooks/use-pwa-install'
+import { Loader2, AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [errorMsg, setErrorMsg] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [confirmError, setConfirmError] = useState('')
+  const [globalError, setGlobalError] = useState('')
   const navigate = useNavigate()
-  const { isInstallable, installPWA } = usePWAInstall()
 
   useEffect(() => {
+    // Verifies if the user has a valid session or is carrying a recovery hash
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        if (!window.location.hash) {
-          toast.error('Sessão de recuperação inválida ou expirada.')
-          navigate('/login')
-        }
+      if (!session && !window.location.hash) {
+        toast.error('Sessão de recuperação inválida ou expirada.')
+        navigate('/login')
       }
     })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        // handled signed out scenario if it occurs during reset
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [navigate])
+
+  const validate = () => {
+    let isValid = true
+    setPasswordError('')
+    setConfirmError('')
+    setGlobalError('')
+
+    if (password.length < 8) {
+      setPasswordError('A senha deve ter pelo menos 8 caracteres.')
+      isValid = false
+    }
+
+    if (password !== confirmPassword) {
+      setConfirmError('As senhas não coincidem.')
+      isValid = false
+    }
+
+    return isValid
+  }
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password !== confirmPassword) {
-      setErrorMsg('As senhas não coincidem.')
-      return
-    }
-    if (password.length < 8) {
-      setErrorMsg('A senha deve ter pelo menos 8 caracteres.')
-      return
-    }
+
+    if (!validate()) return
 
     setLoading(true)
-    setErrorMsg('')
 
     try {
       const { error } = await supabase.auth.updateUser({
@@ -54,13 +79,16 @@ export default function ResetPassword() {
       })
 
       if (error) {
-        setErrorMsg('Erro ao atualizar senha. O link pode ter expirado.')
+        setGlobalError('O link de recuperação expirou ou é inválido.')
+        toast.error('O link de recuperação expirou ou é inválido.')
       } else {
-        toast.success('Senha atualizada com sucesso! Você já pode acessar.')
-        navigate('/')
+        toast.success('Senha atualizada com sucesso!')
+        setTimeout(() => {
+          navigate('/login')
+        }, 2000)
       }
     } catch (err) {
-      setErrorMsg('Erro inesperado. Tente novamente.')
+      setGlobalError('Erro inesperado. Tente novamente.')
     } finally {
       setLoading(false)
     }
@@ -76,15 +104,6 @@ export default function ResetPassword() {
         >
           <ArrowLeft className="h-4 w-4" /> Voltar ao Login
         </Button>
-        {isInstallable && (
-          <Button
-            variant="outline"
-            onClick={installPWA}
-            className="gap-2 bg-white/50 backdrop-blur-sm shadow-sm border-primary/20 text-primary hover:bg-primary/5"
-          >
-            <Download className="h-4 w-4" /> Instalar App
-          </Button>
-        )}
       </div>
       <div className="flex-1 flex items-center justify-center w-full">
         <Card className="w-full max-w-md shadow-lg border-primary/20">
@@ -96,39 +115,80 @@ export default function ResetPassword() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdatePassword} className="space-y-4">
-              {errorMsg && (
+              {globalError && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <p>{errorMsg}</p>
+                  <p>{globalError}</p>
                 </div>
               )}
-              <div className="space-y-2">
+
+              <div className="space-y-2 relative">
                 <Label htmlFor="new-password">Nova Senha</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <Input
+                    id="new-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      if (passwordError) setPasswordError('')
+                    }}
+                    required
+                    disabled={loading}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {passwordError && (
+                  <p className="text-sm text-red-500">{passwordError}</p>
+                )}
               </div>
-              <div className="space-y-2">
+
+              <div className="space-y-2 relative">
                 <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value)
+                      if (confirmError) setConfirmError('')
+                    }}
+                    required
+                    disabled={loading}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {confirmError && (
+                  <p className="text-sm text-red-500">{confirmError}</p>
+                )}
               </div>
+
               <Button type="submit" className="w-full mt-4" disabled={loading}>
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                Salvar Nova Senha
+                {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Atualizar Senha
               </Button>
             </form>
           </CardContent>
