@@ -2507,10 +2507,11 @@ export const Constants = {
 //     USING: (auth.uid() = user_id)
 //     WITH CHECK: (auth.uid() = user_id)
 // Table: admin_settings
-//   Policy "Allow public read access to support settings" (SELECT, PERMISSIVE) roles={anon}
+//   Policy "Allow public read access to support settings" (SELECT, PERMISSIVE) roles={public}
 //     USING: (key = ANY (ARRAY['support_contact_info'::text, 'support_faqs'::text, 'external_official_channels'::text]))
 //   Policy "Enable all access for authenticated users" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: true
+//     WITH CHECK: true
 //   Policy "Enable read access for anon users" (SELECT, PERMISSIVE) roles={anon}
 //     USING: true
 //   Policy "Enable read access for authenticated users" (SELECT, PERMISSIVE) roles={authenticated}

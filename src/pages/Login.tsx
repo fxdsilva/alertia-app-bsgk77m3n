@@ -23,6 +23,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [isRecovery, setIsRecovery] = useState(false)
+  const [isRateLimited, setIsRateLimited] = useState(false)
 
   const navigate = useNavigate()
   const { signIn, signInWithGoogle } = useAuth()
@@ -93,9 +94,23 @@ export default function Login() {
       })
 
       if (error) {
-        setErrorMsg(
-          'Erro ao enviar e-mail de recuperação. Verifique o endereço e tente novamente.',
-        )
+        const isRateLimit =
+          error.status === 429 ||
+          (error as any).code === 'over_email_send_rate_limit' ||
+          String(error.message).toLowerCase().includes('rate limit')
+
+        if (isRateLimit) {
+          const msg =
+            'Limite de envio de e-mails atingido. Por favor, aguarde alguns minutos antes de tentar novamente.'
+          toast.error(msg)
+          setErrorMsg(msg)
+          setIsRateLimited(true)
+          setTimeout(() => setIsRateLimited(false), 60000)
+        } else {
+          setErrorMsg(
+            'Erro ao enviar e-mail de recuperação. Verifique o endereço e tente novamente.',
+          )
+        }
       } else {
         toast.success('Link de recuperação enviado para o seu e-mail.')
         setIsRecovery(false)
@@ -204,7 +219,10 @@ export default function Login() {
                   type="email"
                   placeholder="seu@email.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    setIsRateLimited(false)
+                  }}
                   required
                   disabled={loading}
                 />
@@ -221,6 +239,7 @@ export default function Login() {
                       onClick={() => {
                         setIsRecovery(true)
                         setErrorMsg('')
+                        setIsRateLimited(false)
                       }}
                     >
                       Esqueci minha senha
@@ -237,7 +256,11 @@ export default function Login() {
                 </div>
               )}
 
-              <Button type="submit" className="w-full mt-4" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full mt-4"
+                disabled={loading || (isRecovery && isRateLimited)}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aguarde...
@@ -260,6 +283,7 @@ export default function Login() {
                 onClick={() => {
                   setIsRecovery(false)
                   setErrorMsg('')
+                  setIsRateLimited(false)
                 }}
               >
                 Voltar para o login
