@@ -31,8 +31,21 @@ export default function Login() {
   const [errorMsg, setErrorMsg] = useState('')
   const [isRecovery, setIsRecovery] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [recoveryCooldown, setRecoveryCooldown] = useState(0)
 
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>
+    if (recoveryCooldown > 0) {
+      timer = setInterval(() => {
+        setRecoveryCooldown((prev) => prev - 1)
+      }, 1000)
+    }
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [recoveryCooldown])
   const { signIn, signInWithGoogle } = useAuth()
   const { isInstallable, installPWA } = usePWAInstall()
 
@@ -104,38 +117,50 @@ export default function Login() {
       })
 
       if (error) {
-        const isRateLimit =
+        if (
           error.status === 429 ||
-          (error as any).code === 'over_email_send_rate_limit' ||
-          String(error.message).toLowerCase().includes('rate limit')
-
-        if (isRateLimit) {
-          const msg =
-            'Limite de envio de e-mail excedido. Por favor, aguarde alguns minutos antes de tentar novamente.'
-          toast.error(msg)
-          setErrorMsg(msg)
-        } else {
-          setErrorMsg(
-            'Erro ao enviar e-mail de recuperação. Verifique o endereço e tente novamente.',
+          error.message?.includes('rate_limit') ||
+          (error as any).code === 'over_email_send_rate_limit'
+        ) {
+          toast.error(
+            'Muitas tentativas. Por favor, aguarde um minuto antes de tentar novamente.',
           )
+          setRecoveryCooldown(60)
+          return
         }
-      } else {
-        toast.success('Link de recuperação enviado para o seu e-mail.')
-        setIsRecovery(false)
+        throw error
       }
+
+      toast.success(
+        'Se o e-mail informado estiver em nossa base, você receberá as instruções para redefinir sua senha em breve.',
+        {
+          description: 'Verifique também sua pasta de Spam ou Lixo Eletrônico.',
+          duration: 6000,
+        },
+      )
+
+      setRecoveryCooldown(60)
     } catch (err: any) {
       const isRateLimit =
         err?.status === 429 ||
-        err?.code === 'over_email_send_rate_limit' ||
-        String(err?.message).toLowerCase().includes('rate limit')
+        err?.message?.includes('rate_limit') ||
+        err?.code === 'over_email_send_rate_limit'
 
       if (isRateLimit) {
-        const msg =
-          'Limite de envio de e-mail excedido. Por favor, aguarde alguns minutos antes de tentar novamente.'
-        toast.error(msg)
-        setErrorMsg(msg)
+        toast.error(
+          'Muitas tentativas. Por favor, aguarde um minuto antes de tentar novamente.',
+        )
+        setRecoveryCooldown(60)
       } else {
-        setErrorMsg('Erro inesperado. Tente novamente.')
+        toast.success(
+          'Se o e-mail informado estiver em nossa base, você receberá as instruções para redefinir sua senha em breve.',
+          {
+            description:
+              'Verifique também sua pasta de Spam ou Lixo Eletrônico.',
+            duration: 6000,
+          },
+        )
+        setRecoveryCooldown(60)
       }
     } finally {
       setLoading(false)
@@ -307,6 +332,7 @@ export default function Login() {
                 className="w-full mt-4"
                 disabled={
                   loading ||
+                  (isRecovery && recoveryCooldown > 0) ||
                   (isRecovery
                     ? !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
                     : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password)
@@ -317,7 +343,11 @@ export default function Login() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aguarde...
                   </>
                 ) : isRecovery ? (
-                  'Enviar link de recuperação'
+                  recoveryCooldown > 0 ? (
+                    `Aguarde ${recoveryCooldown}s para tentar novamente`
+                  ) : (
+                    'Enviar link de recuperação'
+                  )
                 ) : (
                   'Entrar'
                 )}
@@ -326,7 +356,12 @@ export default function Login() {
           </CardContent>
 
           {isRecovery && (
-            <CardFooter className="flex justify-center border-t pt-4 pb-2">
+            <CardFooter className="flex flex-col justify-center border-t pt-4 pb-2 gap-4">
+              {recoveryCooldown > 0 && (
+                <p className="text-sm text-center text-muted-foreground px-4">
+                  Verifique também sua pasta de Spam ou Lixo Eletrônico.
+                </p>
+              )}
               <Button
                 type="button"
                 variant="ghost"

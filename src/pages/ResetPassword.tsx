@@ -29,7 +29,9 @@ export default function ResetPassword() {
     // Verifies if the user has a valid session or is carrying a recovery hash
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session && !window.location.hash) {
-        toast.error('Sessão de recuperação inválida ou expirada.')
+        toast.error(
+          'O link de recuperação expirou ou é inválido. Por favor, solicite um novo.',
+        )
         navigate('/login')
       }
     })
@@ -79,12 +81,16 @@ export default function ResetPassword() {
       })
 
       if (error) {
-        setGlobalError('O link de recuperação expirou ou é inválido.')
-        toast.error('O link de recuperação expirou ou é inválido.')
+        setGlobalError(
+          'O link de recuperação expirou ou é inválido. Por favor, solicite um novo.',
+        )
+        toast.error(
+          'O link de recuperação expirou ou é inválido. Por favor, solicite um novo.',
+        )
       } else {
         toast.success('Senha atualizada com sucesso!')
         setTimeout(() => {
-          navigate('/login')
+          navigate('/')
         }, 2000)
       }
     } catch (err) {
