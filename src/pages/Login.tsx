@@ -13,7 +13,14 @@ import {
 } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
-import { Loader2, AlertCircle, ArrowLeft, Download } from 'lucide-react'
+import {
+  Loader2,
+  AlertCircle,
+  ArrowLeft,
+  Download,
+  Eye,
+  EyeOff,
+} from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { usePWAInstall } from '@/hooks/use-pwa-install'
 
@@ -24,6 +31,7 @@ export default function Login() {
   const [errorMsg, setErrorMsg] = useState('')
   const [isRecovery, setIsRecovery] = useState(false)
   const [isRateLimited, setIsRateLimited] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const navigate = useNavigate()
   const { signIn, signInWithGoogle } = useAuth()
@@ -53,17 +61,20 @@ export default function Login() {
       const { error } = await signIn(email, password)
 
       if (error) {
-        const errorStr = error.message
-          ? String(error.message).toLowerCase()
+        const errorObj = error as any
+        const errorStr = errorObj?.message
+          ? String(errorObj.message).toLowerCase()
           : String(error).toLowerCase()
-        if (
-          error.status === 400 ||
+
+        const isInvalidCredentials =
+          errorObj?.status === 400 ||
+          errorObj?.code === 'invalid_credentials' ||
           errorStr.includes('invalid login credentials') ||
           errorStr.includes('invalid_credentials')
-        ) {
-          setErrorMsg(
-            'E-mail ou senha incorretos. Caso tenha esquecido sua senha, utilize a opção "Esqueci minha senha".',
-          )
+
+        if (isInvalidCredentials) {
+          setErrorMsg('E-mail ou senha incorretos')
+          setPassword('')
         } else {
           setErrorMsg('Ocorreu um erro ao tentar entrar. Tente novamente.')
         }
@@ -222,9 +233,15 @@ export default function Login() {
                   onChange={(e) => {
                     setEmail(e.target.value)
                     setIsRateLimited(false)
+                    if (errorMsg) setErrorMsg('')
                   }}
                   required
                   disabled={loading}
+                  className={
+                    errorMsg && !isRecovery
+                      ? 'border-red-500 focus-visible:ring-red-500'
+                      : ''
+                  }
                 />
               </div>
 
@@ -245,21 +262,48 @@ export default function Login() {
                       Esqueci minha senha
                     </Button>
                   </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value)
+                        if (errorMsg) setErrorMsg('')
+                      }}
+                      required
+                      disabled={loading}
+                      className={
+                        errorMsg && !isRecovery
+                          ? 'border-red-500 focus-visible:ring-red-500 pr-10'
+                          : 'pr-10'
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
 
               <Button
                 type="submit"
                 className="w-full mt-4"
-                disabled={loading || (isRecovery && isRateLimited)}
+                disabled={
+                  loading ||
+                  (isRecovery
+                    ? isRateLimited || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+                    : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password)
+                }
               >
                 {loading ? (
                   <>
