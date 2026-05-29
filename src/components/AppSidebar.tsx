@@ -39,6 +39,7 @@ import {
   ShieldAlert,
   ClipboardList,
   UserCog,
+  UserCircle,
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import useAppStore from '@/stores/useAppStore'
@@ -152,6 +153,7 @@ export function AppSidebar() {
 
   const baseItems = [
     { title: 'Início', url: '/home', icon: Home },
+    { title: 'Meu Perfil', url: '/profile', icon: UserCircle },
     { title: 'Compartilhar App', url: '/share', icon: Share2 },
     { title: 'Mensagens', url: '/messages', icon: MessageSquare },
     { title: 'Suporte', url: '/support', icon: LifeBuoy },

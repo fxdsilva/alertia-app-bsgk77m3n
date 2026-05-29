@@ -11,7 +11,6 @@ import Layout from '@/components/Layout'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 import Index from '@/pages/Index'
 import Login from '@/pages/Login'
-import ResetPassword from '@/pages/ResetPassword'
 import NotFound from '@/pages/NotFound'
 import Support from '@/pages/Support'
 import PortalHome from '@/pages/public/PortalHome'
@@ -45,6 +44,7 @@ import SupportManager from '@/pages/senior/SupportManager'
 
 import InternalInvestigations from '@/pages/InternalInvestigations'
 import ReportGeneration from '@/pages/ReportGeneration'
+import Profile from '@/pages/Profile'
 
 // Compliance Modules
 import ComplaintsList from '@/pages/compliance/modules/ComplaintsList'
@@ -156,7 +156,6 @@ const App = () => {
               <Route element={<Layout />}>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/support" element={<Support />} />
 
                 {/* Routing Proxies based on AC */}
@@ -397,6 +396,7 @@ const App = () => {
                   element={<InternalInvestigations />}
                 />
                 <Route path="/reports" element={<ReportGeneration />} />
+                <Route path="/profile" element={<Profile />} />
 
                 {/* Redirects for direct sidebar access */}
                 <Route path="/home" element={<Navigate to="/" replace />} />
