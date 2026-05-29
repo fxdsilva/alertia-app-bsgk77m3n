@@ -30,7 +30,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [isRecovery, setIsRecovery] = useState(false)
-  const [isRateLimited, setIsRateLimited] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const navigate = useNavigate()
@@ -112,11 +111,9 @@ export default function Login() {
 
         if (isRateLimit) {
           const msg =
-            'Limite de envio de e-mails atingido. Por favor, aguarde alguns minutos antes de tentar novamente.'
+            'Limite de envio de e-mail excedido. Por favor, aguarde alguns minutos antes de tentar novamente.'
           toast.error(msg)
           setErrorMsg(msg)
-          setIsRateLimited(true)
-          setTimeout(() => setIsRateLimited(false), 60000)
         } else {
           setErrorMsg(
             'Erro ao enviar e-mail de recuperação. Verifique o endereço e tente novamente.',
@@ -126,8 +123,20 @@ export default function Login() {
         toast.success('Link de recuperação enviado para o seu e-mail.')
         setIsRecovery(false)
       }
-    } catch (err) {
-      setErrorMsg('Erro inesperado. Tente novamente.')
+    } catch (err: any) {
+      const isRateLimit =
+        err?.status === 429 ||
+        err?.code === 'over_email_send_rate_limit' ||
+        String(err?.message).toLowerCase().includes('rate limit')
+
+      if (isRateLimit) {
+        const msg =
+          'Limite de envio de e-mail excedido. Por favor, aguarde alguns minutos antes de tentar novamente.'
+        toast.error(msg)
+        setErrorMsg(msg)
+      } else {
+        setErrorMsg('Erro inesperado. Tente novamente.')
+      }
     } finally {
       setLoading(false)
     }
@@ -232,7 +241,6 @@ export default function Login() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value)
-                    setIsRateLimited(false)
                     if (errorMsg) setErrorMsg('')
                   }}
                   required
@@ -256,7 +264,6 @@ export default function Login() {
                       onClick={() => {
                         setIsRecovery(true)
                         setErrorMsg('')
-                        setIsRateLimited(false)
                       }}
                     >
                       Esqueci minha senha
@@ -301,7 +308,7 @@ export default function Login() {
                 disabled={
                   loading ||
                   (isRecovery
-                    ? isRateLimited || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+                    ? !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
                     : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password)
                 }
               >
@@ -327,7 +334,6 @@ export default function Login() {
                 onClick={() => {
                   setIsRecovery(false)
                   setErrorMsg('')
-                  setIsRateLimited(false)
                 }}
               >
                 Voltar para o login
