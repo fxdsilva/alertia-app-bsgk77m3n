@@ -449,6 +449,18 @@ export const complianceService = {
     return data
   },
 
+  async getAllDueDiligence() {
+    const { data, error } = await supabase
+      .from('due_diligence')
+      .select(
+        '*, escolas_instituicoes(nome_escola), status_due_diligence(nome_status)',
+      )
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
   async getAnalystRiskMatrix(analystId: string) {
     const { data, error } = await supabase
       .from('matriz_riscos')
