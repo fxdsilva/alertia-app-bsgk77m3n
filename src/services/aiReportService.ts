@@ -5,6 +5,7 @@ export const aiReportService = {
     scope: 'global' | 'school',
     schoolId?: string,
     sources: string[] = ['denuncias'],
+    customFilters?: any,
   ) {
     // Simulate AI generation delay
     await new Promise((resolve) => setTimeout(resolve, 3000))
@@ -13,10 +14,15 @@ export const aiReportService = {
       .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
       .join(', ')
 
+    let titleSuffix = ''
+    if (customFilters?.categoria && customFilters.categoria !== 'all') {
+      titleSuffix = ` - Foco: ${customFilters.categoria}`
+    }
+
     const title =
       scope === 'global'
-        ? `Relatório Estratégico Global - ${new Date().toLocaleDateString()}`
-        : `Diagnóstico Institucional - ${new Date().toLocaleDateString()}`
+        ? `Relatório Estratégico Global - ${new Date().toLocaleDateString()}${titleSuffix}`
+        : `Diagnóstico Institucional - ${new Date().toLocaleDateString()}${titleSuffix}`
 
     const type = scope === 'global' ? 'Análise de Rede' : 'Análise Local'
 
@@ -30,16 +36,23 @@ export const aiReportService = {
     let risk_matrix = 'Não selecionado na análise.'
 
     if (sources.includes('denuncias')) {
+      if (customFilters?.categoria && customFilters.categoria !== 'all') {
+        highlights.push(
+          `Foco de análise direcionado para a categoria: ${customFilters.categoria}.`,
+        )
+      }
       highlights.push(
-        'Tempo médio de resolução de denúncias reduziu em 15% no último trimestre.',
+        'Tempo médio de resolução de denúncias analisadas reduziu em 15% no último trimestre.',
       )
       highlights.push(
-        'Pico de relatos anônimos identificados no mês passado, necessitando atenção.',
+        'Foram identificados padrões linguísticos específicos nas descrições recentes.',
       )
       complaint_types =
-        'Assédio Moral (45%), Conduta Inadequada (30%), Desvios Éticos (25%).'
+        customFilters?.categoria && customFilters.categoria !== 'all'
+          ? `${customFilters.categoria} (100% da amostra filtrada).`
+          : 'Assédio Moral (45%), Conduta Inadequada (30%), Desvios Éticos (25%).'
       treatment_status =
-        'Aproximadamente 75% dos casos foram apurados e arquivados/resolvidos no prazo legal. 25% encontram-se em fase de investigação aprofundada ou due diligence.'
+        'Aproximadamente 75% dos casos na amostra selecionada foram apurados e arquivados/resolvidos no prazo legal. 25% encontram-se em fase de investigação aprofundada ou due diligence.'
     }
 
     if (sources.includes('treinamentos')) {
