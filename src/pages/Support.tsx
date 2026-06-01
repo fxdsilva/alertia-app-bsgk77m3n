@@ -1,104 +1,54 @@
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   PanelLeft,
   Mail,
   Phone,
   ArrowLeft,
-  Send,
   MessageCircle,
+  ExternalLink,
+  ShieldAlert,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { toast } from 'sonner'
 import {
   settingsService,
   SupportContactInfo,
   FAQItem,
+  OfficialChannelsData,
 } from '@/services/settingsService'
-import { supabase } from '@/lib/supabase/client'
 
 export default function Support() {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
   const [contactInfo, setContactInfo] = useState<SupportContactInfo | null>(
     null,
   )
   const [faqs, setFaqs] = useState<FAQItem[]>([])
+  const [channels, setChannels] = useState<OfficialChannelsData | null>(null)
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const [info, faqData] = await Promise.all([
+        const [info, faqData, channelsData] = await Promise.all([
           settingsService.getSupportContactInfo(),
           settingsService.getSupportFAQs(),
+          settingsService.getOfficialChannels(),
         ])
         setContactInfo(info)
         if (faqData) setFaqs(faqData)
+        if (channelsData) setChannels(channelsData)
       } catch (error) {
         console.error('Error loading support settings:', error)
       }
     }
     fetchSettings()
   }, [])
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const form = e.currentTarget
-    setLoading(true)
-
-    const formData = new FormData(form)
-    const ticketData = {
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      subject: formData.get('subject') as string,
-      message: formData.get('message') as string,
-    }
-
-    try {
-      const { error } = await supabase
-        .from('support_tickets' as any)
-        .insert([ticketData])
-
-      if (error) throw error
-
-      // Disparo assíncrono do e-mail (Edge Function) para não bloquear a UI
-      supabase.functions
-        .invoke('send-support-email', {
-          body: { record: ticketData },
-        })
-        .catch(console.error)
-
-      toast.success(
-        'Recebemos sua mensagem! Nossa equipe analisará sua dúvida e entraremos em contato em breve.',
-      )
-      if (form) {
-        form.reset()
-      }
-    } catch (error) {
-      console.error('Erro ao enviar mensagem:', error)
-      toast.error(
-        'Ocorreu um erro ao enviar a mensagem. Tente novamente mais tarde.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 animate-fade-in">
@@ -128,142 +78,179 @@ export default function Support() {
           </h1>
           <p className="text-lg text-slate-500">
             Encontre respostas para suas dúvidas ou entre em contato com nossa
-            equipe de suporte.
+            equipe através dos nossos canais de atendimento.
           </p>
         </div>
 
-        {/* Contact & FAQ Grid */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Contact Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Entre em contato</CardTitle>
-              <CardDescription>
-                Preencha o formulário abaixo para enviar uma mensagem.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="Seu nome"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Assunto</Label>
-                  <Input
-                    id="subject"
-                    name="subject"
-                    placeholder="Como podemos ajudar?"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="message">Mensagem</Label>
-                  <Textarea
-                    id="message"
-                    name="message"
-                    placeholder="Descreva sua dúvida ou problema..."
-                    className="min-h-[120px]"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Enviando...' : 'Enviar Mensagem'}
-                  {!loading && <Send className="ml-2 h-4 w-4" />}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-8">
+        {/* Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-12">
+          {/* Left Column: Contact & Channels */}
+          <div className="space-y-10">
             {/* Contact Info */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Card>
-                <CardContent className="p-6 flex flex-col items-center text-center space-y-2">
-                  <div className="p-3 bg-blue-50 rounded-full text-blue-600">
-                    <Mail className="h-6 w-6" />
-                  </div>
-                  <h3 className="font-semibold">Email</h3>
-                  <p className="text-sm text-slate-500">
-                    {contactInfo?.email || 'Carregando...'}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 flex flex-col items-center text-center space-y-2">
-                  <div className="p-3 bg-green-50 rounded-full text-green-600">
-                    <Phone className="h-6 w-6" />
-                  </div>
-                  <h3 className="font-semibold">Telefone</h3>
-                  <p className="text-sm text-slate-500">
-                    {contactInfo?.phone || 'Carregando...'}
-                  </p>
-                </CardContent>
-              </Card>
-              {contactInfo?.phone && (
-                <Card
-                  className="sm:col-span-2 hover:bg-slate-50 transition-colors cursor-pointer"
-                  onClick={() => {
-                    let cleanPhone = contactInfo.phone.replace(/\D/g, '')
-                    if (cleanPhone.length >= 10 && cleanPhone.length <= 11) {
-                      cleanPhone = `55${cleanPhone}`
-                    }
-                    window.open(`https://wa.me/${cleanPhone}`, '_blank')
-                  }}
-                >
-                  <CardContent className="p-4 flex items-center justify-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-full text-green-700">
-                      <MessageCircle className="h-5 w-5" />
-                    </div>
-                    <span className="font-semibold text-green-800">
-                      Atendimento via WhatsApp
-                    </span>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* FAQ */}
             <div className="space-y-4">
               <h2 className="text-2xl font-bold tracking-tight">
-                Perguntas Frequentes
+                Canais de Atendimento
               </h2>
-              {faqs.length > 0 ? (
-                <Accordion type="single" collapsible className="w-full">
-                  {faqs.map((faq) => (
-                    <AccordionItem key={faq.id} value={faq.id}>
-                      <AccordionTrigger className="text-left">
-                        {faq.question}
-                      </AccordionTrigger>
-                      <AccordionContent className="whitespace-pre-wrap">
-                        {faq.answer}
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  Carregando perguntas frequentes...
-                </p>
-              )}
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-6 flex flex-col items-center text-center space-y-2">
+                    <div className="p-3 bg-blue-50 rounded-full text-blue-600">
+                      <Mail className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-semibold">Email</h3>
+                    <p className="text-sm text-slate-500">
+                      {contactInfo?.email || 'fxdsilva@gmail.com'}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6 flex flex-col items-center text-center space-y-2">
+                    <div className="p-3 bg-green-50 rounded-full text-green-600">
+                      <Phone className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-semibold">Telefone</h3>
+                    <p className="text-sm text-slate-500">
+                      {contactInfo?.phone || '(00) 0000-0000'}
+                    </p>
+                  </CardContent>
+                </Card>
+                {(contactInfo?.whatsapp || contactInfo?.phone) && (
+                  <Card
+                    className="sm:col-span-2 hover:bg-slate-50 transition-colors cursor-pointer border-green-200"
+                    onClick={() => {
+                      const phoneToUse =
+                        contactInfo.whatsapp || contactInfo.phone
+                      let cleanPhone = phoneToUse!.replace(/\D/g, '')
+                      if (cleanPhone.length >= 10 && cleanPhone.length <= 11) {
+                        cleanPhone = `55${cleanPhone}`
+                      }
+                      window.open(`https://wa.me/${cleanPhone}`, '_blank')
+                    }}
+                  >
+                    <CardContent className="p-4 flex items-center justify-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-full text-green-700">
+                        <MessageCircle className="h-5 w-5" />
+                      </div>
+                      <span className="font-semibold text-green-800">
+                        Atendimento via WhatsApp
+                      </span>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
+
+            {/* Official External Channels */}
+            {channels && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Canais Oficiais Externos
+                </h2>
+
+                {channels.emergency && channels.emergency.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                      Emergência
+                    </h3>
+                    {channels.emergency.map((contact, idx) => (
+                      <Card key={idx} className="border-red-200 bg-red-50">
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className="p-2 bg-red-100 rounded-full text-red-600 flex-shrink-0">
+                            <ShieldAlert className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-sm text-red-900">
+                              {contact.name}
+                            </h4>
+                            <p className="text-sm font-bold text-red-700">
+                              {contact.number}
+                            </p>
+                            {contact.description && (
+                              <p className="text-xs text-red-600 mt-0.5">
+                                {contact.description}
+                              </p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {(channels.brasil?.length > 0 ||
+                  channels.mato_grosso?.length > 0) && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                      Links Úteis
+                    </h3>
+                    {[
+                      ...(channels.brasil || []),
+                      ...(channels.mato_grosso || []),
+                    ].map((channel, idx) => (
+                      <Card
+                        key={idx}
+                        className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                        onClick={() => window.open(channel.url, '_blank')}
+                      >
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-200 transition-colors flex-shrink-0">
+                              <ExternalLink className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm text-slate-900">
+                                {channel.name}
+                              </h4>
+                              {channel.description && (
+                                <p className="text-xs text-slate-500 line-clamp-1">
+                                  {channel.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: FAQ */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold tracking-tight">
+              Perguntas Frequentes
+            </h2>
+            {faqs.length > 0 ? (
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full bg-white rounded-lg border border-slate-200 shadow-sm"
+              >
+                {faqs.map((faq) => (
+                  <AccordionItem key={faq.id} value={faq.id} className="px-4">
+                    <AccordionTrigger className="text-left font-medium hover:no-underline hover:text-emerald-700">
+                      {faq.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="whitespace-pre-wrap text-slate-600">
+                      {faq.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <div className="text-center p-8 bg-white rounded-lg border border-slate-200 shadow-sm">
+                <p className="text-slate-500">
+                  Nenhuma pergunta frequente disponível no momento.
+                </p>
+                <p className="text-sm text-slate-400 mt-2">
+                  Se precisar de ajuda, entre em contato através do email{' '}
+                  <span className="font-semibold">fxdsilva@gmail.com</span>.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>

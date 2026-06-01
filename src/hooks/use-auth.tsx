@@ -21,6 +21,7 @@ interface AuthContextType {
   ) => Promise<{ error: any; data?: any }>
   signInWithGoogle: () => Promise<{ error: any; data?: any }>
   signOut: () => Promise<{ error: any }>
+  updatePassword: (password: string) => Promise<{ error: any; data?: any }>
   loading: boolean
 }
 
@@ -101,6 +102,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const updatePassword = async (password: string) => {
+    try {
+      const { data, error } = await supabase.auth.updateUser({ password })
+      return { error, data }
+    } catch (err: any) {
+      return { error: err }
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -110,6 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signIn,
         signInWithGoogle,
         signOut,
+        updatePassword,
         loading,
       }}
     >

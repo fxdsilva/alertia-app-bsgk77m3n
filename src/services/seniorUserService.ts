@@ -63,23 +63,29 @@ export const seniorUserService = {
     return result
   },
 
-  async updateUser(id: string, data: Partial<SeniorUser>) {
-    const { data: result, error } = await supabase
-      .from('usuarios_escola')
-      .update({
-        nome_usuario: data.nome_usuario,
-        email: data.email,
-        perfil: data.perfil,
-        escola_id: data.escola_id,
-        ativo: data.ativo,
-        cargo: data.cargo,
-        departamento: data.departamento,
-      })
-      .eq('id', id)
-      .select()
-      .single()
+  async updateUser(
+    id: string,
+    data: Partial<SeniorUser> & { password?: string },
+  ) {
+    const { data: result, error } = await supabase.functions.invoke(
+      'update-user',
+      {
+        body: {
+          user_id: id,
+          nome: data.nome_usuario,
+          email: data.email,
+          perfil: data.perfil,
+          escola_id: data.escola_id,
+          ativo: data.ativo,
+          cargo: data.cargo,
+          departamento: data.departamento,
+          password: data.password,
+        },
+      },
+    )
 
     if (error) throw error
+    if (result?.error) throw new Error(result.error)
     return result
   },
 
