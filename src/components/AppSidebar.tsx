@@ -40,6 +40,7 @@ import {
   ClipboardList,
   UserCog,
   UserCircle,
+  Activity,
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import useAppStore from '@/stores/useAppStore'
@@ -240,6 +241,25 @@ export function AppSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      pathname === '/compliance/director/secretary-config'
+                    }
+                    className={cn(
+                      'w-full justify-start gap-3 px-3 py-2.5 rounded-xl transition-all',
+                      pathname === '/compliance/director/secretary-config'
+                        ? 'bg-purple-100 text-purple-700 font-medium'
+                        : 'text-muted-foreground hover:bg-secondary',
+                    )}
+                  >
+                    <Link to="/compliance/director/secretary-config">
+                      <Building2 className="h-5 w-5" />
+                      <span className="text-sm">Config. Secretaria</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -402,6 +422,23 @@ export function AppSidebar() {
                     <Link to="/senior/audit-logs">
                       <History className="h-5 w-5 text-purple-600" />
                       <span className="text-sm">Logs de Sistema</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === '/senior/workflow'}
+                    className={cn(
+                      'w-full justify-start gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
+                      pathname === '/senior/workflow'
+                        ? 'bg-purple-100 text-purple-700 font-medium shadow-sm'
+                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    <Link to="/senior/workflow">
+                      <Activity className="h-5 w-5 text-purple-600" />
+                      <span className="text-sm">Workflow de Rede</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

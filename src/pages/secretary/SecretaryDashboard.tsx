@@ -1,34 +1,24 @@
 import { useEffect, useState } from 'react'
 import {
-  Search,
-  Filter,
-  School,
-  AlertTriangle,
-  FileCheck,
-  Scale,
-  GraduationCap,
-  LayoutGrid,
-  ChevronRight,
-  MapPin,
-  Building2,
-  Loader2,
-} from 'lucide-react'
-import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  AlertTriangle,
+  Building2,
+  FileCheck,
+  GraduationCap,
+  Scale,
+  ExternalLink,
+} from 'lucide-react'
+import {
+  secretaryService,
+  DashboardSummary,
+  SecretaryDashboardConfig,
+} from '@/services/secretaryService'
 import {
   Table,
   TableBody,
@@ -38,354 +28,264 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { secretaryService, SchoolMetric } from '@/services/secretaryService'
-import { toast } from 'sonner'
-import useAppStore from '@/stores/useAppStore'
-import { useNavigate } from 'react-router-dom'
 
 export default function SecretaryDashboard() {
-  const { profile, loading: appLoading } = useAppStore()
-  const navigate = useNavigate()
-
-  const [data, setData] = useState<SchoolMetric[]>([])
+  const [data, setData] = useState<DashboardSummary | null>(null)
+  const [config, setConfig] = useState<SecretaryDashboardConfig | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Filter States
-  const [networkFilter, setNetworkFilter] = useState<string>('all')
-  const [sphereFilter, setSphereFilter] = useState<string>('all')
-  const [addressFilter, setAddressFilter] = useState<string>('')
-  const [searchFilter, setSearchFilter] = useState<string>('')
-
   useEffect(() => {
-    // Role Check
-    if (!appLoading && profile !== 'SECRETARIA DE EDUCAÇÃO') {
-      navigate('/')
-    }
-  }, [appLoading, profile, navigate])
+    loadData()
+  }, [])
 
-  useEffect(() => {
-    if (profile === 'SECRETARIA DE EDUCAÇÃO') {
-      fetchData()
-    }
-  }, [profile])
-
-  const fetchData = async () => {
-    setLoading(true)
+  async function loadData() {
     try {
-      const dashboardData = await secretaryService.getDashboardData()
-      setData(dashboardData.schools)
+      const [dashData, dashConfig] = await Promise.all([
+        secretaryService.getDashboardData(),
+        secretaryService.getSecretaryConfig(),
+      ])
+      setData(dashData)
+      setConfig(dashConfig)
     } catch (error) {
-      toast.error('Erro ao carregar dados do painel')
+      console.error('Failed to load secretary dashboard:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  // Filter Logic
-  const filteredSchools = data.filter((school) => {
-    const matchesNetwork =
-      networkFilter === 'all' ||
-      school.network.toLowerCase() === networkFilter.toLowerCase()
-
-    const matchesSphere =
-      sphereFilter === 'all' ||
-      school.sphere.toLowerCase() === sphereFilter.toLowerCase()
-
-    const matchesAddress =
-      addressFilter === '' ||
-      school.address.toLowerCase().includes(addressFilter.toLowerCase()) ||
-      school.municipality.toLowerCase().includes(addressFilter.toLowerCase())
-
-    const matchesSearch =
-      searchFilter === '' ||
-      school.name.toLowerCase().includes(searchFilter.toLowerCase())
-
-    return matchesNetwork && matchesSphere && matchesAddress && matchesSearch
-  })
-
-  // Aggregate KPI based on filtered data
-  const kpi = {
-    schools: filteredSchools.length,
-    complaints: filteredSchools.reduce(
-      (acc, curr) => acc + curr.complaintsCount,
-      0,
-    ),
-    investigations: filteredSchools.reduce(
-      (acc, curr) => acc + curr.investigationsCount,
-      0,
-    ),
-    mediations: filteredSchools.reduce(
-      (acc, curr) => acc + curr.mediationsCount,
-      0,
-    ),
-    trainings: filteredSchools.reduce(
-      (acc, curr) => acc + curr.trainingsCount,
-      0,
-    ),
-  }
-
-  if (appLoading || loading) {
+  if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <div className="p-8 text-center text-muted-foreground animate-pulse">
+        Carregando painel...
       </div>
     )
   }
 
-  if (profile !== 'SECRETARIA DE EDUCAÇÃO') return null
+  if (!config) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[50vh] animate-fade-in">
+        <Building2 className="h-16 w-16 text-muted-foreground opacity-20" />
+        <h2 className="text-2xl font-bold">Aguardando Configuração</h2>
+        <p className="text-muted-foreground max-w-md">
+          O painel da Secretaria está aguardando as definições da Diretoria de
+          Compliance. Em breve as informações estarão disponíveis.
+        </p>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 animate-fade-in">
-      {/* Header Section */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-lg">
-                <LayoutGrid className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">
-                  Painel Secretaria de Educação
-                </h1>
-                <p className="text-sm text-slate-500">
-                  Monitoramento consolidado da rede de ensino
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-full border border-slate-200">
-              <Building2 className="h-4 w-4 text-slate-500" />
-              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                Secretaria de Educação
-              </span>
-            </div>
-          </div>
+    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto animate-fade-in">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Painel da Secretaria de Educação
+          </h1>
+          <p className="text-muted-foreground mt-2 max-w-3xl">
+            {config.welcomeMessage}
+          </p>
         </div>
       </div>
 
-      <main className="container mx-auto px-6 py-8 space-y-8">
-        {/* Filters Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-primary font-semibold">
-            <Filter className="h-5 w-5" />
-            <h2>Filtros de Rede</h2>
-          </div>
-
-          <Card className="border-0 shadow-sm bg-white">
-            <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Select value={networkFilter} onValueChange={setNetworkFilter}>
-                <SelectTrigger className="bg-slate-50 border-slate-200">
-                  <SelectValue placeholder="Todas as Redes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as Redes</SelectItem>
-                  <SelectItem value="Municipal">Municipal</SelectItem>
-                  <SelectItem value="Estadual">Estadual</SelectItem>
-                  <SelectItem value="Federal">Federal</SelectItem>
-                  <SelectItem value="Particular">Particular</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sphereFilter} onValueChange={setSphereFilter}>
-                <SelectTrigger className="bg-slate-50 border-slate-200">
-                  <SelectValue placeholder="Todas as Esferas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as Esferas</SelectItem>
-                  <SelectItem value="Pública">Pública</SelectItem>
-                  <SelectItem value="Privada">Privada</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="relative">
-                <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Filtrar por Bairro/Endereço"
-                  className="pl-9 bg-slate-50 border-slate-200"
-                  value={addressFilter}
-                  onChange={(e) => setAddressFilter(e.target.value)}
-                />
+      {config.showStats && data && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total de Escolas
+              </CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{data.totalSchools}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Denúncias Ativas
+              </CardTitle>
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{data.totalComplaints}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Investigações em Curso
+              </CardTitle>
+              <FileCheck className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {data.totalInvestigations}
               </div>
-
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Buscar Escola..."
-                  className="pl-9 bg-slate-50 border-slate-200"
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                />
-              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Mediações</CardTitle>
+              <Scale className="h-4 w-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{data.totalMediations}</div>
             </CardContent>
           </Card>
         </div>
+      )}
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card className="bg-blue-50 border-blue-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-              <School className="h-8 w-8 text-blue-600 mb-1" />
-              <div className="text-3xl font-bold text-blue-900">
-                {kpi.schools}
-              </div>
-              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
-                Escolas Filtradas
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-orange-50 border-orange-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-              <AlertTriangle className="h-8 w-8 text-orange-600 mb-1" />
-              <div className="text-3xl font-bold text-orange-900">
-                {kpi.complaints}
-              </div>
-              <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">
-                Denúncias
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-indigo-50 border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-              <FileCheck className="h-8 w-8 text-indigo-600 mb-1" />
-              <div className="text-3xl font-bold text-indigo-900">
-                {kpi.investigations}
-              </div>
-              <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">
-                Investigações
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-purple-50 border-purple-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-              <Scale className="h-8 w-8 text-purple-600 mb-1" />
-              <div className="text-3xl font-bold text-purple-900">
-                {kpi.mediations}
-              </div>
-              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">
-                Mediações
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-emerald-50 border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-              <GraduationCap className="h-8 w-8 text-emerald-600 mb-1" />
-              <div className="text-3xl font-bold text-emerald-900">
-                {kpi.trainings}
-              </div>
-              <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
-                Treinamentos
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Schools Table */}
-        <div className="space-y-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-xl font-bold text-slate-900">
-              Desempenho por Escola
-            </h2>
-            <p className="text-sm text-slate-500">
-              Lista detalhada das instituições conforme filtros aplicados.
-            </p>
-          </div>
-
-          <Card className="border shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="w-[400px] font-bold text-slate-700 uppercase text-xs">
-                      Instituição
-                    </TableHead>
-                    <TableHead className="font-bold text-slate-700 uppercase text-xs">
-                      Rede / Esfera
-                    </TableHead>
-                    <TableHead className="font-bold text-slate-700 uppercase text-xs">
-                      Localização
-                    </TableHead>
-                    <TableHead className="text-center font-bold text-slate-700 uppercase text-xs">
-                      Denúncias
-                    </TableHead>
-                    <TableHead className="text-center font-bold text-slate-700 uppercase text-xs">
-                      Investig.
-                    </TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSchools.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="h-32 text-center text-slate-500"
-                      >
-                        Nenhuma escola encontrada com os filtros selecionados.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredSchools.map((school) => (
-                      <TableRow
-                        key={school.id}
-                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                      >
-                        <TableCell className="font-semibold text-slate-800">
-                          {school.name.toUpperCase()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="bg-white text-slate-600 border-slate-200"
-                            >
-                              {school.sphere} ({school.network})
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-600 uppercase">
-                          {school.address || 'ENDEREÇO NÃO CADASTRADO'}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {school.complaintsCount > 0 ? (
-                            <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200">
-                              {school.complaintsCount}
-                            </Badge>
-                          ) : (
-                            <span className="text-slate-400 text-sm">0</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {school.investigationsCount > 0 ? (
-                            <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200">
-                              {school.investigationsCount}
-                            </Badge>
-                          ) : (
-                            <span className="text-slate-400 text-sm">0</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <ChevronRight className="h-4 w-4 text-slate-400" />
-                          </Button>
-                        </TableCell>
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-2 space-y-6">
+          {config.showSchools && data && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Situação por Escola</CardTitle>
+                <CardDescription>
+                  Resumo dos indicadores de compliance das unidades
+                  educacionais.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Escola</TableHead>
+                        <TableHead>Rede</TableHead>
+                        <TableHead className="text-center">Denúncias</TableHead>
+                        <TableHead className="text-center">Investig.</TableHead>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {data.schools.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={4}
+                            className="text-center py-6 text-muted-foreground"
+                          >
+                            Nenhuma escola registrada ou ativa no momento.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        data.schools.map((school) => (
+                          <TableRow key={school.id}>
+                            <TableCell className="font-medium">
+                              {school.name}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{school.network}</Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {school.complaintsCount > 0 ? (
+                                <Badge variant="destructive">
+                                  {school.complaintsCount}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground">0</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {school.investigationsCount > 0 ? (
+                                <Badge variant="secondary">
+                                  {school.investigationsCount}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground">0</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {config.showReports && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Relatórios Consolidados</CardTitle>
+                <CardDescription>
+                  Acesse os relatórios de integridade macro da rede educacional.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-center p-8 border border-dashed rounded-lg bg-secondary/20">
+                  <div className="text-center">
+                    <FileCheck className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm font-medium">
+                      Módulo de relatórios disponível para a Secretaria.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
+                      Você será notificado quando novos relatórios consolidados
+                      forem publicados pela Diretoria.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          {config.customLinks && config.customLinks.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Links e Aplicativos Úteis</CardTitle>
+                <CardDescription>
+                  Materiais de apoio e acessos disponibilizados pelo Compliance.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  {config.customLinks.map((link, idx) => (
+                    <li key={idx}>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center p-3 rounded-lg border hover:bg-secondary/50 transition-colors group"
+                      >
+                        <div className="flex-1 font-medium text-sm group-hover:text-primary transition-colors">
+                          {link.title}
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Treinamentos da Rede</CardTitle>
+              <CardDescription>
+                Acompanhamento dos programas de capacitação.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4 bg-primary/5 p-4 rounded-lg border border-primary/10">
+                <GraduationCap className="h-8 w-8 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-primary">
+                    Capacitação Contínua
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    O programa de integridade possui trilhas de treinamento
+                    ativas para os servidores.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

@@ -74,6 +74,7 @@ import TaskDetails from '@/pages/compliance/analyst/TaskDetails'
 import DirectorDashboard from '@/pages/compliance/DirectorDashboard'
 import AnalystManagement from '@/pages/compliance/director/AnalystManagement'
 import ComplaintWorkflow from '@/pages/compliance/director/ComplaintWorkflow'
+import SecretaryConfig from '@/pages/compliance/director/SecretaryConfig'
 import WorkflowDetail from '@/pages/compliance/director/WorkflowDetail'
 import WorkflowTask from '@/pages/compliance/analyst/WorkflowTask'
 import AuditingDashboard from '@/pages/compliance/analyst/AuditingDashboard'
@@ -87,8 +88,8 @@ import SecretaryDashboard from '@/pages/secretary/SecretaryDashboard'
 import DashboardProfessor from '@/pages/professor/DashboardProfessor'
 import Agenda from '@/pages/professor/Agenda'
 import Library from '@/pages/professor/Library'
+import ProfessorShare from '@/pages/professor/ProfessorShare'
 import {
-  ProfessorShare,
   ProfessorMessages,
   ProfessorAbout,
 } from '@/pages/professor/Placeholders'
@@ -229,6 +230,10 @@ const App = () => {
                 <Route
                   path="/compliance/director/analysts"
                   element={<AnalystManagement />}
+                />
+                <Route
+                  path="/compliance/director/secretary-config"
+                  element={<SecretaryConfig />}
                 />
                 <Route
                   path="/compliance/director/pending-reports"

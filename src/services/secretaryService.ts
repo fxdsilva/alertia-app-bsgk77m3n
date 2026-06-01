@@ -22,7 +22,42 @@ export interface DashboardSummary {
   totalTrainings: number
 }
 
+export interface SecretaryDashboardConfig {
+  welcomeMessage: string
+  showStats: boolean
+  showSchools: boolean
+  showReports: boolean
+  customLinks: { title: string; url: string }[]
+}
+
 export const secretaryService = {
+  async getSecretaryConfig(): Promise<SecretaryDashboardConfig | null> {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('settings')
+      .eq('key', 'secretary_dashboard_config')
+      .maybeSingle()
+
+    if (error) {
+      console.error('Error fetching secretary config:', error)
+      return null
+    }
+    return data?.settings as unknown as SecretaryDashboardConfig
+  },
+
+  async updateSecretaryConfig(config: SecretaryDashboardConfig): Promise<void> {
+    const { error } = await supabase.from('admin_settings').upsert(
+      {
+        key: 'secretary_dashboard_config',
+        settings: config as any,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'key' },
+    )
+
+    if (error) throw error
+  },
+
   async getDashboardData(): Promise<DashboardSummary> {
     try {
       // 1. Fetch all schools
