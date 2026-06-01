@@ -20,31 +20,41 @@ import {
   Siren,
   Phone,
   Loader2,
+  Mail,
+  Headset,
 } from 'lucide-react'
 import {
   settingsService,
   OfficialChannelsData,
   OfficialChannel,
   EmergencyContact,
+  SupportContactInfo,
 } from '@/services/settingsService'
 
 export default function Support() {
   const navigate = useNavigate()
   const [data, setData] = useState<OfficialChannelsData | null>(null)
+  const [supportInfo, setSupportInfo] = useState<SupportContactInfo | null>(
+    null,
+  )
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchChannels = async () => {
+    const fetchData = async () => {
       try {
-        const channels = await settingsService.getOfficialChannels()
+        const [channels, support] = await Promise.all([
+          settingsService.getOfficialChannels(),
+          settingsService.getSupportContactInfo(),
+        ])
         setData(channels)
+        setSupportInfo(support)
       } catch (error) {
         console.error(error)
       } finally {
         setLoading(false)
       }
     }
-    fetchChannels()
+    fetchData()
   }, [])
 
   const ChannelCard = ({ channel }: { channel: OfficialChannel }) => (
@@ -140,18 +150,79 @@ export default function Support() {
           <div className="flex justify-center py-20">
             <Loader2 className="h-10 w-10 animate-spin text-emerald-700" />
           </div>
-        ) : !data || (!hasChannels && !hasEmergency) ? (
+        ) : !hasChannels && !hasEmergency && !supportInfo ? (
           <div className="text-center py-20 text-slate-500 bg-white rounded-xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
             <p className="text-lg font-medium text-slate-700 mb-2">
-              Nenhum canal disponível
+              Nenhuma informação disponível
             </p>
             <p>
-              Os canais oficiais estão sendo atualizados no momento. Por favor,
-              tente novamente mais tarde.
+              As informações de suporte e canais oficiais não estão disponíveis
+              no momento. Por favor, tente novamente mais tarde.
             </p>
           </div>
         ) : (
           <div className="space-y-10">
+            {supportInfo ? (
+              <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 animate-fade-in-up">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <Headset className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    Contato de Suporte
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 bg-slate-50 hover:shadow-sm transition-all">
+                    <div className="bg-white p-3 rounded-full shrink-0 shadow-sm">
+                      <Mail className="h-5 w-5 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">
+                        E-mail
+                      </p>
+                      <a
+                        href={`mailto:${supportInfo.email}`}
+                        className="text-lg font-semibold text-slate-900 hover:text-emerald-700 transition-colors break-all"
+                      >
+                        {supportInfo.email}
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 bg-slate-50 hover:shadow-sm transition-all">
+                    <div className="bg-white p-3 rounded-full shrink-0 shadow-sm">
+                      <Phone className="h-5 w-5 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">
+                        Telefone
+                      </p>
+                      <a
+                        href={`tel:${supportInfo.phone.replace(/\D/g, '')}`}
+                        className="text-lg font-semibold text-slate-900 hover:text-emerald-700 transition-colors"
+                      >
+                        {supportInfo.phone}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 animate-fade-in-up">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <Headset className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    Contato de Suporte
+                  </h2>
+                </div>
+                <p className="text-slate-500">
+                  Informações de suporte não disponíveis no momento.
+                </p>
+              </section>
+            )}
+
             {hasEmergency && (
               <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 animate-fade-in-up">
                 <div className="flex items-center gap-3 mb-6">
