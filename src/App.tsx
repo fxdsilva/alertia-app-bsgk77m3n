@@ -88,7 +88,7 @@ import SecretaryDashboard from '@/pages/secretary/SecretaryDashboard'
 import DashboardProfessor from '@/pages/professor/DashboardProfessor'
 import Agenda from '@/pages/professor/Agenda'
 import Library from '@/pages/professor/Library'
-import ProfessorShare from '@/pages/professor/ProfessorShare'
+import ShareApp from '@/pages/shared/ShareApp'
 import {
   ProfessorMessages,
   ProfessorAbout,
@@ -351,7 +351,7 @@ const App = () => {
                   path="/professor/trainings"
                   element={<Navigate to="/trainings" replace />}
                 />
-                <Route path="/share" element={<ProfessorShare />} />
+                <Route path="/share" element={<ShareApp />} />
                 <Route path="/messages" element={<ProfessorMessages />} />
                 <Route path="/about" element={<ProfessorAbout />} />
 

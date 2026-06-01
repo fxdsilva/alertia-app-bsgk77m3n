@@ -2,166 +2,141 @@ import { useEffect, useState } from 'react'
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { settingsService, ShareAppConfig } from '@/services/settingsService'
-import { Loader2, Save, Share2 } from 'lucide-react'
+import { Save, Share2 } from 'lucide-react'
 
 export default function SecretaryConfig() {
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [config, setConfig] = useState<ShareAppConfig>({
+    enabled: true,
+    title: 'Compartilhar App',
+    description:
+      'Convide seus colegas para fazerem parte da cultura de conformidade e transparência da nossa instituição.',
+    url: window.location.origin,
+  })
+  const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
   const { toast } = useToast()
 
-  const [config, setConfig] = useState<ShareAppConfig>({
-    enabled: false,
-    title: '',
-    description: '',
-    url: '',
-  })
-
   useEffect(() => {
-    fetchConfig()
+    loadConfig()
   }, [])
 
-  const fetchConfig = async () => {
-    setLoading(true)
+  const loadConfig = async () => {
     try {
+      setFetching(true)
       const data = await settingsService.getShareAppConfig()
       if (data) {
         setConfig(data)
       }
     } catch (error) {
-      console.error('Failed to fetch config', error)
+      console.error(error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar as configurações.',
+        variant: 'destructive',
+      })
+    } finally {
+      setFetching(false)
+    }
+  }
+
+  const handleSave = async () => {
+    setLoading(true)
+    try {
+      await settingsService.updateShareAppConfig(config)
+      toast({
+        title: 'Sucesso',
+        description: 'Configurações atualizadas com sucesso.',
+      })
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar as configurações.',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      await settingsService.updateShareAppConfig(config)
-      toast({
-        title: 'Configurações salvas',
-        description:
-          'As configurações de compartilhamento foram atualizadas com sucesso.',
-      })
-    } catch (error) {
-      console.error('Failed to save config', error)
-      toast({
-        title: 'Erro ao salvar',
-        description:
-          'Não foi possível salvar as configurações. Tente novamente.',
-        variant: 'destructive',
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (loading) {
+  if (fetching) {
     return (
-      <div className="flex justify-center items-center h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl mx-auto pb-10">
+    <div className="container mx-auto p-6 max-w-4xl space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-3xl font-bold text-foreground">
           Configurações da Secretaria
         </h1>
-        <p className="text-muted-foreground text-lg">
-          Gerencie o que é visível para a Secretaria de Educação
+        <p className="text-muted-foreground mt-2">
+          Gerencie as configurações e o conteúdo exibido para o perfil
+          Secretaria de Educação.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-5 w-5 text-purple-600" />
-            Compartilhar App
-          </CardTitle>
-          <CardDescription>
-            Defina as informações do aplicativo que serão sugeridas para a
-            Secretaria de Educação compartilhar.
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Share2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Compartilhar App</CardTitle>
+              <CardDescription>
+                Personalize a mensagem exibida na página de compartilhamento do
+                aplicativo para a Secretaria.
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/30">
-            <div className="space-y-0.5">
-              <Label className="text-base font-medium">
-                Habilitar Compartilhamento
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Ative para exibir o card de compartilhamento no painel da
-                Secretaria.
-              </p>
-            </div>
-            <Switch
-              checked={config.enabled}
-              onCheckedChange={(checked) =>
-                setConfig({ ...config, enabled: checked })
-              }
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Título da Página</label>
+            <Input
+              value={config.title}
+              onChange={(e) => setConfig({ ...config, title: e.target.value })}
+              placeholder="Compartilhar App"
             />
+            <p className="text-xs text-muted-foreground">
+              O título principal que aparecerá na página de compartilhamento.
+            </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Título do Card</Label>
-              <Input
-                id="title"
-                value={config.title}
-                onChange={(e) =>
-                  setConfig({ ...config, title: e.target.value })
-                }
-                placeholder="Ex: Compartilhe nosso App"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                value={config.description}
-                onChange={(e) =>
-                  setConfig({ ...config, description: e.target.value })
-                }
-                placeholder="Ex: Ajude a promover um ambiente mais ético..."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="url">URL de Compartilhamento</Label>
-              <Input
-                id="url"
-                value={config.url}
-                onChange={(e) => setConfig({ ...config, url: e.target.value })}
-                placeholder="https://exemplo.com/portal"
-                type="url"
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Descrição Institucional
+            </label>
+            <Textarea
+              value={config.description}
+              onChange={(e) =>
+                setConfig({ ...config, description: e.target.value })
+              }
+              placeholder="Convide seus colegas para fazerem parte da cultura de conformidade e transparência da nossa instituição."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">
+              Um texto motivacional encorajando os colegas a utilizarem o app.
+            </p>
           </div>
 
           <div className="pt-4 flex justify-end">
-            <Button onClick={handleSave} disabled={saving} className="gap-2">
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              Salvar Configurações
+            <Button onClick={handleSave} disabled={loading} className="gap-2">
+              <Save className="h-4 w-4" />
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </div>
         </CardContent>
