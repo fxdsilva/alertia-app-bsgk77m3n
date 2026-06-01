@@ -7,21 +7,26 @@ import {
 import useAppStore from '@/stores/useAppStore'
 
 export function useTrainings() {
-  const { selectedSchool, user } = useAppStore()
+  const { selectedSchool, user, profile } = useAppStore()
   const [trainings, setTrainings] = useState<TrainingWithProgress[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
   const fetchTrainings = useCallback(async () => {
-    if (!selectedSchool || !user) {
+    const isSenior =
+      profile === 'senior' ||
+      profile === 'administrador' ||
+      profile === 'admin_gestor'
+    if ((!selectedSchool && !isSenior) || !user) {
       setLoading(false)
       return
     }
     setLoading(true)
     try {
       const data = await trainingService.getTrainingsWithProgress(
-        selectedSchool.id,
+        selectedSchool?.id || null,
         user.id,
+        isSenior,
       )
       setTrainings(data)
       setError(null)

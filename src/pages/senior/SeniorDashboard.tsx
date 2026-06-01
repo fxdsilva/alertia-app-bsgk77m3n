@@ -1,333 +1,229 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   Card,
   CardContent,
-  CardFooter,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
+  CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useNavigate } from 'react-router-dom'
 import {
-  GraduationCap,
-  Building2,
-  Users,
+  BookOpen,
   AlertTriangle,
-  TrendingUp,
-  Activity,
+  FileCheck,
+  SearchCheck,
+  Gavel,
+  BrainCircuit,
+  Building2,
+  ChevronRight,
+  Loader2,
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase/client'
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from 'recharts'
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
-
-const mockChartData = [
-  { name: 'Jan', denuncias: 4 },
-  { name: 'Fev', denuncias: 7 },
-  { name: 'Mar', denuncias: 5 },
-  { name: 'Abr', denuncias: 10 },
-  { name: 'Mai', denuncias: 14 },
-  { name: 'Jun', denuncias: 8 },
-]
+import { useState } from 'react'
 
 export default function SeniorDashboard() {
-  const [stats, setStats] = useState({
-    schools: 0,
-    users: 0,
-    alerts: 0,
-    resolutionRate: 0,
-  })
-  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+  const [loadingTrainings, setLoadingTrainings] = useState(false)
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const { count: schoolsCount } = await supabase
-          .from('escolas_instituicoes')
-          .select('*', { count: 'exact', head: true })
-          .eq('ativo', true)
+  const handleTrainingsClick = () => {
+    setLoadingTrainings(true)
+    setTimeout(() => {
+      navigate('/trainings')
+    }, 400)
+  }
 
-        const { count: usersCount } = await supabase
-          .from('usuarios_escola')
-          .select('*', { count: 'exact', head: true })
-          .eq('ativo', true)
-
-        const { count: alertsCount } = await supabase
-          .from('denuncias')
-          .select('*', { count: 'exact', head: true })
-          .eq('gravidade', 'Alta')
-          .eq('status', 'pendente') // Basic approximation for critical alerts
-
-        setStats({
-          schools: schoolsCount ?? 3,
-          users: usersCount ?? 18,
-          alerts: alertsCount ?? 0,
-          resolutionRate: 85, // Mock calculated value
-        })
-      } catch (err) {
-        console.error('Error fetching stats', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchStats()
-  }, [])
+  const modules = [
+    {
+      title: 'Visão Consolidada',
+      description: 'Métricas globais de todas as escolas da rede.',
+      icon: Building2,
+      path: '/senior/consolidated',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+    },
+    {
+      title: 'Decisões Disciplinares',
+      description: 'Acompanhamento de medidas e sanções aplicadas.',
+      icon: Gavel,
+      path: '/senior/decisions',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+    },
+    {
+      title: 'Due Diligence',
+      description: 'Análise de integridade de fornecedores e parceiros.',
+      icon: SearchCheck,
+      path: '/senior/due-diligence',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100',
+    },
+    {
+      title: 'Relatórios IA',
+      description:
+        'Análise preditiva e insights gerados por inteligência artificial.',
+      icon: BrainCircuit,
+      path: '/senior/ai-reports',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-100',
+    },
+  ]
 
   return (
-    <div className="p-6 space-y-8 max-w-[1600px] mx-auto animate-fade-in-up">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto animate-fade-in-up">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Painel Senior</h1>
-          <p className="text-muted-foreground mt-1">
-            Visão geral estratégica da rede e indicadores de compliance
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Dashboard Master
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Visão executiva e controle global da rede de ensino.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-        <Card className="flex flex-col h-full border-t-4 border-t-purple-500 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              Capacitação
-              <div className="p-2 bg-purple-100 rounded-full text-purple-600">
-                <GraduationCap className="h-4 w-4" />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {modules.map((mod) => (
+          <Card
+            key={mod.title}
+            className="hover:shadow-md transition-shadow cursor-pointer border-t-4 border-t-transparent hover:border-t-primary"
+            onClick={() => navigate(mod.path)}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">{mod.title}</CardTitle>
+              <div className={`p-2 rounded-lg ${mod.bgColor}`}>
+                <mod.icon className={`h-4 w-4 ${mod.color}`} />
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <div className="text-2xl font-bold text-purple-700 mb-1">
-              Portal de Cursos
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Acessar treinamentos
-            </p>
-          </CardContent>
-          <CardFooter className="pt-4">
-            <Button
-              asChild
-              variant="outline"
-              className="w-full text-sm h-auto min-h-[40px] whitespace-normal py-2 text-center group hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors"
-            >
-              <Link to="/trainings">Abrir Portal</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card className="flex flex-col h-full border-t-4 border-t-blue-500 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              Total de Escolas
-              <div className="p-2 bg-blue-100 rounded-full text-blue-600">
-                <Building2 className="h-4 w-4" />
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <div className="text-3xl font-bold text-foreground mb-1">
-              {loading ? (
-                <span className="animate-pulse bg-muted rounded h-8 w-12 block"></span>
-              ) : (
-                stats.schools
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Instituições monitoradas
-            </p>
-          </CardContent>
-          <CardFooter className="pt-4">
-            <Button
-              asChild
-              variant="outline"
-              className="w-full text-sm h-auto min-h-[40px] whitespace-normal py-2 text-center hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-            >
-              <Link to="/senior/schools">Ver Escolas</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card className="flex flex-col h-full border-t-4 border-t-indigo-500 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              Usuários Ativos
-              <div className="p-2 bg-indigo-100 rounded-full text-indigo-600">
-                <Users className="h-4 w-4" />
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <div className="text-3xl font-bold text-foreground mb-1">
-              {loading ? (
-                <span className="animate-pulse bg-muted rounded h-8 w-16 block"></span>
-              ) : (
-                stats.users
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Gestores e colaboradores
-            </p>
-          </CardContent>
-          <CardFooter className="pt-4">
-            <Button
-              asChild
-              variant="outline"
-              className="w-full text-sm h-auto min-h-[40px] whitespace-normal py-2 text-center hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors"
-            >
-              <Link to="/senior/users">Gerenciar Usuários</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card className="flex flex-col h-full border-t-4 border-t-red-500 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              Alertas Críticos
-              <div className="p-2 bg-red-100 rounded-full text-red-600">
-                <AlertTriangle className="h-4 w-4" />
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <div className="text-3xl font-bold text-red-600 mb-1">
-              {loading ? (
-                <span className="animate-pulse bg-red-100/50 rounded h-8 w-12 block"></span>
-              ) : (
-                stats.alerts
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Requerem atenção imediata
-            </p>
-          </CardContent>
-          <CardFooter className="pt-4">
-            <Button
-              asChild
-              variant="outline"
-              className="w-full text-sm h-auto min-h-[40px] whitespace-normal py-2 text-center hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-colors"
-            >
-              <Link to="/senior/pending-reports">Ver Lista de Alertas</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card className="flex flex-col h-full border-t-4 border-t-emerald-500 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              Taxa de Resolução
-              <div className="p-2 bg-emerald-100 rounded-full text-emerald-600">
-                <Activity className="h-4 w-4" />
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <div className="text-3xl font-bold text-emerald-600 mb-1">
-              {loading ? (
-                <span className="animate-pulse bg-emerald-100/50 rounded h-8 w-16 block"></span>
-              ) : (
-                `${stats.resolutionRate}%`
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground flex items-start mt-1">
-              <TrendingUp className="h-3 w-3 mr-1 text-emerald-600 mt-0.5 shrink-0" />
-              <span className="leading-tight">
-                +5% em relação ao mês anterior
-              </span>
-            </p>
-          </CardContent>
-          <CardFooter className="pt-4">
-            <Button
-              asChild
-              variant="outline"
-              className="w-full text-sm h-auto min-h-[40px] whitespace-normal py-2 text-center hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-colors"
-            >
-              <Link to="/senior/consolidated">Ver Detalhes do Cálculo</Link>
-            </Button>
-          </CardFooter>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground mt-2">
+                {mod.description}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <Card className="shadow-sm">
+      <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="flex flex-col h-full">
           <CardHeader>
-            <CardTitle>Visão Geral de Denúncias</CardTitle>
-            <CardDescription>
-              Volume de denúncias nos últimos 6 meses
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <CardTitle>Capacitação / Portal de Cursos</CardTitle>
+            </div>
+            <CardDescription className="pt-2">
+              Acompanhe o progresso e gerencie os treinamentos de compliance em
+              todas as escolas da rede.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pb-4">
-            <ChartContainer
-              config={{
-                denuncias: { label: 'Denúncias', color: 'hsl(var(--primary))' },
-              }}
-              className="h-[300px] w-full"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={mockChartData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="hsl(var(--muted-foreground)/0.2)"
-                  />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fontSize: 12,
-                      fill: 'hsl(var(--muted-foreground))',
-                    }}
-                    dy={10}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fontSize: 12,
-                      fill: 'hsl(var(--muted-foreground))',
-                    }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar
-                    dataKey="denuncias"
-                    fill="var(--color-denuncias)"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={50}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+          <CardContent className="flex-1">
+            <div className="space-y-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-slate-700">
+                    Adesão Global
+                  </span>
+                  <span className="text-sm font-bold text-indigo-700">78%</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-2">
+                  <div
+                    className="bg-indigo-600 h-2 rounded-full"
+                    style={{ width: '78%' }}
+                  ></div>
+                </div>
+              </div>
+            </div>
           </CardContent>
+          <CardFooter className="mt-auto pt-4">
+            <Button
+              className="w-full flex justify-between items-center group"
+              onClick={handleTrainingsClick}
+              disabled={loadingTrainings}
+            >
+              <span>Acessar treinamentos</span>
+              {loadingTrainings ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              )}
+            </Button>
+          </CardFooter>
         </Card>
 
-        <Card className="shadow-sm">
+        {/* Other operational cards... */}
+        <Card className="flex flex-col h-full">
           <CardHeader>
-            <CardTitle>Conformidade da Rede</CardTitle>
-            <CardDescription>
-              Principais indicadores de compliance e adesão
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-red-100 text-red-700">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <CardTitle>Denúncias e Casos</CardTitle>
+            </div>
+            <CardDescription className="pt-2">
+              Supervisão de denúncias graves e investigações abertas.
             </CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px] flex flex-col items-center justify-center bg-muted/10 rounded-md border border-dashed text-center p-6 mx-6 mb-6">
-            <TrendingUp className="h-10 w-10 text-muted-foreground mb-4 opacity-20" />
-            <p className="text-muted-foreground text-sm">
-              Integração de dados de conformidade em andamento.
-              <br />
-              Os gráficos detalhados estarão disponíveis em breve.
-            </p>
+          <CardContent className="flex-1">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-sm text-slate-600">
+                  Abertas (Alta Gravidade)
+                </span>
+                <span className="font-bold text-red-600">12</span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-sm text-slate-600">Em Investigação</span>
+                <span className="font-bold text-amber-600">45</span>
+              </div>
+            </div>
           </CardContent>
+          <CardFooter className="mt-auto pt-4">
+            <Button
+              variant="outline"
+              className="w-full flex justify-between items-center group"
+              onClick={() => navigate('/admin/complaints')}
+            >
+              <span>Ver painel de denúncias</span>
+              <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card className="flex flex-col h-full">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-teal-100 text-teal-700">
+                <FileCheck className="h-5 w-5" />
+              </div>
+              <CardTitle>Auditorias Globais</CardTitle>
+            </div>
+            <CardDescription className="pt-2">
+              Acompanhamento de processos de auditoria nas unidades.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-sm text-slate-600">Agendadas</span>
+                <span className="font-bold text-slate-900">8</span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-sm text-slate-600">Com Pendências</span>
+                <span className="font-bold text-amber-600">3</span>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="mt-auto pt-4">
+            <Button
+              variant="outline"
+              className="w-full flex justify-between items-center group"
+              onClick={() => navigate('/manager/audits')}
+            >
+              <span>Ver cronograma de auditorias</span>
+              <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     </div>

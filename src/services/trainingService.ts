@@ -10,8 +10,17 @@ export interface TrainingWithProgress extends Training {
 }
 
 export const trainingService = {
-  async getTrainings(schoolId: string) {
-    return this.getTrainingsBySchool(schoolId)
+  async getTrainings(schoolId: string | null, isSenior: boolean = false) {
+    let query = supabase
+      .from('treinamentos')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (!isSenior && schoolId) {
+      query = query.eq('escola_id', schoolId)
+    }
+    const { data, error } = await query
+    if (error) throw error
+    return data
   },
 
   async createTraining(training: Partial<Training>) {
@@ -22,12 +31,18 @@ export const trainingService = {
     return this.upsertTraining(training)
   },
 
-  async getTrainingsBySchool(schoolId: string) {
-    const { data, error } = await supabase
+  async getTrainingsBySchool(
+    schoolId: string | null,
+    isSenior: boolean = false,
+  ) {
+    let query = supabase
       .from('treinamentos')
       .select('*')
-      .eq('escola_id', schoolId)
       .order('created_at', { ascending: false })
+    if (!isSenior && schoolId) {
+      query = query.eq('escola_id', schoolId)
+    }
+    const { data, error } = await query
 
     if (error) throw error
     return data
@@ -59,13 +74,16 @@ export const trainingService = {
     if (error) throw error
   },
 
-  async getPublicTrainings(schoolId: string) {
-    const { data, error } = await supabase
+  async getPublicTrainings(schoolId: string | null, isSenior: boolean = false) {
+    let query = supabase
       .from('treinamentos')
       .select('*')
-      .eq('escola_id', schoolId)
       .eq('ativo', true)
       .order('created_at', { ascending: false })
+    if (!isSenior && schoolId) {
+      query = query.eq('escola_id', schoolId)
+    }
+    const { data, error } = await query
 
     if (error) throw error
     return data
@@ -114,15 +132,19 @@ export const trainingService = {
   },
 
   async getTrainingsWithProgress(
-    schoolId: string,
+    schoolId: string | null,
     userId: string,
+    isSenior: boolean = false,
   ): Promise<TrainingWithProgress[]> {
-    const { data: trainings, error: trainingError } = await supabase
+    let query = supabase
       .from('treinamentos')
       .select('*')
-      .eq('escola_id', schoolId)
       .eq('ativo', true)
       .order('created_at', { ascending: false })
+    if (!isSenior && schoolId) {
+      query = query.eq('escola_id', schoolId)
+    }
+    const { data: trainings, error: trainingError } = await query
 
     if (trainingError) throw trainingError
 
