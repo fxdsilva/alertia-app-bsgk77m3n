@@ -1,229 +1,138 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
 import {
+  GraduationCap,
   BookOpen,
-  AlertTriangle,
-  FileCheck,
-  SearchCheck,
-  Gavel,
-  BrainCircuit,
-  Building2,
-  ChevronRight,
+  Presentation,
+  ShieldAlert,
+  BarChart3,
+  Users,
   Loader2,
+  LayoutDashboard,
 } from 'lucide-react'
-import { useState } from 'react'
 
 export default function SeniorDashboard() {
   const navigate = useNavigate()
-  const [loadingTrainings, setLoadingTrainings] = useState(false)
+  const [loadingRoute, setLoadingRoute] = useState<string | null>(null)
 
-  const handleTrainingsClick = () => {
-    setLoadingTrainings(true)
+  const handleNavigation = (route: string) => {
+    setLoadingRoute(route)
+    // Simulate slight delay for visual feedback of loading state before navigation
     setTimeout(() => {
-      navigate('/trainings')
-    }, 400)
+      navigate(route)
+    }, 300)
   }
 
-  const modules = [
-    {
-      title: 'Visão Consolidada',
-      description: 'Métricas globais de todas as escolas da rede.',
-      icon: Building2,
-      path: '/senior/consolidated',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-    },
-    {
-      title: 'Decisões Disciplinares',
-      description: 'Acompanhamento de medidas e sanções aplicadas.',
-      icon: Gavel,
-      path: '/senior/decisions',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-    },
-    {
-      title: 'Due Diligence',
-      description: 'Análise de integridade de fornecedores e parceiros.',
-      icon: SearchCheck,
-      path: '/senior/due-diligence',
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
-    },
-    {
-      title: 'Relatórios IA',
-      description:
-        'Análise preditiva e insights gerados por inteligência artificial.',
-      icon: BrainCircuit,
-      path: '/senior/ai-reports',
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-100',
-    },
-  ]
+  const renderButton = (
+    label: string,
+    icon: React.ElementType,
+    route: string,
+  ) => {
+    const Icon = icon
+    const isLoading = loadingRoute === route
+    return (
+      <Button
+        variant="outline"
+        className="w-full h-auto min-h-[4rem] flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 p-4 whitespace-normal text-center sm:text-left transition-all hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+        onClick={() => handleNavigation(route)}
+        disabled={loadingRoute !== null}
+      >
+        {isLoading ? (
+          <Loader2 className="h-6 w-6 animate-spin shrink-0" />
+        ) : (
+          <Icon className="h-6 w-6 shrink-0 text-primary/80" />
+        )}
+        <span className="font-semibold text-sm sm:text-base leading-tight">
+          {label}
+        </span>
+      </Button>
+    )
+  }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto animate-fade-in-up">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Dashboard Master
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Visão executiva e controle global da rede de ensino.
-          </p>
-        </div>
+    <div className="p-6 space-y-6 max-w-7xl mx-auto animate-fade-in pb-20">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Painel da Alta Gestão
+        </h1>
+        <p className="text-muted-foreground">
+          Visão consolidada e acesso rápido aos módulos estratégicos.
+        </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {modules.map((mod) => (
-          <Card
-            key={mod.title}
-            className="hover:shadow-md transition-shadow cursor-pointer border-t-4 border-t-transparent hover:border-t-primary"
-            onClick={() => navigate(mod.path)}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{mod.title}</CardTitle>
-              <div className={`p-2 rounded-lg ${mod.bgColor}`}>
-                <mod.icon className={`h-4 w-4 ${mod.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground mt-2">
-                {mod.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="flex flex-col h-full">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700">
-                <BookOpen className="h-5 w-5" />
-              </div>
-              <CardTitle>Capacitação / Portal de Cursos</CardTitle>
-            </div>
-            <CardDescription className="pt-2">
-              Acompanhe o progresso e gerencie os treinamentos de compliance em
-              todas as escolas da rede.
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Educação e Treinamentos Card */}
+        <Card className="flex flex-col border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="bg-primary/5 pb-4 border-b border-border/50">
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              Educação e Treinamentos
+            </CardTitle>
+            <CardDescription>
+              Gerencie e acesse os módulos de capacitação
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1">
-            <div className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-slate-700">
-                    Adesão Global
-                  </span>
-                  <span className="text-sm font-bold text-indigo-700">78%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-2">
-                  <div
-                    className="bg-indigo-600 h-2 rounded-full"
-                    style={{ width: '78%' }}
-                  ></div>
-                </div>
-              </div>
-            </div>
+          <CardContent className="flex-1 pt-6 space-y-4">
+            {renderButton('Acessar treinamentos', GraduationCap, '/trainings')}
+            {renderButton('Portal de Cursos', BookOpen, '/trainings')}
+            {renderButton('Capacitação', Presentation, '/trainings')}
           </CardContent>
-          <CardFooter className="mt-auto pt-4">
-            <Button
-              className="w-full flex justify-between items-center group"
-              onClick={handleTrainingsClick}
-              disabled={loadingTrainings}
-            >
-              <span>Acessar treinamentos</span>
-              {loadingTrainings ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              )}
-            </Button>
-          </CardFooter>
         </Card>
 
-        {/* Other operational cards... */}
-        <Card className="flex flex-col h-full">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-red-100 text-red-700">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <CardTitle>Denúncias e Casos</CardTitle>
-            </div>
-            <CardDescription className="pt-2">
-              Supervisão de denúncias graves e investigações abertas.
+        {/* Riscos e Compliance Card */}
+        <Card className="flex flex-col border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="bg-amber-500/5 pb-4 border-b border-border/50">
+            <CardTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-600" />
+              Riscos e Compliance
+            </CardTitle>
+            <CardDescription>
+              Acompanhamento de denúncias e due diligence
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center border-b pb-2">
-                <span className="text-sm text-slate-600">
-                  Abertas (Alta Gravidade)
-                </span>
-                <span className="font-bold text-red-600">12</span>
-              </div>
-              <div className="flex justify-between items-center border-b pb-2">
-                <span className="text-sm text-slate-600">Em Investigação</span>
-                <span className="font-bold text-amber-600">45</span>
-              </div>
-            </div>
+          <CardContent className="flex-1 pt-6 space-y-4">
+            {renderButton(
+              'Painel de Denúncias',
+              ShieldAlert,
+              '/senior/pending-reports',
+            )}
+            {renderButton('Due Diligence', Users, '/senior/due-diligence')}
+            {renderButton('Auditorias', BarChart3, '/senior/audit-logs')}
           </CardContent>
-          <CardFooter className="mt-auto pt-4">
-            <Button
-              variant="outline"
-              className="w-full flex justify-between items-center group"
-              onClick={() => navigate('/admin/complaints')}
-            >
-              <span>Ver painel de denúncias</span>
-              <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </CardFooter>
         </Card>
 
-        <Card className="flex flex-col h-full">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-teal-100 text-teal-700">
-                <FileCheck className="h-5 w-5" />
-              </div>
-              <CardTitle>Auditorias Globais</CardTitle>
-            </div>
-            <CardDescription className="pt-2">
-              Acompanhamento de processos de auditoria nas unidades.
+        {/* Estratégia e Dados Card */}
+        <Card className="flex flex-col border-border/50 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="bg-blue-500/5 pb-4 border-b border-border/50">
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Estratégia e Dados
+            </CardTitle>
+            <CardDescription>
+              Métricas e relatórios consolidados
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center border-b pb-2">
-                <span className="text-sm text-slate-600">Agendadas</span>
-                <span className="font-bold text-slate-900">8</span>
-              </div>
-              <div className="flex justify-between items-center border-b pb-2">
-                <span className="text-sm text-slate-600">Com Pendências</span>
-                <span className="font-bold text-amber-600">3</span>
-              </div>
-            </div>
+          <CardContent className="flex-1 pt-6 space-y-4">
+            {renderButton(
+              'Dados Consolidados',
+              BarChart3,
+              '/senior/consolidated',
+            )}
+            {renderButton('Relatórios IA', Presentation, '/senior/ai-reports')}
+            {renderButton(
+              'Gestão de Escolas',
+              LayoutDashboard,
+              '/senior/schools',
+            )}
           </CardContent>
-          <CardFooter className="mt-auto pt-4">
-            <Button
-              variant="outline"
-              className="w-full flex justify-between items-center group"
-              onClick={() => navigate('/manager/audits')}
-            >
-              <span>Ver cronograma de auditorias</span>
-              <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     </div>
