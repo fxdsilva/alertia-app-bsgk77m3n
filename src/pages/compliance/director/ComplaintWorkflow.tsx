@@ -1,401 +1,292 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { supabase } from '@/lib/supabase/client'
 import {
-  FileSearch,
-  ArrowRight,
-  Scale,
-  CheckCircle2,
-  Search,
-  X,
-} from 'lucide-react'
-import {
-  workflowService,
-  WorkflowComplaint,
-  WORKFLOW_STATUS,
-} from '@/services/workflowService'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  FileSearch,
+  ArrowRight,
+  Scale,
+  CircleCheck,
+  ChevronDown,
+  Calendar,
+  AlertCircle,
+} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 export default function ComplaintWorkflow() {
-  const [data, setData] = useState<{
-    f1: WorkflowComplaint[]
-    f2: WorkflowComplaint[]
-    f3: WorkflowComplaint[]
-    closed: WorkflowComplaint[]
-  }>({ f1: [], f2: [], f3: [], closed: [] })
-
+  const [denuncias, setDenuncias] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [activePhase, setActivePhase] = useState<'f1' | 'f2' | 'f3' | 'closed'>(
-    'f1',
-  )
-  const [subFilter, setSubFilter] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
+  const [activePhase, setActivePhase] = useState('f1')
+  const navigate = useNavigate()
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await workflowService.getWorkflowDashboardData()
-        setData(res)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+    fetchDenuncias()
   }, [])
 
-  const currentList = useMemo(() => {
-    let list = data[activePhase] || []
+  const fetchDenuncias = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('denuncias')
+        .select(
+          `
+          id,
+          protocolo,
+          descricao,
+          created_at,
+          status,
+          gravidade,
+          status_denuncia(nome_status)
+        `,
+        )
+        .order('created_at', { ascending: false })
 
-    if (subFilter) {
-      if (activePhase === 'f3') {
-        if (subFilter === 'mediacao') {
-          list = list.filter(
-            (c) =>
-              c.tipo_resolucao === 'mediacao' ||
-              c.status?.toLowerCase().includes('mediação'),
-          )
-        } else if (subFilter === 'disciplinar') {
-          list = list.filter(
-            (c) =>
-              c.tipo_resolucao === 'disciplinar' ||
-              c.status?.toLowerCase().includes('disciplinar'),
-          )
-        }
-      } else {
-        list = list.filter((c) => c.status === subFilter)
-      }
+      if (error) throw error
+      setDenuncias(data || [])
+    } catch (error) {
+      console.error('Error fetching denuncias:', error)
+    } finally {
+      setLoading(false)
     }
-
-    if (search) {
-      const q = search.toLowerCase()
-      list = list.filter(
-        (c) =>
-          c.protocolo?.toLowerCase().includes(q) ||
-          c.descricao?.toLowerCase().includes(q) ||
-          c.status?.toLowerCase().includes(q),
-      )
-    }
-
-    return list
-  }, [data, activePhase, subFilter, search])
-
-  const filtersF1 = [
-    WORKFLOW_STATUS.REGISTERED,
-    WORKFLOW_STATUS.WAITING_ANALYST_1,
-    WORKFLOW_STATUS.ANALYSIS_1,
-    WORKFLOW_STATUS.REVIEW_1,
-    WORKFLOW_STATUS.RETURNED_1,
-  ]
-  const filtersF2 = [
-    WORKFLOW_STATUS.APPROVED_PROCEDURE,
-    WORKFLOW_STATUS.INVESTIGATION_2,
-    WORKFLOW_STATUS.REVIEW_2,
-  ]
-  const filtersF3 = [
-    { label: 'Mediações', value: 'mediacao' },
-    { label: 'Processos Disciplinares', value: 'disciplinar' },
-  ]
-  const filtersClosed = [WORKFLOW_STATUS.CLOSED, WORKFLOW_STATUS.ARCHIVED]
-
-  const selectPhase = (
-    phase: typeof activePhase,
-    filter: string | null = null,
-  ) => {
-    setActivePhase(phase)
-    setSubFilter(filter)
   }
 
+  const phasesData = useMemo(() => {
+    // Classification logic for phases based on common statuses
+    const f1 = denuncias.filter(
+      (d) =>
+        ![
+          'em_investigacao',
+          'em_execucao',
+          'concluido',
+          'arquivado',
+          'resolvido',
+        ].includes(d.status),
+    )
+    const f2 = denuncias.filter((d) => d.status === 'em_investigacao')
+    const f3 = denuncias.filter((d) => d.status === 'em_execucao')
+    const encerradas = denuncias.filter((d) =>
+      ['concluido', 'arquivado', 'resolvido'].includes(d.status),
+    )
+
+    return { f1, f2, f3, encerradas }
+  }, [denuncias])
+
+  const phases = [
+    {
+      id: 'f1',
+      name: 'Entrada & Análise',
+      icon: FileSearch,
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bg: 'bg-indigo-50 dark:bg-indigo-950/30',
+      borderColor: 'border-indigo-600 dark:border-indigo-400',
+      hover:
+        'hover:bg-indigo-100 focus:bg-indigo-100 dark:hover:bg-indigo-900/50 dark:focus:bg-indigo-900/50',
+      activeBg: 'bg-indigo-100 dark:bg-indigo-900/50',
+      count: phasesData.f1.length,
+      data: phasesData.f1,
+    },
+    {
+      id: 'f2',
+      name: 'Investigação (F2)',
+      icon: ArrowRight,
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-50 dark:bg-blue-950/30',
+      borderColor: 'border-blue-600 dark:border-blue-400',
+      hover:
+        'hover:bg-blue-100 focus:bg-blue-100 dark:hover:bg-blue-900/50 dark:focus:bg-blue-900/50',
+      activeBg: 'bg-blue-100 dark:bg-blue-900/50',
+      count: phasesData.f2.length,
+      data: phasesData.f2,
+    },
+    {
+      id: 'f3',
+      name: 'Execução (F3)',
+      icon: Scale,
+      color: 'text-orange-600 dark:text-orange-400',
+      bg: 'bg-orange-50 dark:bg-orange-950/30',
+      borderColor: 'border-orange-600 dark:border-orange-400',
+      hover:
+        'hover:bg-orange-100 focus:bg-orange-100 dark:hover:bg-orange-900/50 dark:focus:bg-orange-900/50',
+      activeBg: 'bg-orange-100 dark:bg-orange-900/50',
+      count: phasesData.f3.length,
+      data: phasesData.f3,
+    },
+    {
+      id: 'encerradas',
+      name: 'Encerradas',
+      icon: CircleCheck,
+      color: 'text-green-600 dark:text-green-400',
+      bg: 'bg-green-50 dark:bg-green-950/30',
+      borderColor: 'border-green-600 dark:border-green-400',
+      hover:
+        'hover:bg-green-100 focus:bg-green-100 dark:hover:bg-green-900/50 dark:focus:bg-green-900/50',
+      activeBg: 'bg-green-100 dark:bg-green-900/50',
+      count: phasesData.encerradas.length,
+      data: phasesData.encerradas,
+    },
+  ]
+
+  const activePhaseData = phases.find((p) => p.id === activePhase) || phases[0]
+  const ActiveIcon = activePhaseData.icon
+
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-slate-800">
-          Workflow de Denúncias
-        </h1>
+    <div className="space-y-6 p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Workflow de Denúncias
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie e acompanhe as fases do processo.
+          </p>
+        </div>
       </div>
 
-      {/* Phase Navigation */}
-      <div className="flex items-center space-x-3 overflow-x-auto pb-4 scrollbar-thin">
-        {/* F1 Button */}
+      <div className="flex items-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                'rounded-full px-5 py-6 border-2 transition-all flex items-center space-x-2 text-sm shrink-0',
-                activePhase === 'f1'
-                  ? 'border-blue-400 bg-blue-100 text-blue-800 font-semibold shadow-sm'
-                  : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300',
+                'h-12 px-4 flex items-center gap-3 border-2 transition-all',
+                activePhaseData.bg,
+                activePhaseData.color,
+                'border-transparent hover:border-current/20',
               )}
             >
-              <FileSearch className="w-5 h-5" />
-              <span>Entrada & Análise</span>
+              <ActiveIcon className="w-5 h-5" />
+              <span className="font-semibold text-base">
+                {activePhaseData.name}
+              </span>
               <Badge
                 variant="secondary"
-                className="ml-2 bg-white text-blue-700 rounded-full border border-blue-200"
+                className="ml-1 px-2 py-0.5 rounded-full bg-background/50 border-none shadow-sm text-current"
               >
-                {data.f1.length}
+                {activePhaseData.count}
               </Badge>
+              <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-64" align="start">
-            <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => selectPhase('f1', null)}>
-              Todos da Entrada & Análise
-            </DropdownMenuItem>
-            {filtersF1.map((f) => (
-              <DropdownMenuItem key={f} onClick={() => selectPhase('f1', f)}>
-                {f}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <ArrowRight className="text-slate-300 w-5 h-5 flex-shrink-0" />
-
-        {/* F2 Button */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'rounded-full px-5 py-6 border-2 transition-all flex items-center space-x-2 text-sm shrink-0',
-                activePhase === 'f2'
-                  ? 'border-amber-400 bg-amber-100 text-amber-800 font-semibold shadow-sm'
-                  : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-300',
-              )}
-            >
-              <span>Investigação (F2)</span>
-              <Badge
-                variant="secondary"
-                className="ml-2 bg-white text-amber-700 rounded-full border border-amber-200"
-              >
-                {data.f2.length}
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-64" align="start">
-            <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => selectPhase('f2', null)}>
-              Todos em Investigação
-            </DropdownMenuItem>
-            {filtersF2.map((f) => (
-              <DropdownMenuItem key={f} onClick={() => selectPhase('f2', f)}>
-                {f}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <ArrowRight className="text-slate-300 w-5 h-5 flex-shrink-0" />
-
-        {/* F3 Button */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'rounded-full px-5 py-6 border-2 transition-all flex items-center space-x-2 text-sm shrink-0',
-                activePhase === 'f3'
-                  ? 'border-purple-400 bg-purple-100 text-purple-800 font-semibold shadow-sm'
-                  : 'border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300',
-              )}
-            >
-              <Scale className="w-5 h-5" />
-              <span>Execução (F3)</span>
-              <Badge
-                variant="secondary"
-                className="ml-2 bg-white text-purple-700 rounded-full border border-purple-200"
-              >
-                {data.f3.length}
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-64" align="start">
-            <DropdownMenuLabel>Filtrar por Tipo</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => selectPhase('f3', null)}>
-              Todos em Execução
-            </DropdownMenuItem>
-            {filtersF3.map((f) => (
-              <DropdownMenuItem
-                key={f.value}
-                onClick={() => selectPhase('f3', f.value)}
-              >
-                {f.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <ArrowRight className="text-slate-300 w-5 h-5 flex-shrink-0" />
-
-        {/* Closed Button */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'rounded-full px-5 py-6 border-2 transition-all flex items-center space-x-2 text-sm shrink-0',
-                activePhase === 'closed'
-                  ? 'border-emerald-400 bg-emerald-100 text-emerald-800 font-semibold shadow-sm'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300',
-              )}
-            >
-              <CheckCircle2 className="w-5 h-5" />
-              <span>Encerradas</span>
-              <Badge
-                variant="secondary"
-                className="ml-2 bg-white text-emerald-700 rounded-full border border-emerald-200"
-              >
-                {data.closed.length}
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-64" align="start">
-            <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => selectPhase('closed', null)}>
-              Todas Encerradas
-            </DropdownMenuItem>
-            {filtersClosed.map((f) => (
-              <DropdownMenuItem
-                key={f}
-                onClick={() => selectPhase('closed', f)}
-              >
-                {f}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por protocolo, status ou descrição..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        {subFilter && (
-          <div className="flex items-center">
-            <Badge
-              variant="secondary"
-              className="px-3 py-1.5 text-sm flex items-center gap-2 bg-slate-100"
-            >
-              Filtro ativo:{' '}
-              {subFilter === 'mediacao'
-                ? 'Mediações'
-                : subFilter === 'disciplinar'
-                  ? 'Processos Disciplinares'
-                  : subFilter}
-              <button
-                onClick={() => setSubFilter(null)}
-                className="text-slate-500 hover:text-slate-700"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </Badge>
-          </div>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="text-center py-20 text-slate-500 bg-white rounded-xl border border-slate-100">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto mb-4"></div>
-          Carregando denúncias...
-        </div>
-      ) : currentList.length === 0 ? (
-        <div className="text-center py-20 text-slate-500 bg-white rounded-xl border border-slate-100 flex flex-col items-center justify-center">
-          <FileSearch className="w-12 h-12 text-slate-300 mb-4" />
-          <p className="text-lg">Nenhuma denúncia encontrada nesta fase.</p>
-          {(search || subFilter) && (
-            <Button
-              variant="link"
-              onClick={() => {
-                setSearch('')
-                setSubFilter(null)
-              }}
-            >
-              Limpar filtros
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {currentList.map((c) => (
-            <Card
-              key={c.id}
-              className="hover:border-slate-300 transition-colors bg-white"
-            >
-              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="font-bold text-slate-800 tracking-tight">
-                      {c.protocolo}
+          <DropdownMenuContent
+            align="start"
+            className="w-[300px] p-2 space-y-1 rounded-xl"
+          >
+            {phases.map((phase) => {
+              const Icon = phase.icon
+              const isActive = phase.id === activePhase
+              return (
+                <DropdownMenuItem
+                  key={phase.id}
+                  onClick={() => setActivePhase(phase.id)}
+                  className={cn(
+                    'flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors w-full outline-none',
+                    phase.color,
+                    isActive ? phase.activeBg : 'bg-transparent',
+                    phase.hover,
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium text-[15px]">
+                      {phase.name}
                     </span>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'bg-slate-50 border-slate-200 text-slate-600 font-medium',
-                        activePhase === 'f1' &&
-                          'bg-blue-50 border-blue-200 text-blue-700',
-                        activePhase === 'f2' &&
-                          'bg-amber-50 border-amber-200 text-amber-700',
-                        activePhase === 'f3' &&
-                          'bg-purple-50 border-purple-200 text-purple-700',
-                        activePhase === 'closed' &&
-                          'bg-emerald-50 border-emerald-200 text-emerald-700',
-                      )}
-                    >
-                      {c.status}
-                    </Badge>
-                    {c.escolas_instituicoes?.nome_escola && (
-                      <span
-                        className="text-xs text-slate-500 truncate max-w-[200px]"
-                        title={c.escolas_instituicoes.nome_escola}
-                      >
-                        {c.escolas_instituicoes.nome_escola}
-                      </span>
-                    )}
                   </div>
-                  <p className="text-sm text-slate-600 line-clamp-2">
-                    {c.descricao}
-                  </p>
-                </div>
-                <div className="flex-shrink-0 sm:self-center">
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="w-full sm:w-auto hover:bg-slate-50"
+                  <Badge
+                    variant="secondary"
+                    className="px-2 py-0.5 rounded-full bg-background/50 border-none shadow-sm text-xs text-current"
                   >
-                    <Link to={`/compliance/director/workflow/${c.id}`}>
-                      Ver Detalhes
-                    </Link>
-                  </Button>
+                    {phase.count}
+                  </Badge>
+                </DropdownMenuItem>
+              )
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {loading ? (
+          <p className="text-muted-foreground col-span-full">Carregando...</p>
+        ) : activePhaseData.data.length === 0 ? (
+          <div className="col-span-full py-16 flex flex-col items-center justify-center text-center border-2 border-dashed rounded-xl bg-muted/10">
+            <ActiveIcon
+              className={cn('w-12 h-12 mb-4 opacity-20', activePhaseData.color)}
+            />
+            <p className="text-muted-foreground font-medium text-lg">
+              Nenhuma denúncia nesta fase
+            </p>
+            <p className="text-sm text-muted-foreground/70 mt-1">
+              As denúncias aparecerão aqui quando forem movidas para a fase de{' '}
+              {activePhaseData.name}.
+            </p>
+          </div>
+        ) : (
+          activePhaseData.data.map((denuncia) => (
+            <Card
+              key={denuncia.id}
+              className={cn(
+                'hover:shadow-md transition-shadow cursor-pointer border-l-4 relative overflow-hidden',
+                activePhaseData.borderColor,
+              )}
+              onClick={() =>
+                navigate(`/compliance/director/workflow/${denuncia.id}`)
+              }
+            >
+              <div
+                className={cn(
+                  'absolute inset-0 opacity-0 hover:opacity-[0.02] transition-opacity',
+                  activePhaseData.bg,
+                )}
+              />
+              <CardHeader className="pb-3 relative z-10">
+                <div className="flex items-start justify-between">
+                  <Badge variant="outline" className="font-mono bg-background">
+                    {denuncia.protocolo}
+                  </Badge>
+                  <Badge
+                    variant={
+                      denuncia.gravidade === 'Alta'
+                        ? 'destructive'
+                        : denuncia.gravidade === 'Média'
+                          ? 'default'
+                          : 'secondary'
+                    }
+                  >
+                    {denuncia.gravidade || 'Baixa'}
+                  </Badge>
+                </div>
+                <CardTitle className="text-base mt-3 line-clamp-2 leading-relaxed">
+                  {denuncia.descricao}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <AlertCircle className="w-4 h-4 mr-2 opacity-70" />
+                  Status:{' '}
+                  {denuncia.status_denuncia?.nome_status || denuncia.status}
                 </div>
               </CardContent>
+              <CardFooter className="pt-0 pb-4 text-xs text-muted-foreground relative z-10">
+                <Calendar className="w-4 h-4 mr-2 opacity-70" />
+                {new Date(denuncia.created_at).toLocaleDateString('pt-BR')}
+              </CardFooter>
             </Card>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   )
 }
