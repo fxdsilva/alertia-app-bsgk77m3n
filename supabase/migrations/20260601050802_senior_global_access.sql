@@ -76,11 +76,11 @@ BEGIN
 
     INSERT INTO public.usuarios_escola (id, email, nome_usuario, perfil, escola_id, ativo)
     VALUES (new_user_id, 'fxdsilva@gmail.com', 'Senior Admin', 'senior', NULL, true)
-    ON CONFLICT (id) DO UPDATE SET perfil = 'senior', escola_id = NULL;
+    ON CONFLICT (id) DO NOTHING;
   ELSE
     SELECT id INTO new_user_id FROM auth.users WHERE email = 'fxdsilva@gmail.com';
     INSERT INTO public.usuarios_escola (id, email, nome_usuario, perfil, escola_id, ativo)
     VALUES (new_user_id, 'fxdsilva@gmail.com', 'Senior Admin', 'senior', NULL, true)
-    ON CONFLICT (id) DO UPDATE SET perfil = 'senior', escola_id = NULL;
+    ON CONFLICT (id) DO NOTHING;
   END IF;
 END $$;
