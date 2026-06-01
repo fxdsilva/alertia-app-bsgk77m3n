@@ -191,6 +191,13 @@ export const complaintService = {
     escola_id?: string
     analista_id?: string
   }) {
+    const { data: userData } = await supabase.auth.getUser()
+    const { data: profile } = await supabase
+      .from('usuarios_escola')
+      .select('perfil, escola_id')
+      .eq('id', userData.user?.id)
+      .maybeSingle()
+
     let query = supabase
       .from('denuncias')
       .select(
@@ -205,9 +212,18 @@ export const complaintService = {
     if (filters?.status) {
       query = query.eq('status', filters.status)
     }
-    if (filters?.escola_id) {
+
+    if (
+      profile &&
+      profile.perfil !== 'senior' &&
+      profile.perfil !== 'DIRETOR_COMPLIANCE' &&
+      profile.escola_id
+    ) {
+      query = query.eq('escola_id', profile.escola_id)
+    } else if (filters?.escola_id) {
       query = query.eq('escola_id', filters.escola_id)
     }
+
     if (filters?.analista_id) {
       query = query.eq('analista_id', filters.analista_id)
     }
