@@ -312,12 +312,17 @@ export const workflowService = {
   async getWorkflowLogs(complaintId: string) {
     const { data, error } = await supabase
       .from('compliance_workflow_logs')
-      .select('*, changed_by_user:changed_by(nome_usuario)')
+      .select(
+        '*, usuarios_escola!compliance_workflow_logs_changed_by_fkey(nome_usuario)',
+      )
       .eq('complaint_id', complaintId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data
+    return data?.map((log) => ({
+      ...log,
+      changed_by_user: log.usuarios_escola,
+    }))
   },
 
   async assignAnalyst(
@@ -783,10 +788,25 @@ export const workflowService = {
     if (!updateData || updateData.length === 0)
       throw new Error('Falha ao atualizar decisão. Verifique permissões (RLS).')
 
+    const { data: userData } = await supabase.auth.getSession()
+    let authorizerName = 'Diretor'
+    if (userData?.session?.user?.id) {
+      const { data: profile } = await supabase
+        .from('usuarios_escola')
+        .select('nome_usuario')
+        .eq('id', userData.session.user.id)
+        .single()
+      if (profile) authorizerName = profile.nome_usuario
+    }
+
+    const defaultComment = approved
+      ? `Fase ${phase} aprovada por ${authorizerName}`
+      : `Fase ${phase} devolvida por ${authorizerName}`
+
     await this.logTransition(
       complaintId,
       newStatusName,
-      `Decisão Fase ${phase}: ${approved ? 'Aprovado' : 'Devolvido para Ajustes'}. ${comments || ''}`,
+      `${defaultComment}. ${comments || ''}`.trim(),
     )
   },
 
