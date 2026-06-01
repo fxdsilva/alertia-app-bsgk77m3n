@@ -103,13 +103,31 @@ export const workflowService = {
   },
 
   async getComplaintsByStatus(statuses: string[]) {
-    const { data, error } = await supabase
+    const { data: userData } = await supabase.auth.getUser()
+    const { data: profile } = await supabase
+      .from('usuarios_escola')
+      .select('perfil, escola_id')
+      .eq('id', userData.user?.id)
+      .maybeSingle()
+
+    let query = supabase
       .from('denuncias')
       .select(
         '*, escolas_instituicoes(nome_escola), status_denuncia!inner(nome_status), analista_1:analista_1_id(nome_usuario), analista_2:analista_2_id(nome_usuario), analista_3:analista_3_id(nome_usuario)',
       )
       .in('status_denuncia.nome_status', statuses)
       .order('created_at', { ascending: false })
+
+    if (
+      profile &&
+      profile.perfil !== 'senior' &&
+      profile.perfil !== 'DIRETOR_COMPLIANCE' &&
+      profile.escola_id
+    ) {
+      query = query.eq('escola_id', profile.escola_id)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
     return mapStatus(data)
@@ -132,12 +150,30 @@ export const workflowService = {
       }
     }
 
-    const { data: allDenuncias } = await supabase
+    const { data: userData } = await supabase.auth.getUser()
+    const { data: profile } = await supabase
+      .from('usuarios_escola')
+      .select('perfil, escola_id')
+      .eq('id', userData.user?.id)
+      .maybeSingle()
+
+    let query = supabase
       .from('denuncias')
       .select(
         '*, escolas_instituicoes(nome_escola), status_denuncia(nome_status), analista_1:analista_1_id(nome_usuario), analista_2:analista_2_id(nome_usuario), analista_3:analista_3_id(nome_usuario)',
       )
       .order('created_at', { ascending: false })
+
+    if (
+      profile &&
+      profile.perfil !== 'senior' &&
+      profile.perfil !== 'DIRETOR_COMPLIANCE' &&
+      profile.escola_id
+    ) {
+      query = query.eq('escola_id', profile.escola_id)
+    }
+
+    const { data: allDenuncias } = await query
 
     const f1: any[] = []
     const f2: any[] = []
