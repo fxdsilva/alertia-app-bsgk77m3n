@@ -410,11 +410,7 @@ const App = () => {
                 />
                 <Route
                   path="/senior/decisions"
-                  element={
-                    <SecretaryGuard>
-                      <DisciplinaryDecisions />
-                    </SecretaryGuard>
-                  }
+                  element={<DisciplinaryDecisions />}
                 />
                 <Route path="/senior/ai-reports" element={<AIReports />} />
                 <Route path="/senior/schools" element={<SchoolManagement />} />
