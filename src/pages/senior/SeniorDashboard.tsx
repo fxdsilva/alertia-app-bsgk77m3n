@@ -117,9 +117,9 @@ export default function SeniorDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {/* Capacitação Card */}
-        <Card className="border-t-4 border-t-purple-500 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-t-4 border-t-purple-500 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Capacitação
             </CardTitle>
             <div className="text-2xl font-bold text-purple-700 mt-2 leading-tight">
@@ -131,12 +131,12 @@ export default function SeniorDashboard() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 pb-4 mt-auto">
-            <p className="text-xs text-muted-foreground mb-4">
+            <p className="text-xs text-muted-foreground mb-4 truncate">
               Acessar treinamentos
             </p>
             <Button
               variant="outline"
-              className="w-full text-purple-700 border-purple-200 hover:bg-purple-50"
+              className="w-full text-purple-700 border-purple-200 hover:bg-purple-50 text-xs sm:text-sm h-auto py-2 whitespace-normal"
             >
               Abrir Portal
             </Button>
@@ -144,9 +144,9 @@ export default function SeniorDashboard() {
         </Card>
 
         {/* Total de Escolas Card */}
-        <Card className="border-t-4 border-t-blue-500 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-t-4 border-t-blue-500 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Total de Escolas
             </CardTitle>
             <div className="text-4xl font-bold text-slate-900 mt-2">
@@ -154,12 +154,12 @@ export default function SeniorDashboard() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 pb-4 mt-auto">
-            <p className="text-xs text-muted-foreground mb-4">
+            <p className="text-xs text-muted-foreground mb-4 truncate">
               Instituições monitoradas
             </p>
             <Button
               variant="outline"
-              className="w-full text-blue-700 border-blue-200 hover:bg-blue-50"
+              className="w-full text-blue-700 border-blue-200 hover:bg-blue-50 text-xs sm:text-sm h-auto py-2 whitespace-normal"
             >
               Ver Escolas
             </Button>
@@ -167,9 +167,9 @@ export default function SeniorDashboard() {
         </Card>
 
         {/* Usuários Ativos Card */}
-        <Card className="border-t-4 border-t-indigo-600 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-t-4 border-t-indigo-600 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Usuários Ativos
             </CardTitle>
             <div className="text-4xl font-bold text-slate-900 mt-2">
@@ -177,22 +177,22 @@ export default function SeniorDashboard() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 pb-4 mt-auto">
-            <p className="text-xs text-muted-foreground mb-4">
+            <p className="text-xs text-muted-foreground mb-4 truncate">
               Gestores e colaboradores
             </p>
             <Button
               variant="outline"
-              className="w-full text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+              className="w-full text-indigo-700 border-indigo-200 hover:bg-indigo-50 text-xs sm:text-sm h-auto py-2 whitespace-normal"
             >
-              Gerenciar Usuários
+              Gerenciar
             </Button>
           </CardContent>
         </Card>
 
         {/* Alertas Críticos Card */}
-        <Card className="border-t-4 border-t-red-500 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-t-4 border-t-red-500 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Alertas Críticos
             </CardTitle>
             <div className="text-4xl font-bold text-red-500 mt-2">
@@ -200,22 +200,22 @@ export default function SeniorDashboard() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 pb-4 mt-auto">
-            <p className="text-xs text-muted-foreground mb-4">
+            <p className="text-xs text-muted-foreground mb-4 truncate">
               Requerem atenção imediata
             </p>
             <Button
               variant="outline"
-              className="w-full text-red-600 border-red-200 hover:bg-red-50"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50 text-xs sm:text-sm h-auto py-2 whitespace-normal"
             >
-              Ver Lista de Alertas
+              Ver Alertas
             </Button>
           </CardContent>
         </Card>
 
         {/* Taxa de Resolução Card */}
-        <Card className="border-t-4 border-t-green-500 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-t-4 border-t-green-500 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow min-w-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Taxa de Resolução
             </CardTitle>
             <div className="text-4xl font-bold text-green-600 mt-2">
@@ -223,9 +223,9 @@ export default function SeniorDashboard() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 pb-4 mt-auto">
-            <p className="text-xs text-green-600 flex items-center gap-1 mb-4 font-medium">
+            <p className="text-xs text-green-600 flex items-start gap-1 mb-4 font-medium leading-tight">
               <svg
-                className="w-3 h-3"
+                className="w-3 h-3 mt-0.5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -237,16 +237,18 @@ export default function SeniorDashboard() {
                   d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
                 />
               </svg>
-              +0%{' '}
-              <span className="text-muted-foreground font-normal">
-                em relação ao mês anterior
+              <span>
+                +0%{' '}
+                <span className="text-muted-foreground font-normal">
+                  relativo ao mês anterior
+                </span>
               </span>
             </p>
             <Button
               variant="outline"
-              className="w-full text-green-700 border-green-200 hover:bg-green-50"
+              className="w-full text-green-700 border-green-200 hover:bg-green-50 text-xs sm:text-sm h-auto py-2 whitespace-normal"
             >
-              Ver Detalhes do Cálculo
+              Detalhes
             </Button>
           </CardContent>
         </Card>
