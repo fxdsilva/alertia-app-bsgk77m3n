@@ -6,6 +6,7 @@ import {
   Settings,
   Download,
   ArrowLeft,
+  Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -114,6 +115,12 @@ export function Header() {
               <DropdownMenuItem onSelect={() => navigate('/profile')}>
                 <Settings className="mr-2 h-4 w-4" />
                 Minha Conta
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => navigate('/profile?tab=security')}
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                Segurança
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

@@ -154,6 +154,7 @@ export function AppSidebar() {
   const baseItems = [
     { title: 'Início', url: '/home', icon: Home },
     { title: 'Meu Perfil', url: '/profile', icon: UserCircle },
+    { title: 'Segurança', url: '/profile?tab=security', icon: Shield },
     { title: 'Compartilhar App', url: '/share', icon: Share2 },
     { title: 'Mensagens', url: '/messages', icon: MessageSquare },
     { title: 'Suporte', url: '/support', icon: LifeBuoy },
