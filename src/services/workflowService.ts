@@ -435,6 +435,84 @@ export const workflowService = {
     return data
   },
 
+  async getAllSubmissions(complaintId: string) {
+    const { data, error } = await supabase
+      .from('workflow_pareceres')
+      .select('*, analista:analista_id(nome_usuario)')
+      .eq('denuncia_id', complaintId)
+      .order('fase', { ascending: true })
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  async returnForAdjustments(
+    complaintId: string,
+    phase: number,
+    analystId: string,
+    notes: string,
+  ) {
+    const { data: task } = await supabase
+      .from('compliance_tasks')
+      .select('id')
+      .eq('referencia_id', complaintId)
+      .eq('analista_id', analystId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (task) {
+      await supabase
+        .from('compliance_tasks')
+        .update({
+          status: 'Pendente',
+          correction_notes: notes,
+          data_conclusao: null,
+        })
+        .eq('id', task.id)
+    }
+
+    let newStatusName = ''
+    if (phase === 1) newStatusName = WORKFLOW_STATUS.RETURNED_1
+    else if (phase === 2) newStatusName = WORKFLOW_STATUS.INVESTIGATION_2
+    else if (phase === 3) {
+      const { data } = await supabase
+        .from('denuncias')
+        .select('tipo_resolucao')
+        .eq('id', complaintId)
+        .single()
+      newStatusName =
+        data?.tipo_resolucao === 'mediacao'
+          ? WORKFLOW_STATUS.MEDIATION_3
+          : WORKFLOW_STATUS.DISCIPLINARY_3
+    } else {
+      newStatusName = WORKFLOW_STATUS.RETURNED_1
+    }
+
+    const statusId = await this.getStatusId(newStatusName)
+
+    await supabase
+      .from('denuncias')
+      .update({ status: statusId })
+      .eq('id', complaintId)
+
+    await this.logTransition(
+      complaintId,
+      newStatusName,
+      `Devolvido para ajustes (Fase ${phase}): ${notes}`,
+    )
+
+    await supabase.from('notifications').insert({
+      user_id: analystId,
+      title: 'Tarefa Devolvida para Ajustes',
+      message: `Sua análise na denúncia foi devolvida. Notas: ${notes}`,
+      type: 'warning',
+      link: `/compliance/analyst/workflow/${complaintId}`,
+      read: false,
+    })
+  },
+
   async submitAnalystVote(
     complaintId: string,
     phase: 1 | 2 | 3,

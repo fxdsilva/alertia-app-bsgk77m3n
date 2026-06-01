@@ -1,89 +1,74 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '@/lib/supabase/client'
-import {
-  workflowService,
-  WorkflowComplaint,
-  WORKFLOW_STATUS,
-} from '@/services/workflowService'
+import { workflowService, WorkflowComplaint } from '@/services/workflowService'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, Check, X, ArrowLeft, History, User } from 'lucide-react'
-import { toast } from 'sonner'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+  Loader2,
+  ArrowLeft,
+  Building2,
+  User,
+  RefreshCw,
+  Send,
+  CheckCircle,
+} from 'lucide-react'
+import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import useAppStore from '@/stores/useAppStore'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function WorkflowDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { profile } = useAppStore()
+
   const [complaint, setComplaint] = useState<WorkflowComplaint | null>(null)
-  const [logs, setLogs] = useState<any[]>([])
+  const [submissions, setSubmissions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [comment, setComment] = useState('')
-  const [processing, setProcessing] = useState(false)
-  const [analysts, setAnalysts] = useState<any[]>([])
-  const [selectedAnalyst, setSelectedAnalyst] = useState<string>('')
-  const [resolutionTypeSelect, setResolutionTypeSelect] = useState<
-    'mediacao' | 'disciplinar'
-  >('disciplinar')
-  const [votes, setVotes] = useState<any[]>([])
+
+  const [returnModalOpen, setReturnModalOpen] = useState(false)
+  const [selectedSubmission, setSelectedSubmission] = useState<any>(null)
+  const [adjustmentNotes, setAdjustmentNotes] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const isDirectorOrHigher =
+    profile === 'DIRETOR_COMPLIANCE' ||
+    profile === 'senior' ||
+    profile === 'administrador'
 
   useEffect(() => {
-    if (id) {
-      fetchDetails()
-      fetchAnalysts()
+    if (!isDirectorOrHigher) {
+      navigate('/')
+      return
     }
-  }, [id])
-
-  const fetchAnalysts = async () => {
-    const { data } = await supabase
-      .from('usuarios_escola')
-      .select('id, nome_usuario')
-      .eq('perfil', 'ANALISTA_COMPLIANCE')
-      .eq('ativo', true)
-    if (data) setAnalysts(data)
-  }
+    if (id) fetchDetails()
+  }, [id, profile, navigate])
 
   const fetchDetails = async () => {
     setLoading(true)
     try {
-      const [data, logsData] = await Promise.all([
+      const [data, subs] = await Promise.all([
         workflowService.getComplaintDetails(id!),
-        workflowService.getWorkflowLogs(id!),
+        workflowService.getAllSubmissions(id!),
       ])
       setComplaint(data)
-      setLogs(logsData || [])
-
-      // Fetch votes for the active review phase
-      let phase = 1
-      if (
-        data.status.includes('Investigação') ||
-        data.status === WORKFLOW_STATUS.REVIEW_2
-      )
-        phase = 2
-      if (
-        data.status.includes('Mediação') ||
-        data.status.includes('Disciplinar') ||
-        data.status === WORKFLOW_STATUS.REVIEW_3
-      )
-        phase = 3
-
-      try {
-        const phaseVotes = await workflowService.getAnalystVotes(id!, phase)
-        setVotes(phaseVotes || [])
-      } catch (e) {
-        console.error('Failed to load votes', e)
-      }
+      setSubmissions(subs || [])
     } catch (error) {
       toast.error('Erro ao carregar detalhes')
     } finally {
@@ -91,188 +76,75 @@ export default function WorkflowDetail() {
     }
   }
 
-  const handleApproval = async (approved: boolean) => {
-    if (!complaint) return
-    setProcessing(true)
-    try {
-      let phase: 1 | 2 | 3 = 1
-      if (complaint.status === WORKFLOW_STATUS.REVIEW_2) phase = 2
-      if (complaint.status === WORKFLOW_STATUS.REVIEW_3) phase = 3
+  const handleReturnClick = (submission: any) => {
+    setSelectedSubmission(submission)
+    setAdjustmentNotes('')
+    setReturnModalOpen(true)
+  }
 
-      await workflowService.approvePhase(complaint.id, phase, approved, comment)
-      toast.success(
-        approved
-          ? phase === 1
-            ? 'Procedência Aprovada. Investigação Criada.'
-            : 'Fase aprovada com sucesso'
-          : 'Devolvido para ajustes do analista',
+  const confirmReturn = async () => {
+    if (!adjustmentNotes.trim()) {
+      toast.error('Informe as notas de ajuste')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await workflowService.returnForAdjustments(
+        id!,
+        selectedSubmission.fase,
+        selectedSubmission.analista_id,
+        adjustmentNotes,
       )
-      navigate('/compliance/director/workflow')
-    } catch (error) {
-      toast.error('Erro ao processar aprovação')
+      toast.success('Retornado para ajustes com sucesso')
+      setReturnModalOpen(false)
+      fetchDetails()
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao devolver para ajustes')
     } finally {
-      setProcessing(false)
+      setIsSubmitting(false)
     }
   }
 
-  const handleArchive = async () => {
-    if (!complaint) return
-    if (
-      !confirm(
-        'Tem certeza que deseja arquivar esta denúncia como improcedente?',
-      )
-    )
-      return
-    setProcessing(true)
+  const approveCurrentPhase = async (phase: 1 | 2 | 3) => {
     try {
-      await workflowService.archiveComplaint(
-        complaint.id,
-        comment || 'Arquivado pelo diretor',
-      )
-      toast.success('Denúncia arquivada')
-      navigate('/compliance/director/workflow')
-    } catch (e) {
-      toast.error('Erro ao arquivar')
-    } finally {
-      setProcessing(false)
+      await workflowService.approvePhase(id!, phase, true)
+      toast.success('Fase aprovada com sucesso')
+      fetchDetails()
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao aprovar')
     }
   }
 
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader2 className="animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   if (!complaint) return null
 
-  const needsAnalyst1 =
-    complaint.status === WORKFLOW_STATUS.REGISTERED ||
-    complaint.status === WORKFLOW_STATUS.WAITING_ANALYST_1
-  const needsAnalyst2 = complaint.status === WORKFLOW_STATUS.APPROVED_PROCEDURE
-  const needsAnalyst3 = complaint.status === WORKFLOW_STATUS.WAITING_ANALYST_3
-
-  const needsAssignment = needsAnalyst1 || needsAnalyst2 || needsAnalyst3
-
-  const handleAssignAnalyst = async () => {
-    if (!selectedAnalyst) {
-      toast.error('Selecione um analista antes de continuar')
-      return
-    }
-    setProcessing(true)
-    try {
-      let phase: 1 | 2 | 3 = 1
-      let resolutionType: 'mediacao' | 'disciplinar' | undefined
-
-      if (needsAnalyst2) phase = 2
-      if (needsAnalyst3) {
-        phase = 3
-        resolutionType = resolutionTypeSelect
-      }
-
-      await workflowService.assignAnalyst(
-        complaint.id,
-        phase,
-        selectedAnalyst,
-        resolutionType,
-      )
-      toast.success('Analista designado com sucesso')
-      await fetchDetails()
-    } catch (error) {
-      toast.error('Erro ao designar analista')
-    } finally {
-      setProcessing(false)
-      setSelectedAnalyst('')
-    }
-  }
-
-  const isReviewPhase = [
-    WORKFLOW_STATUS.REVIEW_1,
-    WORKFLOW_STATUS.REVIEW_2,
-    WORKFLOW_STATUS.REVIEW_3,
-  ].includes(complaint.status)
-
-  const isPhase1Review = complaint.status === WORKFLOW_STATUS.REVIEW_1
-
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 pb-20">
-      <Button
-        variant="ghost"
-        onClick={() => navigate('/compliance/director/workflow')}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-      </Button>
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Revisão de Workflow</h1>
-        <Badge variant="outline" className="text-lg px-3 w-fit">
-          {complaint.status}
+    <div className="p-6 max-w-5xl mx-auto space-y-6 pb-20 animate-fade-in">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/compliance/director/workflow')}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Detalhes do Processo</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <Building2 className="h-3.5 w-3.5" />
+            {complaint.escolas_instituicoes?.nome_escola}
+          </div>
+        </div>
+        <Badge variant="outline" className="ml-auto text-lg px-3 py-1">
+          {complaint.protocolo}
         </Badge>
       </div>
 
-      {needsAssignment && (
-        <Card className="border-primary shadow-md bg-primary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-primary text-lg">
-              Designar Analista
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-end">
-              <div className="flex-1 w-full space-y-2">
-                <label className="text-sm font-medium">
-                  Selecione um analista para esta fase
-                </label>
-                <select
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={selectedAnalyst}
-                  onChange={(e) => setSelectedAnalyst(e.target.value)}
-                  disabled={processing}
-                >
-                  <option value="">Selecione um analista...</option>
-                  {analysts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.nome_usuario}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {needsAnalyst3 && (
-                <div className="flex-1 w-full space-y-2">
-                  <label className="text-sm font-medium">
-                    Tipo de Resolução
-                  </label>
-                  <select
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={resolutionTypeSelect}
-                    onChange={(e) =>
-                      setResolutionTypeSelect(e.target.value as any)
-                    }
-                    disabled={processing}
-                  >
-                    <option value="disciplinar">Medida Disciplinar</option>
-                    <option value="mediacao">Mediação</option>
-                  </select>
-                </div>
-              )}
-              <Button
-                className="w-full md:w-auto min-w-[200px]"
-                onClick={handleAssignAnalyst}
-                disabled={processing || !selectedAnalyst}
-              >
-                {processing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <User className="mr-2 h-4 w-4" />
-                )}
-                Designar Analista
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Identification Alert */}
       {!complaint.anonimo && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-4">
           <div className="bg-blue-100 p-2 rounded-full">
@@ -304,220 +176,193 @@ export default function WorkflowDetail() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Dados da Denúncia</CardTitle>
+            <CardDescription>Status Atual: {complaint.status}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <span className="font-semibold">Protocolo:</span>{' '}
-              {complaint.protocolo}
-            </div>
-            <div>
-              <span className="font-semibold">Escola:</span>{' '}
-              {complaint.escolas_instituicoes?.nome_escola}
-            </div>
-            <div className="bg-muted p-3 rounded text-sm whitespace-pre-wrap">
+            <div className="bg-muted p-4 rounded-md text-sm whitespace-pre-wrap leading-relaxed">
               {complaint.descricao}
             </div>
+            {complaint.categoria && complaint.categoria.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {complaint.categoria.map((cat, i) => (
+                  <Badge key={i} variant="secondary">
+                    {cat}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {votes.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Votação da Equipe</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {votes.map((v: any) => (
-                <div
-                  key={v.id}
-                  className="border-b pb-3 last:border-0 last:pb-0"
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-semibold text-sm flex items-center">
-                      {v.analista?.nome_usuario}
-                      {v.analista_id === complaint.analista_1_id && (
-                        <Badge variant="secondary" className="ml-2 text-[10px]">
-                          Líder
-                        </Badge>
-                      )}
-                    </span>
-                    <Badge
-                      className={
-                        v.conclusao === 'Procedente'
-                          ? 'bg-green-100 text-green-800'
-                          : v.conclusao === 'Improcedente'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                      }
-                      variant="outline"
-                    >
-                      {v.conclusao}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {v.parecer_texto}
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Responsáveis</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between border-b pb-2">
-                <span>Analista 1 (Procedência):</span>
-                <span className="font-medium">
-                  {complaint.analista_1?.nome_usuario || '-'}
-                </span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span>Analista 2 (Investigação):</span>
-                <span className="font-medium">
-                  {complaint.analista_2?.nome_usuario || '-'}
-                </span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span>Analista 3 (Execução):</span>
-                <span className="font-medium">
-                  {complaint.analista_3?.nome_usuario || '-'}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Responsáveis</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                Analista 1 (Procedência)
+              </p>
+              <p className="font-medium">
+                {complaint.analista_1?.nome_usuario || 'Não designado'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                Analista 2 (Investigação)
+              </p>
+              <p className="font-medium">
+                {complaint.analista_2?.nome_usuario || 'Não designado'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                Analista 3 (Execução)
+              </p>
+              <p className="font-medium">
+                {complaint.analista_3?.nome_usuario || 'Não designado'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Reports View */}
       <Card>
         <CardHeader>
           <CardTitle>Pareceres e Relatórios (Submissões)</CardTitle>
+          <CardDescription>
+            Avalie as submissões dos analistas e devolva para ajustes se
+            necessário.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {complaint.parecer_1 && (
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                Parecer e Recomendação do Analista (Fase 1)
-                {isPhase1Review && (
-                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                    Aguardando Aprovação
-                  </Badge>
-                )}
-              </h3>
-              <div className="bg-slate-50 p-4 rounded border whitespace-pre-wrap">
-                {complaint.parecer_1}
-              </div>
-            </div>
-          )}
-          {complaint.relatorio_2 && (
-            <div>
-              <h3 className="font-semibold mb-2">
-                Relatório de Investigação (Analista 2)
-              </h3>
-              <div className="bg-blue-50 p-4 rounded border whitespace-pre-wrap">
-                {complaint.relatorio_2}
-              </div>
-            </div>
-          )}
-          {complaint.relatorio_3 && (
-            <div>
-              <h3 className="font-semibold mb-2">
-                Relatório de Execução (Analista 3)
-              </h3>
-              <div className="bg-orange-50 p-4 rounded border whitespace-pre-wrap">
-                {complaint.relatorio_3}
-              </div>
+        <CardContent>
+          {submissions.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic text-center py-4">
+              Nenhuma submissão registrada até o momento.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {submissions.map((sub) => (
+                <div key={sub.id} className="border rounded-md p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline">Fase {sub.fase}</Badge>
+                        <span className="font-medium text-sm">
+                          {sub.analista?.nome_usuario}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(
+                            new Date(sub.created_at),
+                            'dd/MM/yyyy HH:mm',
+                            { locale: ptBR },
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold">
+                        Conclusão: {sub.conclusao}
+                      </p>
+                    </div>
+                    {isDirectorOrHigher && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 shrink-0"
+                        onClick={() => handleReturnClick(sub)}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Devolver para Ajustes
+                      </Button>
+                    )}
+                  </div>
+                  <div className="bg-muted/50 p-3 rounded text-sm whitespace-pre-wrap">
+                    {sub.parecer_texto || 'Sem texto detalhado.'}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Action Area */}
-      {isReviewPhase && (
-        <Card className="border-primary">
-          <CardHeader className="bg-primary/5">
-            <CardTitle>Decisão da Diretoria</CardTitle>
+      {isDirectorOrHigher && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ações de Aprovação</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 p-6">
-            <Textarea
-              placeholder="Insira observações, justificativas ou instruções de ajuste..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-            />
-            <div className="flex justify-end gap-3">
-              {complaint.status === WORKFLOW_STATUS.REVIEW_1 && (
-                <Button
-                  variant="destructive"
-                  onClick={handleArchive}
-                  disabled={processing}
-                >
-                  Arquivar (Improcedente)
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                onClick={() => handleApproval(false)}
-                disabled={processing}
-              >
-                <X className="mr-2 h-4 w-4" /> Devolver para Ajustes
-              </Button>
-              <Button
-                onClick={() => handleApproval(true)}
-                disabled={processing}
-              >
-                <Check className="mr-2 h-4 w-4" />
-                {isPhase1Review
-                  ? 'Aprovar para Investigação'
-                  : 'Aprovar e Avançar'}
-              </Button>
-            </div>
+          <CardContent className="flex gap-4 flex-wrap">
+            <Button
+              onClick={() => approveCurrentPhase(1)}
+              variant="outline"
+              className="border-green-200 hover:bg-green-50"
+            >
+              <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+              Aprovar Procedência (F1)
+            </Button>
+            <Button
+              onClick={() => approveCurrentPhase(2)}
+              variant="outline"
+              className="border-green-200 hover:bg-green-50"
+            >
+              <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+              Aprovar Investigação (F2)
+            </Button>
+            <Button
+              onClick={() => approveCurrentPhase(3)}
+              variant="outline"
+              className="border-green-200 hover:bg-green-50"
+            >
+              <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+              Aprovar Execução (F3)
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Audit Log Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <History className="h-5 w-5" /> Histórico de Auditoria
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Usuário</TableHead>
-                <TableHead>Comentários</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell className="text-xs">
-                    {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', {
-                      locale: ptBR,
-                    })}
-                  </TableCell>
-                  <TableCell className="text-xs">{log.new_status}</TableCell>
-                  <TableCell className="text-xs">
-                    {log.changed_by_user?.nome_usuario || 'Sistema'}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {log.comments}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <Dialog open={returnModalOpen} onOpenChange={setReturnModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Devolver para Ajustes</DialogTitle>
+            <DialogDescription>
+              Informe as orientações para que o analista possa corrigir a
+              submissão.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">
+              Notas de Ajuste
+            </label>
+            <Textarea
+              placeholder="Descreva o que precisa ser corrigido ou melhorado..."
+              value={adjustmentNotes}
+              onChange={(e) => setAdjustmentNotes(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReturnModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmReturn}
+              disabled={isSubmitting || !adjustmentNotes.trim()}
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Send className="w-4 h-4 mr-2" />
+              )}
+              Confirmar Devolução
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
