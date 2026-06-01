@@ -117,6 +117,7 @@ export default function UserManagement() {
           ativo: values.ativo,
           cargo: values.cargo,
           departamento: values.departamento,
+          password: values.password || undefined,
         })
         toast.success('Usuário atualizado com sucesso')
       } else {

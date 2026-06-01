@@ -42,7 +42,13 @@ const formSchema = z
     email: z.string().email('Email inválido'),
     perfil: z.string().min(1, 'Selecione um perfil'),
     escola_id: z.string().optional(),
-    password: z.string().optional(),
+    password: z
+      .string()
+      .refine(
+        (val) => !val || val.length >= 8,
+        'A senha deve ter no mínimo 8 caracteres',
+      )
+      .optional(),
     cargo: z.string().optional(),
     departamento: z.string().optional(),
     ativo: z.boolean().default(true),
@@ -316,7 +322,7 @@ export function SeniorUserFormDialog({
                   <FormDescription className="text-xs">
                     {initialData
                       ? 'Preencha apenas se desejar alterar a senha do usuário.'
-                      : 'Mínimo de 6 caracteres.'}
+                      : 'Mínimo de 8 caracteres.'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

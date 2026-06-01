@@ -3613,6 +3613,30 @@ export const Constants = {
 //   END;
 //   $function$
 //
+// FUNCTION trigger_send_support_email()
+//   CREATE OR REPLACE FUNCTION public.trigger_send_support_email()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   DECLARE
+//     request_id bigint;
+//     url text := 'https://quygstnufewyyenaccre.supabase.co/functions/v1/send-support-email';
+//   BEGIN
+//     -- Fire and forget the webhook using pg_net
+//     SELECT net.http_post(
+//         url := url,
+//         headers := '{"Content-Type": "application/json"}'::jsonb,
+//         body := jsonb_build_object('type', 'INSERT', 'table', 'support_tickets', 'record', row_to_json(NEW))
+//     ) INTO request_id;
+//
+//     RETURN NEW;
+//   EXCEPTION WHEN OTHERS THEN
+//     -- Do not block the insert if webhook fails
+//     RETURN NEW;
+//   END;
+//   $function$
+//
 // FUNCTION update_updated_at(text, uuid)
 //   CREATE OR REPLACE FUNCTION public.update_updated_at(p_table_name text, p_row_id uuid)
 //    RETURNS void
@@ -3691,6 +3715,8 @@ export const Constants = {
 //   trigger_generate_complaint_protocol: CREATE TRIGGER trigger_generate_complaint_protocol BEFORE INSERT ON public.denuncias FOR EACH ROW EXECUTE FUNCTION generate_complaint_protocol()
 // Table: escolas_instituicoes
 //   on_escolas_updated: CREATE TRIGGER on_escolas_updated BEFORE UPDATE ON public.escolas_instituicoes FOR EACH ROW EXECUTE FUNCTION handle_escolas_updated_at()
+// Table: support_tickets
+//   on_support_ticket_created: CREATE TRIGGER on_support_ticket_created AFTER INSERT ON public.support_tickets FOR EACH ROW EXECUTE FUNCTION trigger_send_support_email()
 // Table: usuarios_escola
 //   check_sensitive_user_update: CREATE TRIGGER check_sensitive_user_update BEFORE UPDATE ON public.usuarios_escola FOR EACH ROW EXECUTE FUNCTION prevent_sensitive_user_update()
 

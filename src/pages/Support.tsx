@@ -60,36 +60,42 @@ export default function Support() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = e.currentTarget
-    setLoading(true)
 
     const formData = new FormData(form)
+    const name = (formData.get('name') as string).trim()
+    const email = (formData.get('email') as string).trim()
+    const subject = (formData.get('subject') as string).trim()
+    const message = (formData.get('message') as string).trim()
+
+    if (!name || !email || !subject || !message) {
+      toast.error('Preencha todos os campos obrigatórios.')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast.error('Por favor, insira um e-mail válido.')
+      return
+    }
+
+    setLoading(true)
+
     const ticketData = {
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      subject: formData.get('subject') as string,
-      message: formData.get('message') as string,
+      name,
+      email,
+      subject,
+      message,
     }
 
     try {
       const { error } = await supabase
-        .from('support_tickets' as any)
+        .from('support_tickets')
         .insert([ticketData])
 
       if (error) throw error
 
-      // Disparo assíncrono do e-mail (Edge Function) para não bloquear a UI
-      supabase.functions
-        .invoke('send-support-email', {
-          body: { record: ticketData },
-        })
-        .catch(console.error)
-
-      toast.success(
-        'Recebemos sua mensagem! Nossa equipe analisará sua dúvida e entraremos em contato em breve.',
-      )
-      if (form) {
-        form.reset()
-      }
+      toast.success('Mensagem enviada com sucesso!')
+      form.reset()
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       toast.error(
