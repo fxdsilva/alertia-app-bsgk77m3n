@@ -45,6 +45,7 @@ import SupportManager from '@/pages/senior/SupportManager'
 import InternalInvestigations from '@/pages/InternalInvestigations'
 import ReportGeneration from '@/pages/ReportGeneration'
 import Profile from '@/pages/Profile'
+import { RestrictedAccess } from '@/components/RestrictedAccess'
 
 // Compliance Modules
 import ComplaintsList from '@/pages/compliance/modules/ComplaintsList'
@@ -134,6 +135,12 @@ const ComplianceRouter = () => {
   return <Navigate to="/" replace />
 }
 
+const SecretaryGuard = ({ children }: { children: React.ReactNode }) => {
+  const { profile } = useAppStore()
+  if (profile === 'SECRETARIA DE EDUCAÇÃO') return <RestrictedAccess />
+  return <>{children}</>
+}
+
 const App = () => {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -178,7 +185,11 @@ const App = () => {
                 />
                 <Route
                   path="/admin/complaints"
-                  element={<ComplaintManager />}
+                  element={
+                    <SecretaryGuard>
+                      <ComplaintManager />
+                    </SecretaryGuard>
+                  }
                 />
                 <Route
                   path="/admin/trainings"
@@ -197,7 +208,11 @@ const App = () => {
                 />
                 <Route
                   path="/school-admin/complaints"
-                  element={<SchoolComplaints />}
+                  element={
+                    <SecretaryGuard>
+                      <SchoolComplaints />
+                    </SecretaryGuard>
+                  }
                 />
                 <Route
                   path="/school-management/dashboard"
@@ -292,11 +307,19 @@ const App = () => {
                 {/* Compliance Shared Modules */}
                 <Route
                   path="/compliance/complaints"
-                  element={<ComplaintsList />}
+                  element={
+                    <SecretaryGuard>
+                      <ComplaintsList />
+                    </SecretaryGuard>
+                  }
                 />
                 <Route
                   path="/compliance/complaints/:id"
-                  element={<ComplaintDetails />}
+                  element={
+                    <SecretaryGuard>
+                      <ComplaintDetails />
+                    </SecretaryGuard>
+                  }
                 />
 
                 {/* Portal Public Pages */}
@@ -358,7 +381,14 @@ const App = () => {
                 {/* Manager Pages */}
                 <Route path="/manager/risks" element={<RiskDashboard />} />
                 <Route path="/manager/audits" element={<Audits />} />
-                <Route path="/manager/mediations" element={<Mediations />} />
+                <Route
+                  path="/manager/mediations"
+                  element={
+                    <SecretaryGuard>
+                      <Mediations />
+                    </SecretaryGuard>
+                  }
+                />
 
                 {/* Senior Management Pages */}
                 <Route path="/senior/dashboard" element={<SeniorDashboard />} />
@@ -372,11 +402,19 @@ const App = () => {
                 />
                 <Route
                   path="/senior/due-diligence"
-                  element={<DueDiligence />}
+                  element={
+                    <SecretaryGuard>
+                      <DueDiligence />
+                    </SecretaryGuard>
+                  }
                 />
                 <Route
                   path="/senior/decisions"
-                  element={<DisciplinaryDecisions />}
+                  element={
+                    <SecretaryGuard>
+                      <DisciplinaryDecisions />
+                    </SecretaryGuard>
+                  }
                 />
                 <Route path="/senior/ai-reports" element={<AIReports />} />
                 <Route path="/senior/schools" element={<SchoolManagement />} />
@@ -385,10 +423,21 @@ const App = () => {
                   path="/senior/pending-reports"
                   element={<PendingReportsProxy />}
                 />
-                <Route path="/senior/workflow" element={<NetworkWorkflow />} />
+                <Route
+                  path="/senior/workflow"
+                  element={
+                    <SecretaryGuard>
+                      <NetworkWorkflow />
+                    </SecretaryGuard>
+                  }
+                />
                 <Route
                   path="/senior/workflow/:id"
-                  element={<WorkflowDetailMaster />}
+                  element={
+                    <SecretaryGuard>
+                      <WorkflowDetailMaster />
+                    </SecretaryGuard>
+                  }
                 />
                 <Route
                   path="/senior/support-config"
@@ -398,7 +447,11 @@ const App = () => {
                 {/* Shared Pages */}
                 <Route
                   path="/investigations"
-                  element={<InternalInvestigations />}
+                  element={
+                    <SecretaryGuard>
+                      <InternalInvestigations />
+                    </SecretaryGuard>
+                  }
                 />
                 <Route path="/reports" element={<ReportGeneration />} />
                 <Route path="/profile" element={<Profile />} />
