@@ -1,418 +1,344 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { supabase } from '@/lib/supabase/client'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { Gavel, AlertTriangle, Eye, ShieldAlert, FileText } from 'lucide-react'
+import {
+  FileSearch,
+  GitBranch,
+  Scale,
+  CheckCircle2,
+  ChevronDown,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+function DropdownButton({
+  label,
+  options,
+}: {
+  label: string
+  options: { label: string; onClick?: () => void }[]
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 px-4 h-10 w-full sm:w-auto"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[200px]">
+        {options.map((opt, i) => (
+          <DropdownMenuItem key={i} onClick={opt.onClick}>
+            {opt.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 export default function DisciplinaryDecisions() {
-  const [records, setRecords] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState('entrada')
+  const [dueDiligence, setDueDiligence] = useState<any[]>([])
+  const [processos, setProcessos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedRecord, setSelectedRecord] = useState<any>(null)
+
+  const tabs = [
+    { id: 'entrada', label: 'Entrada & Análise', icon: FileSearch },
+    { id: 'investigacao', label: 'Investigação (F2)', icon: GitBranch },
+    { id: 'execucao', label: 'Execução (F3)', icon: Scale },
+    { id: 'encerradas', label: 'Encerradas', icon: CheckCircle2 },
+  ]
 
   useEffect(() => {
-    fetchRecords()
+    fetchData()
   }, [])
 
-  async function fetchRecords() {
+  const fetchData = async () => {
+    setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('processos_disciplinares')
-        .select(
-          `
-          *,
-          escola:escolas_instituicoes(nome_escola),
-          status_obj:status_processo_disciplinar(nome_status),
-          denuncia:denuncias(protocolo, gravidade, categoria)
-        `,
-        )
-        .order('created_at', { ascending: false })
+      const [ddRes, pdRes] = await Promise.all([
+        supabase
+          .from('due_diligence')
+          .select(
+            '*, escolas_instituicoes(nome_escola), status_due_diligence(nome_status)',
+          ),
+        supabase
+          .from('processos_disciplinares')
+          .select(
+            '*, escolas_instituicoes(nome_escola), status_processo_disciplinar(nome_status)',
+          ),
+      ])
 
-      if (error) throw error
-      setRecords(data || [])
-    } catch (err) {
-      console.error('Error fetching disciplinary processes:', err)
+      if (ddRes.data) setDueDiligence(ddRes.data)
+      if (pdRes.data) setProcessos(pdRes.data)
+    } catch (error) {
+      console.error(error)
     } finally {
       setLoading(false)
     }
   }
 
-  const getStatusColor = (status: string) => {
-    const s = status?.toLowerCase() || ''
-    if (s.includes('conclu')) return 'bg-green-100 text-green-800'
-    if (s.includes('andamento') || s.includes('curso'))
-      return 'bg-blue-100 text-blue-800'
-    if (s.includes('abert') || s.includes('pendent'))
-      return 'bg-yellow-100 text-yellow-800'
-    return 'bg-gray-100 text-gray-800'
+  const getTabCount = (tabId: string) => {
+    if (tabId === 'entrada') return dueDiligence.length
+    if (tabId === 'investigacao')
+      return processos.filter(
+        (p) =>
+          p.status_processo_disciplinar?.nome_status
+            ?.toLowerCase()
+            .includes('investiga') || p.status === 'em_andamento',
+      ).length
+    if (tabId === 'execucao')
+      return processos.filter(
+        (p) =>
+          p.status_processo_disciplinar?.nome_status
+            ?.toLowerCase()
+            .includes('execu') || p.status === 'execucao',
+      ).length
+    if (tabId === 'encerradas')
+      return processos.filter(
+        (p) =>
+          p.status_processo_disciplinar?.nome_status
+            ?.toLowerCase()
+            .includes('conclu') || p.status === 'concluido',
+      ).length
+    return 0
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Gavel className="h-8 w-8 text-primary" />
-          Decisões Disciplinares
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Registro e rastreamento de sanções e processos disciplinares aplicados
-          na instituição, com vínculo direto aos perfis de risco e denúncias
-          relatadas.
-        </p>
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1400px] mx-auto animate-fade-in">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Decisões Disciplinares
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie os processos e diligências da instituição.
+          </p>
+        </div>
+        <DropdownButton
+          label="Ações e Filtros"
+          options={[
+            { label: 'Todos os Registros' },
+            { label: 'Alta Gravidade' },
+            { label: 'Mais Recentes' },
+          ]}
+        />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Processos
-            </CardTitle>
-            <Gavel className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{records.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Registros ativos e passados
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Casos Críticos/Alta Severidade
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {
-                records.filter(
-                  (r) =>
-                    r.denuncia?.gravidade === 'Alta' ||
-                    r.denuncia?.gravidade === 'Crítica',
-                ).length
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Requerem atenção redobrada
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Processos Concluídos
-            </CardTitle>
-            <ShieldAlert className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {
-                records.filter(
-                  (r) =>
-                    r.status_obj?.nome_status
-                      ?.toLowerCase()
-                      .includes('conclu') ||
-                    r.status?.toLowerCase().includes('conclu'),
-                ).length
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Com decisão final aplicada
-            </p>
-          </CardContent>
-        </Card>
+      <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex w-max items-center gap-1 p-1 bg-white border border-slate-200 rounded-full shadow-sm">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id
+            const count = getTabCount(tab.id)
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all outline-none ring-0 shrink-0',
+                  isActive
+                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent',
+                )}
+              >
+                <tab.icon
+                  className={cn(
+                    'h-4 w-4 shrink-0',
+                    isActive ? 'text-indigo-600' : 'text-slate-400',
+                  )}
+                />
+                <span className="truncate">{tab.label}</span>
+                {count >= 0 && (
+                  <span
+                    className={cn(
+                      'text-xs rounded-full px-2 py-0.5 ml-1 font-semibold shrink-0',
+                      isActive
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'bg-slate-100 text-slate-600',
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Sanções e Processos</CardTitle>
-          <CardDescription>
-            Lista completa de processos disciplinares para análise de
-            conformidade e integridade institucional.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center p-8">Carregando...</div>
-          ) : records.length === 0 ? (
-            <div className="text-center p-8 text-muted-foreground">
-              Nenhum processo disciplinar registrado.
-            </div>
-          ) : (
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título do Processo</TableHead>
-                    <TableHead>Instituição</TableHead>
-                    <TableHead>Data de Abertura</TableHead>
-                    <TableHead>Vínculo (Denúncia)</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {records.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell
-                        className="font-medium max-w-[250px] truncate"
-                        title={record.titulo}
-                      >
-                        {record.titulo}
-                      </TableCell>
-                      <TableCell>{record.escola?.nome_escola || '-'}</TableCell>
-                      <TableCell>
-                        {record.data_abertura
-                          ? format(
-                              new Date(record.data_abertura),
-                              'dd/MM/yyyy',
-                              { locale: ptBR },
-                            )
-                          : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {record.denuncia ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
-                              {record.denuncia.protocolo}
-                            </span>
-                            {record.denuncia.gravidade && (
-                              <Badge
-                                variant="outline"
-                                className={
-                                  record.denuncia.gravidade === 'Alta' ||
-                                  record.denuncia.gravidade === 'Crítica'
-                                    ? 'text-red-600 border-red-200 bg-red-50'
-                                    : ''
-                                }
-                              >
-                                {record.denuncia.gravidade}
-                              </Badge>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
+      {loading ? (
+        <div className="flex h-40 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-4 border-b">
+              <CardTitle className="text-lg">
+                Investigações em Andamento
+              </CardTitle>
+              <CardDescription>
+                Acompanhe o status e nível de risco das due diligences ativas.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {dueDiligence.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                  <AlertCircle className="h-8 w-8 text-slate-400 mb-3" />
+                  <p className="font-medium text-slate-600">
+                    Nenhum registro encontrado.
+                  </p>
+                  <p className="text-sm mt-1">
+                    Não há due diligences ativas no momento.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {dueDiligence.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all gap-4 group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm text-slate-900 truncate">
+                          {item.fornecedor || 'Registro sem nome'}
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1 truncate">
+                          Escola:{' '}
+                          {item.escolas_instituicoes?.nome_escola ||
+                            'Não informada'}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <Badge
-                          className={getStatusColor(
-                            record.status_obj?.nome_status || record.status,
-                          )}
-                          variant="outline"
+                          variant={
+                            item.nivel_risco?.toLowerCase() === 'alto' ||
+                            item.nivel_risco?.toLowerCase() === 'critico'
+                              ? 'destructive'
+                              : 'secondary'
+                          }
+                          className="shrink-0"
                         >
-                          {record.status_obj?.nome_status || record.status}
+                          {item.nivel_risco || 'Sem risco definido'}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedRecord(record)}
-                            >
-                              <Eye className="h-4 w-4 mr-2" /> Detalhes
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[650px]">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2 text-xl">
-                                <Gavel className="h-5 w-5 text-primary" />
-                                Detalhes do Processo Disciplinar
-                              </DialogTitle>
-                              <DialogDescription>
-                                Processo ID:{' '}
-                                <span className="font-mono text-xs">
-                                  {record.id}
-                                </span>
-                              </DialogDescription>
-                            </DialogHeader>
-                            {selectedRecord && (
-                              <div className="space-y-5 mt-4">
-                                <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg border">
-                                  <div>
-                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                                      Título
-                                    </h4>
-                                    <p className="text-sm font-medium">
-                                      {selectedRecord.titulo}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                                      Instituição
-                                    </h4>
-                                    <p className="text-sm">
-                                      {selectedRecord.escola?.nome_escola ||
-                                        'Não associado'}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                                      Status Atual
-                                    </h4>
-                                    <Badge
-                                      className={getStatusColor(
-                                        selectedRecord.status_obj
-                                          ?.nome_status ||
-                                          selectedRecord.status,
-                                      )}
-                                      variant="outline"
-                                    >
-                                      {selectedRecord.status_obj?.nome_status ||
-                                        selectedRecord.status}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                                      Data de Abertura
-                                    </h4>
-                                    <p className="text-sm">
-                                      {selectedRecord.data_abertura
-                                        ? format(
-                                            new Date(
-                                              selectedRecord.data_abertura,
-                                            ),
-                                            'dd/MM/yyyy',
-                                            { locale: ptBR },
-                                          )
-                                        : 'Não informada'}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
-                                    Descrição dos Fatos
-                                  </h4>
-                                  <div className="bg-muted/50 p-3 rounded-md text-sm leading-relaxed whitespace-pre-wrap border">
-                                    {selectedRecord.descricao || (
-                                      <span className="italic text-muted-foreground">
-                                        Nenhuma descrição fornecida para este
-                                        processo.
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
-                                    Decisão / Sanção Aplicada
-                                  </h4>
-                                  <div className="bg-primary/5 border border-primary/20 p-4 rounded-md text-sm text-foreground shadow-sm">
-                                    {selectedRecord.decisao ? (
-                                      selectedRecord.decisao
-                                    ) : (
-                                      <span className="italic text-muted-foreground flex items-center gap-2">
-                                        <AlertTriangle className="h-4 w-4" />{' '}
-                                        Decisão pendente ou não registrada no
-                                        sistema.
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {selectedRecord.denuncia && (
-                                  <div className="border-t pt-4">
-                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                                      <FileText className="h-4 w-4 text-blue-500" />
-                                      Vínculo de Denúncia Originária
-                                    </h4>
-                                    <div className="grid grid-cols-2 gap-3 text-sm bg-blue-50/50 p-4 rounded-md border border-blue-100">
-                                      <div>
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                                          Protocolo
-                                        </span>
-                                        <span className="font-mono">
-                                          {selectedRecord.denuncia.protocolo}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                                          Gravidade
-                                        </span>
-                                        <span
-                                          className={
-                                            selectedRecord.denuncia
-                                              .gravidade === 'Alta' ||
-                                            selectedRecord.denuncia
-                                              .gravidade === 'Crítica'
-                                              ? 'text-red-600 font-medium'
-                                              : ''
-                                          }
-                                        >
-                                          {selectedRecord.denuncia.gravidade ||
-                                            'Não classificada'}
-                                        </span>
-                                      </div>
-                                      <div className="col-span-2">
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                                          Categorias Identificadas
-                                        </span>
-                                        {selectedRecord.denuncia.categoria &&
-                                        selectedRecord.denuncia.categoria
-                                          .length > 0 ? (
-                                          <div className="flex flex-wrap gap-1 mt-1">
-                                            {selectedRecord.denuncia.categoria.map(
-                                              (cat: string) => (
-                                                <Badge
-                                                  key={cat}
-                                                  variant="secondary"
-                                                  className="text-xs"
-                                                >
-                                                  {cat}
-                                                </Badge>
-                                              ),
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <span className="text-muted-foreground">
-                                            Não categorizada
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                    </TableRow>
+                        <Badge
+                          variant="outline"
+                          className="bg-indigo-50 text-indigo-700 border-indigo-200 shrink-0"
+                        >
+                          {item.status_due_diligence?.nome_status ||
+                            item.status ||
+                            'Pendente'}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-700"
+                        >
+                          Detalhes
+                        </Button>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-4 border-b">
+              <CardTitle className="text-lg">
+                Histórico de Sanções e Processos
+              </CardTitle>
+              <CardDescription>
+                Lista completa de processos disciplinares para análise de
+                conformidade e integridade institucional.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {processos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                  <AlertCircle className="h-8 w-8 text-slate-400 mb-3" />
+                  <p className="font-medium text-slate-600">
+                    Nenhum processo disciplinar registrado.
+                  </p>
+                  <p className="text-sm mt-1">
+                    O histórico de sanções está vazio.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {processos.map((proc) => (
+                    <div
+                      key={proc.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all gap-4 group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm text-slate-900 truncate">
+                          {proc.titulo || 'Processo sem título'}
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1 truncate">
+                          Escola:{' '}
+                          {proc.escolas_instituicoes?.nome_escola ||
+                            'Não informada'}{' '}
+                          • Abertura:{' '}
+                          {proc.data_abertura
+                            ? new Date(proc.data_abertura).toLocaleDateString(
+                                'pt-BR',
+                              )
+                            : 'N/A'}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'shrink-0',
+                            proc.status_processo_disciplinar?.nome_status
+                              ?.toLowerCase()
+                              .includes('conclu') || proc.status === 'concluido'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200',
+                          )}
+                        >
+                          {proc.status_processo_disciplinar?.nome_status ||
+                            proc.status ||
+                            'Em andamento'}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-700"
+                        >
+                          Analisar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
