@@ -6,296 +6,258 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { supabase } from '@/lib/supabase/client'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import {
-  School,
-  AlertTriangle,
-  FileCheck,
-  Scale,
-  GraduationCap,
   Building2,
+  AlertTriangle,
+  SearchCheck,
+  Scale,
+  BarChart3,
+  FileText,
+  Loader2,
 } from 'lucide-react'
-import {
-  secretaryService,
-  DashboardSummary,
-  SecretaryDashboardConfig,
-} from '@/services/secretaryService'
-import useAppStore from '@/stores/useAppStore'
-import { Navigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function SecretaryDashboard() {
-  const { profile } = useAppStore()
-  const [data, setData] = useState<DashboardSummary | null>(null)
-  const [config, setConfig] = useState<SecretaryDashboardConfig | null>(null)
+  const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+  const { toast } = useToast()
 
   useEffect(() => {
-    async function loadData() {
+    async function loadStats() {
       try {
-        const [dashData, dashConfig] = await Promise.all([
-          secretaryService.getDashboardData(),
-          secretaryService.getSecretaryConfig(),
-        ])
-        setData(dashData)
-        setConfig(dashConfig)
-      } catch (error) {
-        console.error('Error loading secretary dashboard data', error)
+        const { data, error } = await supabase.rpc(
+          'get_secretary_dashboard_stats',
+        )
+        if (error) throw error
+
+        if (data) {
+          setStats(data)
+        }
+      } catch (err: any) {
+        console.error('Error loading stats:', err)
+        toast({
+          title: 'Erro ao carregar dados',
+          description:
+            err.message || 'Não foi possível carregar as estatísticas da rede.',
+          variant: 'destructive',
+        })
       } finally {
         setLoading(false)
       }
     }
-
-    if (profile === 'SECRETARIA DE EDUCAÇÃO') {
-      loadData()
-    } else {
-      setLoading(false)
-    }
-  }, [profile])
-
-  if (profile !== 'SECRETARIA DE EDUCAÇÃO' && !loading) {
-    return <Navigate to="/dashboard" replace />
-  }
+    loadStats()
+  }, [toast])
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
+  const schools = stats?.schools || []
+  const totalSchools = stats?.totalSchools || 0
+
+  const totalComplaints = schools.reduce(
+    (acc: number, school: any) => acc + (school.complaintsCount || 0),
+    0,
+  )
+  const totalInvestigations = schools.reduce(
+    (acc: number, school: any) => acc + (school.investigationsCount || 0),
+    0,
+  )
+  const totalMediations = schools.reduce(
+    (acc: number, school: any) => acc + (school.mediationsCount || 0),
+    0,
+  )
+
   return (
-    <div className="p-6 md:p-8 space-y-8 animate-fade-in max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2 text-slate-900">
-          {config?.welcomeMessage || 'Painel da Secretaria de Educação'}
-        </h1>
-        <p className="text-slate-500 text-lg">
-          Visão geral institucional e métricas por escola da rede.
-        </p>
+    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Visão Geral da Rede
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Acompanhamento estratégico das escolas da rede
+          </p>
+        </div>
       </div>
 
-      {/* Visão Geral */}
-      {config?.showStats !== false && data && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card className="bg-primary/5 border-primary/20 shadow-sm transition-all hover:shadow-md">
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" /> Total de
-                  Escolas
-                </span>
-                <span className="text-3xl font-bold text-primary">
-                  {data.totalSchools}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm transition-all hover:shadow-md">
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-500" />{' '}
-                  Denúncias Ativas
-                </span>
-                <span className="text-3xl font-bold text-slate-800">
-                  {data.totalComplaints}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm transition-all hover:shadow-md">
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <FileCheck className="h-4 w-4 text-blue-500" /> Investigações
-                </span>
-                <span className="text-3xl font-bold text-slate-800">
-                  {data.totalInvestigations}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm transition-all hover:shadow-md">
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <Scale className="h-4 w-4 text-purple-500" /> Mediações
-                </span>
-                <span className="text-3xl font-bold text-slate-800">
-                  {data.totalMediations}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm transition-all hover:shadow-md">
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-green-500" />{' '}
-                  Treinamentos
-                </span>
-                <span className="text-3xl font-bold text-slate-800">
-                  {data.totalTrainings}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Métricas por Escola */}
-      {config?.showSchools !== false && data && (
-        <Card className="border-0 shadow-lg overflow-hidden bg-white/50 backdrop-blur-sm">
-          <CardHeader className="bg-slate-50/80 border-b border-slate-100 pb-6">
-            <CardTitle className="flex items-center gap-2 text-xl text-slate-800">
-              <School className="h-6 w-6 text-primary" />
-              Resumo de Conformidade por Unidade Escolar
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="shadow-sm border-0 bg-white ring-1 ring-slate-100">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">
+              Total de Escolas
             </CardTitle>
-            <CardDescription className="text-base mt-1.5">
-              Acompanhamento detalhado de denúncias, investigações, mediações e
-              treinamentos por escola da rede.
-            </CardDescription>
+            <Building2 className="h-4 w-4 text-blue-600" />
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
-                    <TableHead className="w-[300px] text-slate-700 font-semibold py-4 px-6">
-                      Unidade Escolar
-                    </TableHead>
-                    <TableHead className="text-slate-700 font-semibold">
-                      Rede / Esfera
-                    </TableHead>
-                    <TableHead className="text-center text-slate-700 font-semibold">
-                      Denúncias
-                    </TableHead>
-                    <TableHead className="text-center text-slate-700 font-semibold">
-                      Investigações
-                    </TableHead>
-                    <TableHead className="text-center text-slate-700 font-semibold">
-                      Mediações
-                    </TableHead>
-                    <TableHead className="text-center text-slate-700 font-semibold">
-                      Treinamentos
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.schools.map((school) => (
-                    <TableRow
-                      key={school.id}
-                      className="transition-colors hover:bg-slate-50/80"
-                    >
-                      <TableCell className="font-medium px-6 py-4">
-                        <div className="text-slate-900">{school.name}</div>
-                        <div className="text-xs text-slate-500 font-normal mt-1">
-                          {school.municipality} • {school.address}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className="font-medium text-xs bg-white text-slate-600 border-slate-200"
-                          >
-                            {school.network}
-                          </Badge>
-                          <Badge
-                            variant="secondary"
-                            className="font-medium text-xs bg-slate-100 text-slate-600"
-                          >
-                            {school.sphere}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            school.complaintsCount > 0
-                              ? 'destructive'
-                              : 'outline'
-                          }
-                          className={
-                            school.complaintsCount === 0
-                              ? 'bg-slate-50 text-slate-400 border-slate-200'
-                              : ''
-                          }
-                        >
-                          {school.complaintsCount}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            school.investigationsCount > 0
-                              ? 'default'
-                              : 'outline'
-                          }
-                          className={
-                            school.investigationsCount > 0
-                              ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                              : 'bg-slate-50 text-slate-400 border-slate-200'
-                          }
-                        >
-                          {school.investigationsCount}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            school.mediationsCount > 0 ? 'default' : 'outline'
-                          }
-                          className={
-                            school.mediationsCount > 0
-                              ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                              : 'bg-slate-50 text-slate-400 border-slate-200'
-                          }
-                        >
-                          {school.mediationsCount}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            school.trainingsCount > 0 ? 'default' : 'outline'
-                          }
-                          className={
-                            school.trainingsCount > 0
-                              ? 'bg-green-500 hover:bg-green-600 text-white'
-                              : 'bg-slate-50 text-slate-400 border-slate-200'
-                          }
-                        >
-                          {school.trainingsCount}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {data.schools.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center py-12 text-slate-500"
-                      >
-                        Nenhuma escola encontrada ou ativa no momento.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">
+              {totalSchools}
             </div>
           </CardContent>
         </Card>
-      )}
+
+        <Card className="shadow-sm border-0 bg-white ring-1 ring-slate-100">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">
+              Denúncias Ativas
+            </CardTitle>
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">
+              {totalComplaints}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-0 bg-white ring-1 ring-slate-100">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">
+              Investigações em Curso
+            </CardTitle>
+            <SearchCheck className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">
+              {totalInvestigations}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-0 bg-white ring-1 ring-slate-100">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">
+              Mediações Ativas
+            </CardTitle>
+            <Scale className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">
+              {totalMediations}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="shadow-sm border-0 bg-white ring-1 ring-slate-100">
+        <CardHeader>
+          <CardTitle>Ferramentas Institucionais</CardTitle>
+          <CardDescription>
+            Acesse os relatórios consolidados e a gestão da rede
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Button
+              variant="outline"
+              className="h-auto py-6 flex flex-col items-center justify-center gap-3 hover:bg-slate-50 hover:text-blue-700 transition-colors"
+              onClick={() => navigate('/admin/reports')}
+            >
+              <BarChart3 className="h-8 w-8 text-blue-600" />
+              <span className="font-semibold text-center">
+                Relatórios da Rede
+              </span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto py-6 flex flex-col items-center justify-center gap-3 hover:bg-slate-50 hover:text-purple-700 transition-colors"
+              onClick={() => navigate('/senior/consolidated')}
+            >
+              <FileText className="h-8 w-8 text-purple-600" />
+              <span className="font-semibold text-center">
+                Visão Consolidada
+              </span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-auto py-6 flex flex-col items-center justify-center gap-3 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
+              onClick={() => navigate('/senior/schools')}
+            >
+              <Building2 className="h-8 w-8 text-emerald-600" />
+              <span className="font-semibold text-center">
+                Lista de Escolas
+              </span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border-0 bg-white ring-1 ring-slate-100 overflow-hidden">
+        <CardHeader>
+          <CardTitle>Escolas da Rede</CardTitle>
+          <CardDescription>Resumo dos indicadores por escola</CardDescription>
+        </CardHeader>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-slate-50 text-slate-600 border-y border-slate-200">
+              <tr>
+                <th className="px-6 py-4 font-semibold">Escola</th>
+                <th className="px-6 py-4 font-semibold">Localização</th>
+                <th className="px-6 py-4 font-semibold text-center">
+                  Denúncias
+                </th>
+                <th className="px-6 py-4 font-semibold text-center">
+                  Investigações
+                </th>
+                <th className="px-6 py-4 font-semibold text-center">
+                  Mediações
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {schools.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-8 text-center text-slate-500"
+                  >
+                    Nenhuma escola encontrada ou vinculada.
+                  </td>
+                </tr>
+              ) : (
+                schools.map((school: any) => (
+                  <tr
+                    key={school.id}
+                    className="hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="px-6 py-4 font-medium text-slate-900">
+                      {school.nome_escola}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {school.localizacao}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 font-medium text-xs">
+                        {school.complaintsCount || 0}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 font-medium text-xs">
+                        {school.investigationsCount || 0}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center justify-center min-w-[2rem] px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium text-xs">
+                        {school.mediationsCount || 0}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   )
 }
