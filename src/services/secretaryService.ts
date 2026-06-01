@@ -38,6 +38,22 @@ export interface ShareAppConfig {
 }
 
 export const secretaryService = {
+  async getNetworkReportData() {
+    const { data: denuncias, error: denunciasError } = await supabase
+      .from('denuncias')
+      .select('id, categoria, gravidade, status')
+
+    if (denunciasError) throw denunciasError
+
+    const { data: statuses, error: statusesError } = await supabase
+      .from('status_denuncia')
+      .select('id, nome_status')
+
+    if (statusesError) throw statusesError
+
+    return { denuncias: denuncias || [], statuses: statuses || [] }
+  },
+
   async getSecretaryConfig(): Promise<SecretaryDashboardConfig | null> {
     const { data, error } = await supabase
       .from('admin_settings')
