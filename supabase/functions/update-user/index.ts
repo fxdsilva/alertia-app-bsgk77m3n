@@ -4,8 +4,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 Deno.serve(async (req: Request) => {
@@ -23,30 +22,14 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) throw new Error('Missing Authorization header')
     const token = authHeader.replace('Bearer ', '')
-    const {
-      data: { user: requestUser },
-      error: userError,
-    } = await supabaseClient.auth.getUser(token)
+    const { data: { user: requestUser }, error: userError } = await supabaseClient.auth.getUser(token)
 
     if (userError || !requestUser) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     const body = await req.json()
-    const {
-      user_id,
-      email,
-      password,
-      nome,
-      perfil,
-      escola_id,
-      cargo,
-      departamento,
-      ativo,
-    } = body
+    const { user_id, email, password, nome, perfil, escola_id, cargo, departamento, ativo } = body
 
     if (!user_id) throw new Error('Missing user_id')
 
@@ -61,15 +44,17 @@ Deno.serve(async (req: Request) => {
         cargo: cargo || null,
         departamento: departamento || null,
         ativo: ativo !== undefined ? ativo : true,
-      },
+      }
     }
-
+    
     if (password) {
       authUpdatePayload.password = password
     }
 
-    const { data: updateData, error: updateError } =
-      await supabaseClient.auth.admin.updateUserById(user_id, authUpdatePayload)
+    const { data: updateData, error: updateError } = await supabaseClient.auth.admin.updateUserById(
+      user_id,
+      authUpdatePayload
+    )
 
     if (updateError) throw updateError
 
@@ -93,6 +78,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
+
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
