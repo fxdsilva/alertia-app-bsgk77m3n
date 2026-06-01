@@ -16,6 +16,7 @@ import {
   Search,
   Archive,
   Inbox,
+  Share2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { complianceService } from '@/services/complianceService'
@@ -186,6 +187,21 @@ export default function DirectorDashboard() {
             <div className="text-2xl font-bold text-blue-700">Equipe</div>
             <p className="text-xs text-muted-foreground mt-1">
               Gestão de acessos
+            </p>
+          </CardContent>
+        </Card>
+        <Card
+          className="cursor-pointer hover:shadow-md transition-all group border-l-4 border-l-pink-500"
+          onClick={() => navigate('/compliance/director/secretary-config')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Secretaria</CardTitle>
+            <Share2 className="h-4 w-4 text-pink-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-pink-700">Ajustes</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Compartilhamento
             </p>
           </CardContent>
         </Card>

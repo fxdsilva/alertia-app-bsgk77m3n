@@ -32,6 +32,13 @@ export interface FAQItem {
   answer: string
 }
 
+export interface ShareAppConfig {
+  enabled: boolean
+  title: string
+  description: string
+  url: string
+}
+
 export const settingsService = {
   async getOfficialChannels(): Promise<OfficialChannelsData | null> {
     const { data, error } = await supabase
@@ -98,6 +105,34 @@ export const settingsService = {
       {
         key: 'support_faqs',
         settings: faqs,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'key' },
+    )
+
+    if (error) throw error
+  },
+
+  async getShareAppConfig(): Promise<ShareAppConfig | null> {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('settings')
+      .eq('key', 'secretary_share_app_config')
+      .maybeSingle()
+
+    if (error) {
+      console.error('Error fetching share app config:', error)
+      return null
+    }
+
+    return data?.settings as unknown as ShareAppConfig
+  },
+
+  async updateShareAppConfig(config: ShareAppConfig): Promise<void> {
+    const { error } = await supabase.from('admin_settings').upsert(
+      {
+        key: 'secretary_share_app_config',
+        settings: config,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'key' },
