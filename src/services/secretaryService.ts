@@ -30,6 +30,13 @@ export interface SecretaryDashboardConfig {
   customLinks: { title: string; url: string }[]
 }
 
+export interface ShareAppConfig {
+  enabled: boolean
+  title: string
+  description: string
+  url: string
+}
+
 export const secretaryService = {
   async getSecretaryConfig(): Promise<SecretaryDashboardConfig | null> {
     const { data, error } = await supabase
@@ -56,6 +63,20 @@ export const secretaryService = {
     )
 
     if (error) throw error
+  },
+
+  async getShareAppConfig(): Promise<ShareAppConfig | null> {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('settings')
+      .eq('key', 'secretary_share_app_config')
+      .maybeSingle()
+
+    if (error) {
+      console.error('Error fetching share app config:', error)
+      return null
+    }
+    return data?.settings as unknown as ShareAppConfig
   },
 
   async getDashboardData(): Promise<DashboardSummary> {
